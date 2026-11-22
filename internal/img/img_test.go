@@ -131,8 +131,9 @@ func TestPlaceholderGeometryAndCut(t *testing.T) {
 		t.Fatalf("%d lines", len(lines))
 	}
 	for i, l := range lines {
-		if w := ansi.StringWidth(l); w != 7 {
-			t.Errorf("line %d width %d", i, w)
+		// Bubble Tea measures with grapheme or wcwidth semantics; both must agree.
+		if w, wc := ansi.StringWidth(l), ansi.StringWidthWc(l); w != 7 || wc != 7 {
+			t.Errorf("line %d width %d (wcwidth %d)", i, w, wc)
 		}
 		if !strings.HasPrefix(l, "\x1b[38;2;18;52;86m") {
 			t.Errorf("line %d: id not in foreground color: %q", i, l)
