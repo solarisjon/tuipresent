@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-drift.sh",
+            "timeout": 180,
+            "statusMessage": "Checking code/docs/examples drift"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-drift.sh",
+            "timeout": 180,
+            "statusMessage": "Checking code/docs/examples drift"
+          }
+        ]
+      }
+    ]
+  }
+}
