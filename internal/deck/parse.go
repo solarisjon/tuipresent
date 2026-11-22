@@ -3,6 +3,7 @@ package deck
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ var (
 	fenceRe     = regexp.MustCompile("^\\s*(```+|~~~+)\\s*(.*)$")
 	// noteOpenRe matches the first line of a multi-line speaker_note comment.
 	noteOpenRe = regexp.MustCompile(`^\s*<!--\s*speaker_note\s*(?::(.*))?$`)
+	imageRe    = regexp.MustCompile(`^\s*!\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+"[^"]*")?\s*\)\s*$`)
 )
 
 func Load(path string) (*Deck, error) {
@@ -23,7 +25,11 @@ func Load(path string) (*Deck, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Parse(string(b))
+	d, err := Parse(string(b))
+	if d != nil {
+		d.Dir = filepath.Dir(path)
+	}
+	return d, err
 }
 
 func Parse(src string) (*Deck, error) {
@@ -146,6 +152,13 @@ func parseSlide(lines []string, execID *int) Slide {
 
 		if m := directiveRe.FindStringSubmatch(line); m != nil {
 			p.directive(m[1], m[2])
+			continue
+		}
+
+		if m := imageRe.FindStringSubmatch(line); m != nil {
+			p.content = true
+			p.flush()
+			p.add(Block{Kind: Image, Step: p.step, Text: m[1], Path: m[2] + m[3]})
 			continue
 		}
 

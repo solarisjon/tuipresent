@@ -34,6 +34,7 @@ func (t *Theme) UnmarshalYAML(n *yaml.Node) error {
 type Deck struct {
 	Meta   Meta
 	Slides []Slide
+	Dir    string // directory of the deck file; image paths resolve against it
 }
 
 // FadeEnabled reports whether content revealed by a pause on slide i fades in:
@@ -67,15 +68,17 @@ const (
 	Markdown BlockKind = iota
 	Columns
 	Exec
+	Image
 )
 
 // Block is a unit of content revealed at Step (0-based).
 type Block struct {
 	Kind     BlockKind
 	Step     int
-	Text     string    // Markdown: source; Exec: script body
+	Text     string    // Markdown: source; Exec: script body; Image: alt text
 	Lang     string    // Exec: fence language
 	Widths   []int     // Columns: relative widths
 	Children [][]Block // Columns: blocks per column
 	ExecID   int       // Exec: deck-unique id
+	Path     string    // Image: path as written, relative to Deck.Dir
 }

@@ -89,6 +89,7 @@ Look for:
 - Titles cut off at the right edge.
 - Last body lines missing (truncated). Compare against the source.
 - Reveal order across pause steps, especially with columns (section 5).
+- Images: they show as rows of `▀`/`▄` (half-blocks). A `[image: alt]` box means the file was not found or not decodable. An image of only 3 rows means the slide has no room for it.
 - Slide count. With a front-matter `title`, the count is sections + 1.
 
 ### Step C: `-exec` (decks with `+exec` blocks only)
@@ -255,6 +256,26 @@ Exec behavior:
 - Output is wrapped in a ```` ``` ```` fence, so an output line that is itself a ```` ``` ```` fence would close it early and garble the slide. Do not print fences.
 - The timeout text and the `running…` status come from reading the code. They are not visible in `-dump`.
 
+### Images
+
+```markdown
+![Architecture overview](assets/arch.png)
+![image:width:50%](assets/logo.png)
+```
+
+- An image must be **alone on its line**. `![alt](path)` inside a paragraph or list item is left to glamour and shows as text.
+- The path is relative to the deck file's directory (absolute paths work too; `<path with spaces>` and a `"title"` are accepted). PNG, JPEG and GIF (first frame) are decoded. URLs are not fetched.
+- Sizing: the image is scaled to fit, aspect ratio kept, centered in its width. Its height is the body rows the fully revealed slide leaves free after all other content, split evenly between images stacked vertically, minimum 3 rows. Its width is at most the content width (or column width). A cell counts as 1 pixel wide by 2 tall, so a 2:1 image is 4 cells wide per row: 92 cells wide needs 23 rows.
+- `![image:width:N%](path)` (presenterm syntax) caps the width at N% of the available width. The alt text is then the file name.
+- Inside columns an image gets its column's width, plus any rows its taller neighbour columns leave free.
+- Sizes are stable across pauses. A `pause` before an image reserves its rows.
+- Drawing, chosen by `-images auto|kitty|blocks|off` (default `auto`):
+  - `kitty`: real pixels via the kitty graphics protocol (Unicode placeholders). `auto` picks it in kitty and ghostty (`TERM_PROGRAM=ghostty`, `TERM=xterm-kitty`, `KITTY_WINDOW_ID`), but never inside tmux or screen.
+  - `blocks`: truecolor half-block characters (`▀`), two pixels per cell. Works in any truecolor terminal. Same geometry as `kitty`.
+  - `off`: every image becomes the placeholder box below.
+  - `-dump` and `-check` always use `blocks` (or `off` if given), so `-check` measures images exactly as they will appear.
+- A missing or undecodable file never fails: it renders as a dim 3-row box `[image: alt]` (the file name if alt is empty). In `-dump`, look for these boxes to catch wrong paths.
+
 ---
 
 ## 4. Layout budget
@@ -305,6 +326,7 @@ All numbers come from `render.go` and match `-check` and `-dump`. "Rows" means t
 - A columns block: the height of its tallest column, fully revealed. Markdown that follows it gets 1 blank row before it. Markdown right before it (including content before the first `column:`) gets no blank row.
 - `+exec` output: an extra block of output lines plus 1 to 2 rows of spacing, added at runtime.
 - `speaker_note` comments: 0 rows. They never appear on the slide, and `-dump` does not show them.
+- An image: whatever rows are left (section 3, Images), plus 1 blank row before it and before the markdown that follows. A missing image: 3 rows.
 
 ### Rules of thumb
 
@@ -320,6 +342,7 @@ Design for 80x24, the binding constraint: 17 body rows on a titled slide.
 - Text-art charts at full width: **68 characters or fewer** per line.
 - Titles: **60 characters or fewer**. They never wrap.
 - Tables: glamour stretches them to the full content width. Keep cell text short (total 60 characters or fewer) and at most 8 rows.
+- Images: one per slide, with at most 4 rows of other body content, or in one column of a `[1, 1]` layout beside 4 to 6 short bullets. Wide images (2:1 or wider) fit best. Use an image for a diagram, screenshot, logo or photo that text cannot replace, not for decoration. Keep files small (under about 1000 px wide): they are scaled down to a few hundred pixels anyway.
 
 ---
 

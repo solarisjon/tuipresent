@@ -44,7 +44,8 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-fade=false` (instant pause reveals, overrides the deck).
+- **Images:** `![alt](path)` alone on its line; path relative to the deck; PNG, JPEG or GIF. Scaled to fit with aspect kept: height = body rows left free on the fully revealed slide (split between stacked images, min 3), width at most the content or column width. `![image:width:50%](path)` caps the width. kitty/ghostty draw real pixels; other terminals, `-dump` and `-check` use truecolor half-blocks with the same geometry. A missing file renders as a dim `[image: alt]` box (3 rows), never an error.
+- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-fade=false` (instant pause reveals, overrides the deck), `-images auto|kitty|blocks|off` (image drawing; `auto` uses kitty graphics in kitty/ghostty outside tmux).
 
 ## Layout budget
 
@@ -63,6 +64,7 @@ Design for 80x24:
 - Code at most 10 lines of 68 characters or fewer (tabs count as 4 spaces). Titles 60 characters or fewer (they never wrap).
 - `[1, 1]` column lines 30 characters or fewer.
 - `+exec` slides: code lines + output lines + about 5 must be 17 or fewer.
+- Images: one per slide with at most 4 rows of other content, or in one `[1, 1]` column beside short bullets. In `-dump` they appear as `▀▄` rows; a `[image: …]` box means a bad path.
 
 ## Gotchas
 

@@ -27,6 +27,7 @@ tuipresent [flags] deck.md
 | `-dump` | | Print every frame (each slide at each pause step) to stdout and exit. Doesn't need a TTY. |
 | `-check` | | Report slides that overflow a `-w` x `-h` screen and exit 1 if any do (exit 0 and print `N slides fit WxH` otherwise). Doesn't need a TTY. |
 | `-exec` | | With `-check` or `-dump`: run every `+exec` block first so its output is measured and shown. This executes the deck's code, so only use it on decks you trust. |
+| `-images MODE` | `auto` | How to draw images: `kitty` (graphics protocol), `blocks` (truecolor half-blocks), `off` (text placeholder) or `auto` (kitty in kitty/ghostty outside tmux, otherwise blocks). `-dump` and `-check` always use blocks unless `off`. |
 | `-w W` | `100` | Frame width for `-dump` and `-check` |
 | `-h H` | `30` | Frame height for `-dump` and `-check` |
 | `-watch` | `true` | Reload the deck automatically when the file changes on disk (polled every 400 ms, so editors that save by rename work too). Keeps the current slide and step. If the new file fails to parse, the old deck stays up and the error shows in the status line. Disable with `-watch=false`. |
@@ -107,6 +108,12 @@ tuipresent -notes deck.md   # notes, in the other pane
 ```
 
 The notes view shows the current slide's notes, `slide N/M` and the reveal step, the next slide's title and the time since the presenter started. It follows the presenter through a small state file in the system temp directory, keyed by the deck's absolute path, so no network is involved and either one can start first. When the presenter quits, the notes view goes back to "waiting". Press `q` to quit it.
+
+### Images
+
+Put `![alt](path)` on a line of its own. The path is relative to the deck file; PNG, JPEG and GIF are supported. The image is scaled to fit the width and the rows the slide leaves free, keeping its aspect ratio, and it works inside columns. `![image:width:50%](path)` caps it at half the available width.
+
+In kitty and ghostty, images are drawn in full resolution with the [kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) (Unicode placeholders, so transitions still work). Elsewhere, including inside tmux, they're drawn with truecolor half-block characters. Use `-images` to force a mode. A missing or unreadable file shows as a dim `[image: alt]` box.
 
 ### Executable code
 
@@ -191,5 +198,4 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 
 ## Roadmap
 
-- Inline images via the kitty graphics protocol, with a text fallback for other terminals
 - More themes
