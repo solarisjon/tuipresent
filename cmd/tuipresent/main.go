@@ -5,8 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"image/color"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,11 +40,24 @@ func main() {
 	notesView := flag.Bool("notes", false, "show speaker notes for a presenter running the same deck in another terminal")
 	fade := flag.Bool("fade", true, "fade in content revealed by a pause; -fade=false makes reveals instant")
 	images := flag.String("images", "auto", "image drawing: auto|kitty|blocks|off (-dump and -check always use blocks unless off)")
+	themeName := flag.String("theme", "", "theme name or theme file (.yaml), overriding front matter; see -themes")
+	themeBg := flag.String("background", "", "terminal|paint: paint the theme background into every cell, overriding front matter")
+	listThemes := flag.Bool("themes", false, "list the built-in themes with a color swatch and exit")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n")
+		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+	if *listThemes {
+		printThemes(os.Stdout)
+		return
+	}
+	switch *themeBg {
+	case "", "terminal", "paint":
+	default:
+		fmt.Fprintf(os.Stderr, "-background %q: want terminal or paint\n", *themeBg)
+		os.Exit(2)
+	}
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(2)
@@ -61,12 +76,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if *trans != "" {
-		d.Meta.Transition = *trans
-	}
+	flags := deckFlags{transition: *trans, theme: *themeName, background: *themeBg}
+	flags.apply(d)
 
 	if *notesView {
-		if err := runNotes(path, d); err != nil {
+		if err := runNotes(path, d, flags); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -74,6 +88,15 @@ func main() {
 	}
 
 	r := render.New(d)
+	if err := r.ThemeErr(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
+		os.Exit(1)
+	}
+	if *check || *dump {
+		for _, w := range r.ThemeWarnings() {
+			fmt.Fprintf(os.Stderr, "%s: warning: %s\n", path, w)
+		}
+	}
 	if *runExec && (*check || *dump) {
 		var blocks []deck.Block
 		for _, s := range d.Slides {
@@ -116,9 +139,11 @@ func main() {
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
 	}
 
-	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans, watch: *watch, stamp: stat(path),
+	m := &model{path: path, deck: d, r: render.New(d), flags: flags, watch: *watch, stamp: stat(path),
 		statePath: notes.StatePath(path), started: time.Now(),
 		noFade: !*fade}
+	m.themePath, m.themeStamp = themeFile(d), stat(themeFile(d))
+	m.status = strings.Join(m.r.ThemeWarnings(), "; ")
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
 	_, err = tea.NewProgram(m).Run()
@@ -162,11 +187,14 @@ type model struct {
 	slide, step int
 	anim        *anim
 	status      string
-	// flagTransition is reapplied on reload so -transition beats front matter.
-	flagTransition string
-	// watch polls the deck file and reloads on change; stamp is its last seen state.
-	watch bool
-	stamp os.FileInfo
+	// flags are reapplied on reload so -transition, -theme and -background beat front matter.
+	flags deckFlags
+	// watch polls the deck file (and its custom theme file, if any) and
+	// reloads on change; the stamps are their last seen state.
+	watch      bool
+	stamp      os.FileInfo
+	themePath  string
+	themeStamp os.FileInfo
 	// Speaker-notes sync (see notes.go).
 	statePath string
 	started   time.Time
@@ -176,10 +204,23 @@ type model struct {
 }
 
 func (m *model) Init() tea.Cmd {
+	cmds := []tea.Cmd{tea.RequestBackgroundColor, m.clearStatusLater(statusWarnTime)}
 	if m.watch {
-		return tea.Batch(tea.RequestBackgroundColor, watchTick())
+		cmds = append(cmds, watchTick())
 	}
-	return tea.RequestBackgroundColor
+	return tea.Batch(cmds...)
+}
+
+const statusWarnTime = 6 * time.Second
+
+// clearStatusLater clears the current status message after d unless it has
+// been replaced by then.
+func (m *model) clearStatusLater(d time.Duration) tea.Cmd {
+	if m.status == "" {
+		return nil
+	}
+	text := m.status
+	return tea.Tick(d, func(time.Time) tea.Msg { return clearStatusMsg{text} })
 }
 
 func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
@@ -321,8 +362,10 @@ func (m *model) current() string {
 	if m.anim != nil {
 		t := float64(time.Since(m.anim.start)) / float64(m.anim.duration())
 		if m.anim.fade {
+			// A painted slide fades up from its own background; otherwise
+			// from the terminal's, or the theme's when that is unknown.
 			bg := m.termBg
-			if bg == nil {
+			if bg == nil || m.r.Paints() {
 				bg = m.r.Background()
 			}
 			return transition.FadeIn(m.anim.from, m.anim.to, transition.EaseOutCubic(min(t, 1)), bg, m.r.Foreground())
@@ -389,19 +432,32 @@ func runBlock(b deck.Block) string {
 
 func (m *model) reload() tea.Cmd {
 	m.stamp = stat(m.path)
+	if m.themePath != "" {
+		m.themeStamp = stat(m.themePath)
+	}
 	d, err := deck.Load(m.path)
 	if err != nil {
 		m.status = err.Error()
 		return nil
 	}
-	if m.flagTransition != "" {
-		d.Meta.Transition = m.flagTransition
+	m.flags.apply(d)
+	r := render.New(d)
+	m.themePath = themeFile(d)
+	m.themeStamp = stat(m.themePath)
+	if err := r.ThemeErr(); err != nil {
+		// Like a parse error: keep showing the old deck until the theme is fixed.
+		m.status = err.Error()
+		return nil
 	}
-	m.deck, m.r, m.anim = d, render.New(d), nil
+	m.deck, m.r, m.anim = d, r, nil
 	m.slide = min(m.slide, len(d.Slides)-1)
 	m.step = min(m.step, d.Slides[m.slide].Steps-1)
+	if w := r.ThemeWarnings(); len(w) > 0 {
+		m.status = strings.Join(w, "; ")
+		return m.clearStatusLater(statusWarnTime)
+	}
 	m.status = "reloaded"
-	return tea.Tick(1200*time.Millisecond, func(time.Time) tea.Msg { return clearStatusMsg{"reloaded"} })
+	return m.clearStatusLater(1200 * time.Millisecond)
 }
 
 func (m *model) View() tea.View {
@@ -412,7 +468,7 @@ func (m *model) View() tea.View {
 		frame := m.current()
 		if m.status != "" && m.anim == nil {
 			lines := strings.Split(frame, "\n")
-			lines[len(lines)-1] = render.Fit(" "+m.status, m.w)
+			lines[len(lines)-1] = m.r.StatusLine(m.status, m.w)
 			frame = strings.Join(lines, "\n")
 		}
 		v = tea.NewView(frame)
@@ -423,4 +479,60 @@ func (m *model) View() tea.View {
 
 func tick() tea.Cmd {
 	return tea.Tick(frameInterval, func(t time.Time) tea.Msg { return tickMsg(t) })
+}
+
+// deckFlags are command-line settings that beat the deck's front matter.
+// They are applied after every load, so they survive live reload.
+type deckFlags struct {
+	transition string
+	theme      string // built-in name, or a .yaml/.yml theme file
+	background string // terminal|paint
+}
+
+func (f deckFlags) apply(d *deck.Deck) {
+	if f.transition != "" {
+		d.Meta.Transition = f.transition
+	}
+	if f.theme != "" {
+		// Previewing another theme replaces the deck's theme and its inline
+		// overrides, but keeps its background choice.
+		t := deck.Theme{Name: f.theme, Background: d.Meta.Theme.Background}
+		if ext := strings.ToLower(filepath.Ext(f.theme)); ext == ".yaml" || ext == ".yml" {
+			abs, err := filepath.Abs(f.theme)
+			if err != nil {
+				abs = f.theme
+			}
+			t = deck.Theme{Path: abs, Background: t.Background}
+		}
+		d.Meta.Theme = t
+	}
+	if f.background != "" {
+		d.Meta.Theme.Background = f.background
+	}
+}
+
+// themeFile is the deck's custom theme file, or "" if it uses a built-in.
+func themeFile(d *deck.Deck) string {
+	p := d.Meta.Theme.Path
+	if p == "" || filepath.IsAbs(p) || d.Dir == "" {
+		return p
+	}
+	return filepath.Join(d.Dir, p)
+}
+
+// printThemes lists the built-in themes, one per line with a color swatch.
+func printThemes(w io.Writer) {
+	names := render.ThemeNames()
+	width := 0
+	for _, n := range names {
+		width = max(width, len(n))
+	}
+	for _, n := range names {
+		t, _ := render.LookupTheme(n)
+		kind := "dark "
+		if t.IsLight() {
+			kind = "light"
+		}
+		fmt.Fprintf(w, "%-*s  %s  %s\n", width, n, kind, render.Swatch(t))
+	}
 }

@@ -46,7 +46,7 @@ func fileChanged(prev, cur os.FileInfo) bool {
 
 // pollWatch reloads the deck if its file changed and schedules the next poll.
 func (m *model) pollWatch() tea.Cmd {
-	if !fileChanged(m.stamp, stat(m.path)) {
+	if !fileChanged(m.stamp, stat(m.path)) && (m.themePath == "" || !fileChanged(m.themeStamp, stat(m.themePath))) {
 		return watchTick()
 	}
 	return tea.Batch(m.reload(), watchTick())

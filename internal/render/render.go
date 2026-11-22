@@ -13,7 +13,6 @@ import (
 
 	"charm.land/glamour/v2"
 	gansi "charm.land/glamour/v2/ansi"
-	"charm.land/glamour/v2/styles"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/lucasb-eyer/go-colorful"
@@ -21,29 +20,6 @@ import (
 	"tuipresent/internal/deck"
 	"tuipresent/internal/img"
 )
-
-type Theme struct {
-	Glamour string
-	Accent  string
-	Accent2 string
-	Dim     string
-	Fg      string
-	Bg      string // slide background that pause reveals fade up from
-}
-
-func themeFor(name string) Theme {
-	n := strings.ToLower(name)
-	switch {
-	case strings.Contains(n, "light") || strings.Contains(n, "day"):
-		return Theme{"light", "#2e7de9", "#9854f1", "#8990b3", "#3760bf", "#e1e2e7"}
-	case strings.Contains(n, "tokyo"):
-		return Theme{"tokyo-night", "#7aa2f7", "#bb9af7", "#565f89", "#c0caf5", "#24283b"}
-	case strings.Contains(n, "dracula"):
-		return Theme{"dracula", "#bd93f9", "#ff79c6", "#6272a4", "#f8f8f2", "#282a36"}
-	default:
-		return Theme{"dark", "#7aa2f7", "#bb9af7", "#5c6370", "#d0d0d0", "#1a1b26"}
-	}
-}
 
 const (
 	maxContentWidth = 110
@@ -59,12 +35,19 @@ type Renderer struct {
 	clip       int // widest column overflow seen since Overflow reset it
 	imgRows    int // max rows per image on the slide being laid out; 0 while measuring
 	images     map[string]*loadedImage
+	themeWarn  []string
+	themeErr   error
 }
 
+// New renders d in the theme its front matter selects. Theme problems never
+// stop rendering: see ThemeWarnings and ThemeErr.
 func New(d *deck.Deck) *Renderer {
+	th, warns, err := ResolveTheme(d.Meta.Theme, d.Dir)
 	return &Renderer{
 		deck:       d,
-		theme:      themeFor(d.Meta.Theme.Name),
+		theme:      th,
+		themeWarn:  warns,
+		themeErr:   err,
 		glam:       map[int]*glamour.TermRenderer{},
 		cache:      map[[4]int]string{},
 		execOutput: map[int]string{},
@@ -166,6 +149,11 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 	}
 	for _, l := range footer {
 		lines = append(lines, fit(l, w))
+	}
+	if r.theme.Paint {
+		for i, l := range lines {
+			lines[i] = paint(l, r.theme.Palette.Foreground, r.theme.Palette.Background)
+		}
 	}
 	return strings.Join(lines, "\n")
 }
@@ -392,8 +380,10 @@ func (r *Renderer) markdown(src string, width int) []string {
 	var out []string
 	for _, seg := range splitFences(src) {
 		lines := r.glamour(seg.text, width)
-		if !seg.code {
-			lines = hangIndent(lines, max(width-2, 10))
+		if seg.code {
+			lines = r.codePanel(lines, width)
+		} else {
+			lines = r.decorate(hangIndent(lines, max(width-2, 10)))
 		}
 		if len(lines) == 0 {
 			continue
@@ -448,7 +438,7 @@ func (r *Renderer) glamour(src string, width int) []string {
 	g, ok := r.glam[width]
 	if !ok {
 		var err error
-		g, err = glamour.NewTermRenderer(glamour.WithStyles(r.glamourStyle()), glamour.WithWordWrap(width))
+		g, err = glamour.NewTermRenderer(glamour.WithStyles(r.glamourStyle()), glamour.WithWordWrap(width), glamour.WithChromaFormatter("terminal16m"))
 		if err != nil {
 			return strings.Split(src, "\n")
 		}
@@ -467,6 +457,97 @@ func (r *Renderer) glamour(src string, width int) []string {
 		lines = lines[:len(lines)-1]
 	}
 	return lines
+}
+
+// codePanel paints a fenced code block's lines on the code background, as a
+// panel two cells wider than its longest line (glamour already indents code
+// by two cells), so code stands apart from prose in every theme.
+func (r *Renderer) codePanel(lines []string, width int) []string {
+	pw := 0
+	for _, l := range lines {
+		pw = max(pw, visibleWidth(l))
+	}
+	pw = min(pw+2, width)
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = paint(fit(l, pw), "", r.theme.Palette.CodeBackground)
+	}
+	return out
+}
+
+const boxChars = "─│┼├┤┬┴╭╮╰╯┌┐└┘"
+
+// decorate colors what glamour can't style per theme: list bullets and
+// numbers get the bullet color, and table borders (the only box-drawing
+// characters glamour leaves at the default foreground) get the border color.
+func (r *Renderer) decorate(lines []string) []string {
+	bullet := sgrColor(38, r.theme.Palette.Bullet)
+	border := sgrColor(38, r.theme.Palette.Border)
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		if m := listMarkerRe.FindStringSubmatch(ansi.Strip(l)); m != nil {
+			lead, pw := len(m[1]), ansi.StringWidth(m[0])
+			marker := strings.TrimRight(m[2], " ")
+			l = ansi.Cut(l, 0, lead) + bullet + marker + "\x1b[39m" + strings.Repeat(" ", pw-lead-ansi.StringWidth(marker)) + ansi.Cut(l, pw, ansi.StringWidth(l))
+		}
+		out[i] = recolorBorders(l, border)
+	}
+	return out
+}
+
+// recolorBorders wraps runs of box-drawing characters drawn in the default
+// foreground in the color seq.
+func recolorBorders(line, seq string) string {
+	if seq == "" || !strings.ContainsAny(line, boxChars) {
+		return line
+	}
+	var sb strings.Builder
+	p := ansi.NewParser()
+	var state byte
+	fgSet, inRun := false, false
+	for len(line) > 0 {
+		s, width, n, newState := ansi.DecodeSequence(line, state, p)
+		state = newState
+		line = line[n:]
+		if width == 0 {
+			if inRun {
+				sb.WriteString("\x1b[39m")
+				inRun = false
+			}
+			if ansi.HasCsiPrefix(s) && ansi.Cmd(p.Command()) == 'm' {
+				if reset, _ := sgrResets(p.Params()); reset {
+					fgSet = false
+				} else if sgrSetsFg(p.Params()) {
+					fgSet = true
+				}
+			}
+			sb.WriteString(s)
+			continue
+		}
+		box := !fgSet && strings.Contains(boxChars, s)
+		if box && !inRun {
+			sb.WriteString(seq)
+			inRun = true
+		} else if !box && inRun {
+			sb.WriteString("\x1b[39m")
+			inRun = false
+		}
+		sb.WriteString(s)
+	}
+	if inRun {
+		sb.WriteString("\x1b[39m")
+	}
+	return sb.String()
+}
+
+func sgrSetsFg(params ansi.Params) bool {
+	for i := range params {
+		v := params[i].Param(0)
+		if v == 38 || (v >= 30 && v <= 37) || (v >= 90 && v <= 97) {
+			return true
+		}
+	}
+	return false
 }
 
 var listMarkerRe = regexp.MustCompile(`^( *)(• |\d+\. |\[[ x✓✗]\] )`)
@@ -511,26 +592,43 @@ func hangIndent(lines []string, width int) []string {
 	return out
 }
 
-// glamourStyle drops document margins (we lay out ourselves) and restyles headings.
+// glamourStyle builds the whole glamour style from the theme palette, so
+// every theme styles headings, quotes, tables, links and code the same way.
+// Document margins are dropped: we lay out ourselves.
 func (r *Renderer) glamourStyle() gansi.StyleConfig {
-	base, ok := styles.DefaultStyles[r.theme.Glamour]
-	if !ok {
-		base = styles.DefaultStyles[styles.DarkStyle]
-	}
-	c := *base
-	zero := uint(0)
-	c.Document.Margin = &zero
-	c.Document.BlockPrefix, c.Document.BlockSuffix = "", ""
-	accent, accent2, t := r.theme.Accent, r.theme.Accent2, true
+	p := r.theme.Palette
+	str := func(s string) *string { return &s }
+	t := true
+	zero, two := uint(0), uint(2)
+	prim := func(col string) gansi.StylePrimitive { return gansi.StylePrimitive{Color: str(col)} }
 	head := func(prefix, col string) gansi.StyleBlock {
-		return gansi.StyleBlock{StylePrimitive: gansi.StylePrimitive{Prefix: prefix, Color: &col, Bold: &t}}
+		return gansi.StyleBlock{StylePrimitive: gansi.StylePrimitive{Prefix: prefix, Color: str(col), Bold: &t}}
 	}
-	c.H1 = head("", accent)
-	c.H2 = head("▌ ", accent2)
-	c.H3 = head("", accent2)
-	c.H4 = head("", accent2)
-	c.H5 = head("", accent2)
-	c.H6 = head("", accent2)
+	var c gansi.StyleConfig
+	c.Document = gansi.StyleBlock{StylePrimitive: prim(p.Foreground), Margin: &zero}
+	c.BlockQuote = gansi.StyleBlock{StylePrimitive: gansi.StylePrimitive{Color: str(p.Quote), Italic: &t}, Indent: func() *uint { u := uint(1); return &u }(), IndentToken: str("│ ")}
+	c.List = gansi.StyleList{StyleBlock: gansi.StyleBlock{StylePrimitive: prim(p.Foreground)}, LevelIndent: 2}
+	c.Heading = gansi.StyleBlock{StylePrimitive: gansi.StylePrimitive{BlockSuffix: "\n", Color: str(p.Subheading), Bold: &t}}
+	c.H1 = head("", p.Heading)
+	c.H2 = head("▌ ", p.Subheading)
+	c.H3 = head("", p.Subheading)
+	c.H4 = head("", p.Subheading)
+	c.H5 = head("", p.Subheading)
+	c.H6 = head("", p.Subheading)
+	c.Strikethrough = gansi.StylePrimitive{CrossedOut: &t}
+	c.Emph = gansi.StylePrimitive{Italic: &t}
+	c.Strong = gansi.StylePrimitive{Bold: &t}
+	c.HorizontalRule = gansi.StylePrimitive{Color: str(p.Border), Format: "\n--------\n"}
+	c.Item = gansi.StylePrimitive{BlockPrefix: "• "}
+	c.Enumeration = gansi.StylePrimitive{BlockPrefix: ". "}
+	c.Task = gansi.StyleTask{Ticked: "[✓] ", Unticked: "[ ] "}
+	c.Link = gansi.StylePrimitive{Color: str(p.Link), Underline: &t}
+	c.LinkText = gansi.StylePrimitive{Color: str(p.Link), Bold: &t}
+	c.Image = gansi.StylePrimitive{Color: str(p.Link), Underline: &t}
+	c.ImageText = gansi.StylePrimitive{Color: str(p.Dim), Format: "Image: {{.text}} →"}
+	c.Code = gansi.StyleBlock{StylePrimitive: gansi.StylePrimitive{Prefix: " ", Suffix: " ", Color: str(p.Code), BackgroundColor: str(p.CodeBackground)}}
+	c.CodeBlock = gansi.StyleCodeBlock{StyleBlock: gansi.StyleBlock{StylePrimitive: prim(p.Foreground), Margin: &two}, Theme: r.theme.CodeStyle}
+	c.DefinitionDescription = gansi.StylePrimitive{BlockPrefix: "\n🠶 "}
 	return c
 }
 
@@ -544,8 +642,8 @@ func (r *Renderer) rule(cw int) string {
 
 // gradient colors each rune along a blend from Accent to Accent2.
 func (r *Renderer) gradient(s string, bold bool) string {
-	a, _ := colorful.Hex(r.theme.Accent)
-	b, _ := colorful.Hex(r.theme.Accent2)
+	a, _ := colorful.Hex(r.theme.Palette.Accent)
+	b, _ := colorful.Hex(r.theme.Palette.Accent2)
 	runes := []rune(s)
 	var sb strings.Builder
 	for i, ch := range runes {
@@ -570,7 +668,7 @@ func (r *Renderer) cover(cw int) []string {
 	}
 	lines := []string{center(r.gradient(title, true)), "", center(r.gradient(strings.Repeat("━", min(cw, ansi.StringWidth(title)+8)), false))}
 	if m.SubTitle != "" {
-		lines = append(lines, "", center(r.style(r.theme.Fg).Italic(true).Render(m.SubTitle)))
+		lines = append(lines, "", center(r.style(r.theme.Palette.Foreground).Italic(true).Render(m.SubTitle)))
 	}
 	var by []string
 	for _, s := range []string{m.Author, m.Date} {
@@ -579,7 +677,7 @@ func (r *Renderer) cover(cw int) []string {
 		}
 	}
 	if len(by) > 0 {
-		lines = append(lines, "", "", center(r.style(r.theme.Dim).Render(strings.Join(by, "  ·  "))))
+		lines = append(lines, "", "", center(r.style(r.theme.Palette.Dim).Render(strings.Join(by, "  ·  "))))
 	}
 	return lines
 }
@@ -591,15 +689,15 @@ func spaced(s string) string {
 func (r *Renderer) footer(idx, w int) []string {
 	n := len(r.deck.Slides)
 	done := w * (idx + 1) / n
-	bar := r.style(r.theme.Accent).Render(strings.Repeat("━", done)) +
-		r.style(r.theme.Dim).Render(strings.Repeat("─", w-done))
+	bar := r.style(r.theme.Palette.Accent).Render(strings.Repeat("━", done)) +
+		r.style(r.theme.Palette.Dim).Render(strings.Repeat("─", w-done))
 	leftText := " " + r.deck.Meta.Title
 	if a := r.deck.Meta.Author; a != "" {
 		leftText += "  ·  " + a
 	}
 	right := fmt.Sprintf("%d / %d ", idx+1, n)
 	gap := max(w-ansi.StringWidth(leftText)-ansi.StringWidth(right), 1)
-	text := r.style(r.theme.Dim).Render(leftText + strings.Repeat(" ", gap) + right)
+	text := r.style(r.theme.Palette.Dim).Render(leftText + strings.Repeat(" ", gap) + right)
 	return []string{bar, text}
 }
 
@@ -607,21 +705,73 @@ func (r *Renderer) style(hex string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(hex))
 }
 
-func (r *Renderer) Accent() color.Color { return lipgloss.Color(r.theme.Accent) }
+// StatusLine renders text as the bottom line of a w-wide frame, in the theme's
+// accent and painted like the frame when the theme paints its background.
+func (r *Renderer) StatusLine(text string, w int) string {
+	l := fit(r.style(r.theme.Palette.Accent).Render(" "+text), w)
+	if r.theme.Paint {
+		l = paint(l, r.theme.Palette.Foreground, r.theme.Palette.Background)
+	}
+	return l
+}
+
+// Theme is the resolved theme the deck renders in.
+func (r *Renderer) Theme() Theme { return r.theme }
+
+// Paints reports whether frames paint the theme background into every cell.
+func (r *Renderer) Paints() bool { return r.theme.Paint }
+
+// ThemeWarnings are recoverable theme problems, such as an unknown name
+// (which falls back to dark), for the status line or stderr.
+func (r *Renderer) ThemeWarnings() []string { return r.themeWarn }
+
+// ThemeErr is set when a custom theme is invalid; the deck then renders in dark.
+func (r *Renderer) ThemeErr() error { return r.themeErr }
+
+func (r *Renderer) Accent() color.Color { return lipgloss.Color(r.theme.Palette.Accent) }
 
 // Background is the theme's slide background, the fallback when the terminal's is unknown.
-func (r *Renderer) Background() color.Color { return lipgloss.Color(r.theme.Bg) }
+func (r *Renderer) Background() color.Color { return lipgloss.Color(r.theme.Palette.Background) }
 
 // Foreground stands in for text drawn in the terminal's default color.
-func (r *Renderer) Foreground() color.Color { return lipgloss.Color(r.theme.Fg) }
+func (r *Renderer) Foreground() color.Color { return lipgloss.Color(r.theme.Palette.Foreground) }
 
 // fit truncates or pads s to exactly w cells.
 func fit(s string, w int) string {
-	s = ansi.Truncate(s, w, "")
+	if ansi.StringWidth(s) > w {
+		s = dropTrailingSGR(ansi.Truncate(s, w, ""))
+	}
 	if pad := w - ansi.StringWidth(s); pad > 0 {
 		s += strings.Repeat(" ", pad)
 	}
 	return s
+}
+
+// dropTrailingSGR removes the styling sequences ansi.Truncate keeps from the
+// cut-off text (glamour pads every line with individually styled spaces, so
+// there can be dozens), ending the line with a single reset instead. Other
+// sequences, such as hyperlink ends, are kept.
+func dropTrailingSGR(s string) string {
+	last := 0
+	p := ansi.NewParser()
+	var state byte
+	for rest := s; len(rest) > 0; {
+		_, width, n, ns := ansi.DecodeSequence(rest, state, p)
+		state, rest = ns, rest[n:]
+		if width > 0 {
+			last = len(s) - len(rest)
+		}
+	}
+	var tail strings.Builder
+	state = 0
+	for rest := s[last:]; len(rest) > 0; {
+		seq, _, n, ns := ansi.DecodeSequence(rest, state, p)
+		state, rest = ns, rest[n:]
+		if !ansi.HasCsiPrefix(seq) || ansi.Cmd(p.Command()) != 'm' {
+			tail.WriteString(seq)
+		}
+	}
+	return s[:last] + tail.String() + "\x1b[m"
 }
 
 // Fit is exported for transitions.
@@ -745,7 +895,7 @@ func (r *Renderer) image(b deck.Block, width int) []string {
 
 // missingImage is a dim three-row box standing in for an image that can't be shown.
 func (r *Renderer) missingImage(alt string, width int) []string {
-	st := r.style(r.theme.Dim)
+	st := r.style(r.theme.Palette.Dim)
 	label := ansi.Truncate("[image: "+alt+"]", max(width-4, 1), "…")
 	inner := ansi.StringWidth(label) + 2
 	if width < inner+2 {

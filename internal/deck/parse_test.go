@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -56,7 +57,7 @@ func TestFrontMatter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := mustParse(t, tt.src)
-			if d.Meta != tt.wantMeta {
+			if !reflect.DeepEqual(d.Meta, tt.wantMeta) {
 				t.Errorf("Meta = %+v, want %+v", d.Meta, tt.wantMeta)
 			}
 			if len(d.Slides) != tt.wantSlides {
@@ -481,6 +482,27 @@ func TestThemeScalarAndMapping(t *testing.T) {
 		if d.Meta.Theme.Name != "dracula" {
 			t.Fatalf("theme = %q", d.Meta.Theme.Name)
 		}
+	}
+}
+
+func TestThemeMappingKeys(t *testing.T) {
+	src := "---\ntheme:\n  name: nord\n  background: paint\n  accent: \"#88c0d0\"\n  code_style: monokai\n---\na\n"
+	d, err := Parse(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Theme{Name: "nord", Background: "paint", Overrides: map[string]string{"accent": "#88c0d0", "code_style": "monokai"}}
+	if !reflect.DeepEqual(d.Meta.Theme, want) {
+		t.Fatalf("theme = %+v, want %+v", d.Meta.Theme, want)
+	}
+	d, err = Parse("---\ntheme:\n  path: themes/brand.yaml\n---\na\n")
+	if err != nil || d.Meta.Theme.Path != "themes/brand.yaml" {
+		t.Fatalf("path form: %+v, %v", d.Meta.Theme, err)
+	}
+	// presenterm's nested override block is skipped, not an error.
+	d, err = Parse("---\ntheme:\n  name: dark\n  override:\n    default:\n      colors:\n        foreground: \"ffffff\"\n---\na\n")
+	if err != nil || d.Meta.Theme.Name != "dark" || !reflect.DeepEqual(d.Meta.Theme.Nested, []string{"override"}) {
+		t.Fatalf("nested key: %+v, %v", d.Meta.Theme, err)
 	}
 }
 

@@ -25,7 +25,7 @@ Follow these steps in order. Do not skip step 4.
    - Topic and the one message the audience should leave with.
    - Audience (executives, engineers, mixed) and what they already know.
    - Length: talk minutes or slide count. Default: about 1 slide per minute, 8-12 slides.
-   - Live demos wanted? (`+exec` blocks.) Theme preference? (Default `dark`.)
+   - Live demos wanted? (`+exec` blocks.) Theme preference? (Default `dark`; see "Choosing a theme" in section 6.) Where will it be shown: a laptop, a projector in a bright room, someone else's terminal?
    - Output path. Default: `<topic-slug>.md` in the current directory.
 2. **Outline.** Write one line per slide: title plus the single idea. Show it to the user if the deck is long or the brief is vague.
 3. **Write the deck.** One markdown file. Use the syntax in section 3 and stay within the budget in section 4.
@@ -134,11 +134,11 @@ Optional. The first line of the file must be exactly `---`. It ends at the next 
 | `sub_title` | string | Italic line on the cover. |
 | `author` | string | On the cover and in the footer (`title · author`). |
 | `date` | string | On the cover after the author (`author · date`). Any string is accepted. |
-| `theme` | string, or mapping with `name` | Color theme (mapping below). `theme: dracula` and `theme:` / `  name: dracula` are equivalent. |
+| `theme` | string, or mapping with `name`/`path`/`background`/palette keys | Color theme (details below). `theme: dracula` and `theme:` / `  name: dracula` are equivalent. |
 | `transition` | string | Default transition for every slide (tuipresent extension). |
 | `fade` | bool | `false` makes pause reveals instant deck-wide. Default on (tuipresent extension). |
 
-Both forms are accepted:
+Both forms are accepted, plus a mapping with more keys:
 
 ```yaml
 theme: dracula
@@ -147,18 +147,68 @@ theme: dracula
 ```yaml
 theme:
   name: dracula
+  background: paint     # optional: terminal (default) or paint
+  accent: "#ff79c6"     # optional: override palette keys inline (quote colors)
 ```
 
-**Theme mapping.** The name is lowercased, then matched by substring in this order. The first match wins.
+```yaml
+theme:
+  path: themes/brand.yaml   # custom theme file, relative to the deck
+```
 
-| Name contains | Theme used |
-|---------------|------------|
-| `light` or `day` | light. Includes `tokyonight-day`. Note that any name containing `day` matches. |
-| `tokyo` | tokyo-night (dark) |
-| `dracula` | dracula |
-| anything else, or unset | dark |
+**Theme names.** Matching is exact apart from case and surrounding spaces; there is no substring matching. The built-in themes, with their syntax-highlighting (chroma) style:
 
-Use exactly one of: `dark`, `tokyonight-storm`, `dracula`, `light`.
+| Theme | Kind | Code style (chroma) |
+|-------|------|---------------------|
+| `dark` (default) | dark | onedark |
+| `light` | light | github |
+| `tokyonight-storm` | dark | tokyonight-storm |
+| `tokyonight-night` | dark | tokyonight-night |
+| `tokyonight-moon` | dark | tokyonight-moon |
+| `tokyonight-day` | light | tokyonight-day |
+| `catppuccin-mocha` | dark | catppuccin-mocha |
+| `catppuccin-macchiato` | dark | catppuccin-macchiato |
+| `catppuccin-frappe` | dark | catppuccin-frappe |
+| `catppuccin-latte` | light | catppuccin-latte |
+| `gruvbox-dark` | dark | gruvbox |
+| `gruvbox-light` | light | gruvbox-light |
+| `dracula` | dark | dracula |
+| `nord` | dark | nord |
+| `rose-pine` | dark | rose-pine |
+| `rose-pine-dawn` | light | rose-pine-dawn |
+| `solarized-dark` | dark | solarized-dark |
+| `solarized-light` | light | solarized-light |
+| `everforest-dark` | dark | evergarden (chroma has no everforest; this is its closest relative) |
+| `kanagawa` | dark | kanagawa (built into tuipresent; chroma has none) |
+
+Aliases: `tokyo-night`, `tokyonight` → `tokyonight-storm`; `catppuccin` → `catppuccin-mocha`; `gruvbox` → `gruvbox-dark`; `solarized` → `solarized-dark`; `everforest` → `everforest-dark`; `rosepine` → `rose-pine`; `kanagawa-wave` → `kanagawa`; `terminal-dark`, `default` → `dark`; `terminal-light` → `light`. Any other name renders in `dark` with a warning (status line while presenting, stderr under `-check`/`-dump`, with a "did you mean" suggestion). `tuipresent -themes` lists the names with a color swatch. `tuipresent -theme NAME deck.md` renders a deck in another theme without editing it; `examples/themes.md` is a gallery deck for previewing themes.
+
+**What a theme colors.** Gradient slide titles and their rules, `#` headings (`heading`), `##`-`######` headings with the `▌` bar (`subheading`), body text (`foreground`), bullets and list numbers (`bullet`), links (`link`), inline code (`code` on `code_background`, padded by one space each side), fenced code (chroma style, on a `code_background` panel two cells wider than the longest line), quotes (`quote`), table borders and rules (`border`), footer and cover byline (`dim`), progress bar (`accent`). Layout and row counts are identical in every theme, so `-check` results don't depend on the theme.
+
+**Background painting.** `background: terminal` (default) draws on the terminal's own background. `background: paint` (or CLI `-background paint`) draws every cell of the w×h frame on the theme's `background` and `foreground`, re-applied after every color reset, so the slide looks the same in any terminal. Transitions, the pause fade, the status line and kitty images all keep working, and geometry is unchanged.
+
+**Custom theme files.** YAML with an optional `extends: <built-in>` (default `dark`) and any of these keys; the same keys work inline in front matter:
+
+| Key | Colors | Default |
+|-----|--------|---------|
+| `background` | Slide background: painted with `background: paint`, and what pause reveals fade up from | |
+| `foreground` | Body text | |
+| `dim` | Footer, cover byline, missing-image boxes | |
+| `accent` | Gradient start (titles, rules), progress bar | |
+| `accent2` | Gradient end | |
+| `heading` | `#` headings | `accent` |
+| `subheading` | `##` to `######` headings | `accent2` |
+| `link` | Links | `accent` |
+| `bullet` | List bullets and numbers | `accent` |
+| `code` | Inline code text | `accent2` |
+| `code_background` | Inline code and the panel behind code blocks | `background` mixed 8% toward `foreground` |
+| `quote` | Blockquote text | `dim` |
+| `border` | Table borders, horizontal rules | `dim` |
+| `code_style` | Syntax highlighting: any [chroma style](https://xyproto.github.io/splash/docs/) name, e.g. `monokai` | the base theme's |
+
+Colors must be quoted `"#rrggbb"` or `"#rgb"`. An invalid color, unreadable file or unknown `extends` is a load error (`-check` exits 1 with a message naming the key; during live reload the old deck stays up and the error shows in the status line). Unknown keys and an unknown `code_style` are warnings. `examples/themes/brand.yaml` is a complete example, used by `examples/brand.md`. While presenting, saving the theme file reloads like saving the deck.
+
+**CLI.** `-theme NAME` (a built-in or a `.yaml`/`.yml` file path) replaces the front matter's name, path and inline overrides but keeps its `background`; `-background terminal|paint` replaces the background setting. Both still apply after a reload.
 
 **Cover slide.** Present only when `title` is set. It is vertically centered and shows the title in spaced uppercase (`T I T L E`), falling back to the plain title if the spaced form is wider than the content width. Below that come a rule, the `sub_title`, then `author · date`.
 
@@ -220,7 +270,7 @@ The CLI flag `-transition KIND` replaces the front matter default but not per-sl
 
 ### Reveal fade
 
-Stepping forward through a `<!-- pause -->` fades the newly revealed content in from the slide background to its final colors over 280 ms (ease-out, truecolor). The fade is per cell: anything already visible, including other columns on the same rows, stays exactly as it was. Stepping backward within a slide is instant. Moving to another slide uses its transition, never the fade. The background is the terminal's own (queried at startup via OSC 11) and falls back to the theme's: `dark` `#1a1b26`, `tokyonight-storm` `#24283b`, `dracula` `#282a36`, `light` `#e1e2e7`. 256- and 16-color codes are blended through their standard RGB values and land on the exact original codes when the fade ends.
+Stepping forward through a `<!-- pause -->` fades the newly revealed content in from the slide background to its final colors over 280 ms (ease-out, truecolor). The fade is per cell: anything already visible, including other columns on the same rows, stays exactly as it was. Stepping backward within a slide is instant. Moving to another slide uses its transition, never the fade. The background is the terminal's own (queried at startup via OSC 11) and falls back to the theme's `background` color; with `background: paint` it is always the theme's. 256- and 16-color codes are blended through their standard RGB values and land on the exact original codes when the fade ends.
 
 Turning it off, from broadest to narrowest:
 
@@ -361,7 +411,7 @@ These come from the code. Each one fails silently.
 9. **An out-of-range `column: N` is clamped** to the last column (a negative N becomes 0). A typo such as `column: 5` in a 2-column layout silently merges into column 1. A non-numeric N is ignored.
 10. **Consecutive markdown in the same target is concatenated.** A paragraph line directly followed by a directive and then another line can merge into one paragraph. Put blank lines around directives.
 11. **Leading and trailing blank lines are trimmed** from every rendered block. Blank lines and `&nbsp;` cannot add vertical space.
-12. **Theme names match by substring.** A name containing `day` or `light` selects the light theme, even when it also contains `tokyo` or `dracula`. Stick to `dark`, `tokyonight-storm`, `dracula`, `light`.
+12. **An unknown theme name renders in `dark`.** It only warns (stderr under `-check`, which still exits 0). Read the stderr of `-check`, and copy names from the theme table. In YAML, an unquoted `#88c0d0` is a comment, so the key is empty and rejected: always quote colors.
 13. **Exec language fallback.** Any language other than python, python3, py or sh runs through bash.
 14. **`r` (reload) clears exec output.** So does every automatic reload on save (`-watch`, on by default).
 
@@ -392,6 +442,14 @@ Other useful glyphs: `→ ← ↑ ↓`, `✓ ✗`, box drawing `─ │ ┌ ┐ 
 ### Statement slides
 
 Use `<!-- jump_to_middle -->` with a setext title for a single sentence that should land hard (thesis, key number, section break). Optionally add one supporting line of plain prose underneath, which keeps per-line centering. A list or code line switches the body to block centering. Use them for at most 1 in 5 slides.
+
+### Choosing a theme
+
+- **Match the room.** Bright room or projector: use a light theme (`light`, `catppuccin-latte`, `solarized-light`, `gruvbox-light`, `rose-pine-dawn`, `tokyonight-day`); projectors wash out dark backgrounds and thin colored text. Dark room, or a laptop or large monitor: any dark theme.
+- **Paint the background when the terminal is unknown.** If the deck will be shown from someone else's terminal, shared, or uses a light theme, add `background: paint` so it does not depend on the terminal's own background. A light theme in a dark terminal without painting is unreadable.
+- **Pick for contrast, then mood.** High contrast: `dark`, `tokyonight-night`, `dracula`, `catppuccin-mocha`. Softer, warmer: `gruvbox-dark`, `everforest-dark`, `kanagawa`, `rose-pine`. Low contrast (`solarized-dark`, `nord`) suits small rooms and big screens better than projectors.
+- **Brand colors:** extend the closest built-in in a theme file and override only `accent`/`accent2` (and maybe `code_background`); keep the base's foreground and background for legibility.
+- Preview before choosing: `./bin/tuipresent -theme NAME deck.md` (or `examples/themes.md`), and `./bin/tuipresent -themes` for swatches. You cannot see colors in `-dump`; tell the user which theme you chose and why, and suggest they eyeball it.
 
 ### Choosing transitions
 
@@ -540,7 +598,7 @@ Verified with:
 
 ## 8. Pre-handoff checklist
 
-- [ ] Front matter starts at line 1 with `---`. `theme` (plain or nested `name:`) is one of `dark`, `tokyonight-storm`, `dracula`, `light`.
+- [ ] Front matter starts at line 1 with `---`. `theme` is a built-in name from the theme table (or a `path:` to a theme file that exists), colors are quoted, and `-check` printed no theme warning on stderr. Light theme or unknown terminal: `background: paint` is set.
 - [ ] Every transition value is one of `slide`, `wipe`, `cover`, `dissolve`, `none`.
 - [ ] Every slide has a setext title (`Title` + `===`) as its first content, 60 characters or fewer.
 - [ ] Every directive is lowercase, alone on its line, spelled exactly, and one of: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`, `fade`.

@@ -88,6 +88,23 @@ func TestDocsCoverFlags(t *testing.T) {
 	requireMentions(t, flags, func(f string) string { return "-" + f })
 }
 
+// TestDocsCoverThemes requires every built-in theme name in the docs and in
+// the theme gallery deck, so adding a theme to the code forces a doc update.
+func TestDocsCoverThemes(t *testing.T) {
+	names := render.ThemeNames()
+	if len(names) == 0 {
+		t.Fatal("no themes found")
+	}
+	for _, doc := range []string{"README.md", "docs/AGENT_GUIDE.md", "docs/agent-skill/SKILL.md", "examples/themes.md"} {
+		text := read(t, doc)
+		for _, n := range names {
+			if !regexp.MustCompile(`(^|[^a-z-])` + regexp.QuoteMeta(n) + `($|[^a-z-])`).MatchString(text) {
+				t.Errorf("%s does not mention theme %q", doc, n)
+			}
+		}
+	}
+}
+
 func requireMentions(t *testing.T, items []string, token func(string) string) {
 	t.Helper()
 	for _, doc := range docs {

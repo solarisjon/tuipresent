@@ -6,13 +6,13 @@ require (
 	charm.land/bubbletea/v2 v2.1.2
 	charm.land/glamour/v2 v2.0.1
 	charm.land/lipgloss/v2 v2.1.1
+	github.com/alecthomas/chroma/v2 v2.20.0
 	github.com/charmbracelet/x/ansi v0.11.10
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4 // indirect

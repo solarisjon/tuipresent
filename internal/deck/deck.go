@@ -2,6 +2,7 @@
 package deck
 
 import (
+	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -17,9 +18,16 @@ type Meta struct {
 	Fade       string `yaml:"fade"` // off/false disables the pause reveal fade deck-wide
 }
 
-// Theme accepts `theme: name` or `theme: {name: name}`.
+// Theme is the front-matter theme setting. It accepts `theme: name` or a
+// mapping: `{name: nord, background: paint, accent: "#88c0d0"}` or
+// `{path: brand.yaml}`. Keys other than name, path and background are palette
+// overrides; the render package validates them.
 type Theme struct {
-	Name string `yaml:"name"`
+	Name       string
+	Path       string            // custom theme file, relative to the deck
+	Background string            // "terminal" (default) or "paint"
+	Overrides  map[string]string // palette key -> value
+	Nested     []string          // keys with non-scalar values (e.g. presenterm's override), ignored
 }
 
 func (t *Theme) UnmarshalYAML(n *yaml.Node) error {
@@ -27,8 +35,30 @@ func (t *Theme) UnmarshalYAML(n *yaml.Node) error {
 		t.Name = n.Value
 		return nil
 	}
-	type plain Theme
-	return n.Decode((*plain)(t))
+	if n.Kind != yaml.MappingNode {
+		return fmt.Errorf("line %d: theme must be a name or a mapping", n.Line)
+	}
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		k, v := n.Content[i].Value, n.Content[i+1]
+		if v.Kind != yaml.ScalarNode {
+			t.Nested = append(t.Nested, k)
+			continue
+		}
+		switch k {
+		case "name":
+			t.Name = v.Value
+		case "path":
+			t.Path = v.Value
+		case "background":
+			t.Background = v.Value
+		default:
+			if t.Overrides == nil {
+				t.Overrides = map[string]string{}
+			}
+			t.Overrides[k] = v.Value
+		}
+	}
+	return nil
 }
 
 type Deck struct {
