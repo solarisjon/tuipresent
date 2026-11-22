@@ -21,7 +21,7 @@ title: tuipresent in 5 minutes
 sub_title: Every slide shows a feature and the markdown behind it
 author: tuipresent examples
 date: 2026
-theme: dark          # or tokyonight-storm, dracula, light
+theme: dark          # or nord, catppuccin-latte... (-themes)
 transition: slide    # deck-wide default
 ---
 ```

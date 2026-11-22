@@ -20,6 +20,20 @@ Each deck passes `-check` at 100x30 and 80x24. Run them from the repo root after
 ./bin/tuipresent examples/product-pitch.md
 ```
 
+**[themes.md](themes.md)**, 8 slides. A theme gallery: headings and the gradient title, lists, inline code and links, syntax-highlighted code, a table, quotes, a text chart and a pause fade, plus a slide listing every built-in theme. Made for previewing themes; it paints its background so it looks the same in any terminal:
+
+```sh
+./bin/tuipresent -theme nord examples/themes.md
+./bin/tuipresent -theme catppuccin-latte examples/themes.md
+./bin/tuipresent -themes    # all names with color swatches
+```
+
+**[brand.md](brand.md)**, 4 slides. A short deck in a custom theme, [themes/brand.yaml](themes/brand.yaml): it extends `nord` and overrides the accents, code colors and code style. Copy the file as a starting point for your own theme; edit it while the deck is open and the deck reloads.
+
+```sh
+./bin/tuipresent examples/brand.md
+```
+
 **[terminal-tricks.md](terminal-tricks.md)**, 12 slides. A technical talk, "Things your terminal can do in 2026": escape codes in bash, Go and Rust, the kitty graphics protocol (with an image), box-drawing diagrams, a 3-column layout, and four live `+exec` blocks (an `isatty` check, Unicode cell widths, shell arithmetic, an `awk` sum).
 
 ```sh

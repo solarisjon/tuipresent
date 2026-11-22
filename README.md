@@ -27,6 +27,9 @@ tuipresent [flags] deck.md
 | `-dump` | | Print every frame (each slide at each pause step) to stdout and exit. Doesn't need a TTY. |
 | `-check` | | Report slides that overflow a `-w` x `-h` screen and exit 1 if any do (exit 0 and print `N slides fit WxH` otherwise). Doesn't need a TTY. |
 | `-exec` | | With `-check` or `-dump`: run every `+exec` block first so its output is measured and shown. This executes the deck's code, so only use it on decks you trust. |
+| `-theme NAME` | | Render in this theme instead of the front matter's (a built-in name or a `.yaml` theme file). Keeps the deck's `background` setting and still applies after a reload. See [Themes](#themes). |
+| `-themes` | | Print the built-in theme names, each with a one-line color swatch, and exit. |
+| `-background MODE` | | `paint` draws every cell on the theme's background; `terminal` uses the terminal's own. Overrides front matter. |
 | `-images MODE` | `auto` | How to draw images: `kitty` (graphics protocol), `blocks` (truecolor half-blocks), `off` (text placeholder) or `auto` (kitty in kitty/ghostty outside tmux, otherwise blocks). `-dump` and `-check` always use blocks unless `off`. |
 | `-w W` | `100` | Frame width for `-dump` and `-check` |
 | `-h H` | `30` | Frame height for `-dump` and `-check` |
@@ -59,11 +62,98 @@ sub_title: A subtitle
 author: Jane Doe
 date: 2026-12-08
 theme:
-  name: tokyonight-storm   # dark (default), tokyonight-storm, dracula, light (or *-day); `theme: dracula` also works
+  name: tokyonight-storm   # see Themes below; `theme: dracula` also works
+  background: paint        # optional: paint the theme background into every cell
 transition: wipe           # tuipresent extension
 fade: false                # tuipresent extension: instant pause reveals (fade is on by default)
 ---
 ```
+
+### Themes
+
+Twenty built-in themes, using each scheme's official palette and a matching syntax-highlighting style. Names are exact (case-insensitive), as in presenterm:
+
+| Theme | Kind | Code style (chroma) |
+|-------|------|---------------------|
+| `dark` (default) | dark | onedark |
+| `light` | light | github |
+| `tokyonight-storm` | dark | tokyonight-storm |
+| `tokyonight-night` | dark | tokyonight-night |
+| `tokyonight-moon` | dark | tokyonight-moon |
+| `tokyonight-day` | light | tokyonight-day |
+| `catppuccin-mocha` | dark | catppuccin-mocha |
+| `catppuccin-macchiato` | dark | catppuccin-macchiato |
+| `catppuccin-frappe` | dark | catppuccin-frappe |
+| `catppuccin-latte` | light | catppuccin-latte |
+| `gruvbox-dark` | dark | gruvbox |
+| `gruvbox-light` | light | gruvbox-light |
+| `dracula` | dark | dracula |
+| `nord` | dark | nord |
+| `rose-pine` | dark | rose-pine |
+| `rose-pine-dawn` | light | rose-pine-dawn |
+| `solarized-dark` | dark | solarized-dark |
+| `solarized-light` | light | solarized-light |
+| `everforest-dark` | dark | evergarden (chroma has no everforest; this is its closest relative) |
+| `kanagawa` | dark | kanagawa (built into tuipresent; chroma has none) |
+
+A deck that already works in presenterm keeps working: presenterm's built-in names render with tuipresent's palette, and presenterm-only settings such as an `override:` block are ignored with a warning (presenterm theme files aren't supported).
+
+Run `tuipresent -themes` to print them all with a color swatch, and `tuipresent -theme NAME deck.md` to preview any deck in another theme without editing it (`-theme` also survives live reload). `examples/themes.md` is a gallery deck made for this: `./bin/tuipresent -theme nord examples/themes.md`.
+
+Older spellings still work: `tokyo-night` and `tokyonight` mean `tokyonight-storm`, `catppuccin` means `catppuccin-mocha`, `gruvbox` means `gruvbox-dark`, `solarized` means `solarized-dark`, `everforest` means `everforest-dark`, and `terminal-dark`/`terminal-light` mean `dark`/`light`. Names are never matched by substring. An unknown name renders in `dark` and warns: on the status line while presenting, and on stderr with `-check` and `-dump`.
+
+A theme colors the gradient slide titles and rules, headings, body text, bullets, links, inline code, code blocks (drawn on a panel in the code background), quotes, table borders, the footer and the progress bar.
+
+#### Front-matter forms
+
+```yaml
+theme: nord                      # a built-in name
+
+theme:
+  name: nord
+  background: paint              # paint the theme background (default: terminal)
+  accent: "#88c0d0"              # override any palette key inline
+
+theme:
+  path: themes/brand.yaml        # a custom theme file, relative to the deck
+  background: paint
+```
+
+#### Background painting
+
+By default slides are drawn on the terminal's own background, so a theme looks as intended only when the terminal's background roughly matches it (a dark theme in a dark terminal). With `background: paint`, or `-background paint` on the command line, every cell of the frame is drawn on the theme's background and in its foreground, so the deck looks the same in any terminal: transitions, the pause fade (which then fades up from the painted background), the status line and kitty images included. Use it for light themes, for decks shared with others, and whenever you don't know the presenting terminal's colors.
+
+#### Custom themes
+
+A theme file is YAML: an optional `extends:` naming a built-in (default `dark`), then any palette keys to override. Quote colors: in YAML a bare `#` starts a comment. Colors are `#rrggbb` or `#rgb`; anything else, an unreadable file or an unknown `extends` is an error that names the key. Unknown keys are ignored with a warning. The file reloads while you present, like the deck.
+
+```yaml
+# themes/brand.yaml
+extends: nord
+accent: "#ff6b35"
+accent2: "#f7c548"
+code_background: "#262b36"
+code_style: monokai
+```
+
+| Key | Colors | Default |
+|-----|--------|---------|
+| `background` | Slide background: painted with `background: paint`, and what pause reveals fade up from | |
+| `foreground` | Body text | |
+| `dim` | Footer, cover byline, missing-image boxes | |
+| `accent` | Gradient start (titles, rules), progress bar | |
+| `accent2` | Gradient end | |
+| `heading` | `#` headings | `accent` |
+| `subheading` | `##` to `######` headings | `accent2` |
+| `link` | Links | `accent` |
+| `bullet` | List bullets and numbers | `accent` |
+| `code` | Inline code text | `accent2` |
+| `code_background` | Inline code and the panel behind code blocks | `background` mixed 8% toward `foreground` |
+| `quote` | Blockquote text | `dim` |
+| `border` | Table borders, horizontal rules | `dim` |
+| `code_style` | Syntax highlighting: any [chroma style](https://xyproto.github.io/splash/docs/) name, e.g. `monokai` | the base theme's |
+
+The same keys work inline in front matter on top of `name:` or `path:`. `examples/brand.md` uses `examples/themes/brand.yaml`. `-theme` also accepts a theme file path (`-theme my.yaml`).
 
 ### Slide titles
 
@@ -167,7 +257,7 @@ See `cpe-staff-meeting-demo.md` for a longer example.
 
 ## Examples
 
-[`examples/`](examples/README.md) has four ready-to-run decks: a self-demonstrating feature tour, an incident postmortem, a keynote-style pitch and a technical talk with live `+exec` demos. Start with `./bin/tuipresent examples/tour.md`.
+[`examples/`](examples/README.md) has ready-to-run decks: a self-demonstrating feature tour, an incident postmortem, a keynote-style pitch, a technical talk with live `+exec` demos, a theme gallery and a deck in a custom theme. Start with `./bin/tuipresent examples/tour.md`, then try `./bin/tuipresent -theme catppuccin-latte examples/themes.md`.
 
 ## For AI agents
 
@@ -191,11 +281,7 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 
 ## Keeping docs and examples current
 
-`internal/docscheck` fails `go test` when any deck in `examples/` overflows 100x30 or 80x24, or when README.md, docs/AGENT_GUIDE.md or the agent skill omits a directive, transition kind or CLI flag that the code supports. Two hooks run it automatically:
+`internal/docscheck` fails `go test` when any deck in `examples/` overflows 100x30 or 80x24, or when README.md, docs/AGENT_GUIDE.md or the agent skill omits a directive, transition kind, CLI flag or built-in theme name that the code supports. Two hooks run it automatically:
 
 - **Git pre-commit** (`.githooks/pre-commit`): gofmt, `go vet`, `go test`. Enable once per clone: `ln -s ../../.githooks/pre-commit .git/hooks/pre-commit`.
 - **Claude Code Stop/SubagentStop** (`.claude/settings.json` -> `.claude/hooks/check-drift.sh`): the same checks when an agent finishes a turn; failures are fed back so the agent fixes the drift. Skipped when no `.go`/`.md` file changed since the last pass.
-
-## Roadmap
-
-- More themes

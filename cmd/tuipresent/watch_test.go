@@ -64,23 +64,21 @@ func TestFileChanged(t *testing.T) {
 
 const threeSlides = "A\n===\n\none\n<!-- pause -->\nmore\n<!-- end_slide -->\nB\n===\n\ntwo\n<!-- end_slide -->\nC\n===\n\nthree\n<!-- pause -->\nmore\n"
 
-func newWatchModel(t *testing.T, path, flagTransition string) *model {
+func newWatchModel(t *testing.T, path string, flags deckFlags) *model {
 	t.Helper()
 	d, err := deck.Load(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if flagTransition != "" {
-		d.Meta.Transition = flagTransition
-	}
-	return &model{path: path, deck: d, r: render.New(d), flagTransition: flagTransition, watch: true, stamp: stat(path)}
+	flags.apply(d)
+	return &model{path: path, deck: d, r: render.New(d), flags: flags, watch: true, stamp: stat(path), themePath: themeFile(d), themeStamp: stat(themeFile(d))}
 }
 
 func TestPollWatchReloads(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "deck.md")
 	t0 := time.Unix(1_700_000_000, 0)
 	writeFile(t, path, threeSlides, t0)
-	m := newWatchModel(t, path, "wipe")
+	m := newWatchModel(t, path, deckFlags{transition: "wipe"})
 	m.slide, m.step = 2, 1
 	m.r.SetExecOutput(0, "old output")
 

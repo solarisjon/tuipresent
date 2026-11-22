@@ -28,8 +28,9 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 ## Syntax
 
 - **Front matter** must start at line 1 with `---`. Keys: `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`.
-  - `theme: dracula` and `theme:` / `  name: dracula` are equivalent. Use `dark`, `tokyonight-storm`, `dracula` or `light`.
-  - Themes match by substring in this order: `light` or `day` gives light (so `tokyonight-day` is light), then `tokyo`, then `dracula`, otherwise `dark`.
+  - `theme: dracula` and `theme:` / `  name: dracula` are equivalent. Exact names only (no substring matching): dark themes `dark` (default), `tokyonight-storm`, `tokyonight-night`, `tokyonight-moon`, `catppuccin-mocha`, `catppuccin-macchiato`, `catppuccin-frappe`, `gruvbox-dark`, `dracula`, `nord`, `rose-pine`, `solarized-dark`, `everforest-dark`, `kanagawa`; light themes `light`, `tokyonight-day`, `catppuccin-latte`, `gruvbox-light`, `rose-pine-dawn`, `solarized-light`. An unknown name renders in `dark` with a stderr warning from `-check`.
+  - Mapping keys: `background: paint` draws every cell on the theme background (use it for light themes, bright rooms/projectors, or when the presenting terminal is unknown); palette overrides such as `accent: "#88c0d0"` (always quote colors); `path: themes/x.yaml` for a custom theme file (`extends: nord` plus palette keys `background`, `foreground`, `dim`, `accent`, `accent2`, `heading`, `subheading`, `link`, `bullet`, `code`, `code_background`, `quote`, `border`, `code_style`). See `examples/themes/brand.yaml`.
+  - Theme choice: light theme + `background: paint` for bright rooms/projectors; dark themes for dark rooms and screens.
   - Setting `title` adds a cover slide, so total slides = sections + 1.
 - **Slides** are separated by `<!-- end_slide -->` on its own line. It is ignored inside code fences.
 - **Slide title:** a setext H1 (`Title` then a `===` line) before any other content. `# Title` is NOT a title. It renders as a body heading.
@@ -45,7 +46,7 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
 - **Images:** `![alt](path)` alone on its line; path relative to the deck; PNG, JPEG or GIF. Scaled to fit with aspect kept: height = body rows left free on the fully revealed slide (split between stacked images, min 3), width at most the content or column width. `![image:width:50%](path)` caps the width. kitty/ghostty draw real pixels; other terminals, `-dump` and `-check` use truecolor half-blocks with the same geometry. A missing file renders as a dim `[image: alt]` box (3 rows), never an error.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-fade=false` (instant pause reveals, overrides the deck), `-images auto|kitty|blocks|off` (image drawing; `auto` uses kitty graphics in kitty/ghostty outside tmux).
+- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-fade=false` (instant pause reveals, overrides the deck), `-images auto|kitty|blocks|off` (image drawing; `auto` uses kitty graphics in kitty/ghostty outside tmux), `-theme NAME` (preview in another theme or a `.yaml` theme file, overrides front matter, also after reload), `-background terminal|paint`, `-themes` (list themes with swatches).
 
 ## Layout budget
 
@@ -86,7 +87,7 @@ Design for 80x24:
 
 ## Pre-handoff checklist
 
-- [ ] Front matter is valid, and the theme and transition values are valid.
+- [ ] Front matter is valid, the theme name is exact (no `-check` warning on stderr), colors are quoted, and the transition values are valid.
 - [ ] Every slide starts with a setext title of 60 characters or fewer. All fences are closed.
 - [ ] Directives are spelled exactly: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`, `fade`.
 - [ ] No pauses in earlier columns unless intended. Exec blocks are safe and have rows reserved for output.

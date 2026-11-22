@@ -1,0 +1,17 @@
+# A custom tuipresent theme. Decks use it with:
+#
+#   theme:
+#     path: themes/brand.yaml   # relative to the deck file
+#
+# Start from a built-in theme and override any palette key. Quote every
+# color: in YAML a bare # starts a comment.
+extends: nord
+
+accent: "#ff6b35"          # gradient start, H1, progress bar, bullets, links
+accent2: "#f7c548"         # gradient end, H2-H6
+link: "#5fb3b3"
+code: "#f7c548"            # inline code
+code_background: "#262b36" # inline code and code-block panels
+quote: "#c0c8d8"
+border: "#4c566a"          # table borders
+code_style: monokai        # any chroma style name

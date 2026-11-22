@@ -34,6 +34,7 @@ type notesModel struct {
 	path      string
 	statePath string
 	deck      *deck.Deck
+	flags     deckFlags
 	r         *render.Renderer
 	mtime     time.Time
 	w, h      int
@@ -41,8 +42,8 @@ type notesModel struct {
 	running   bool
 }
 
-func runNotes(path string, d *deck.Deck) error {
-	m := &notesModel{path: path, statePath: notes.StatePath(path), deck: d, r: render.New(d)}
+func runNotes(path string, d *deck.Deck, flags deckFlags) error {
+	m := &notesModel{path: path, statePath: notes.StatePath(path), deck: d, flags: flags, r: render.New(d)}
 	if fi, err := os.Stat(path); err == nil {
 		m.mtime = fi.ModTime()
 	}
@@ -81,6 +82,7 @@ func (m *notesModel) reloadIfChanged() {
 		return
 	}
 	if d, err := deck.Load(m.path); err == nil {
+		m.flags.apply(d)
 		m.deck, m.r, m.mtime = d, render.New(d), fi.ModTime()
 	}
 }
