@@ -285,3 +285,29 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 
 - **Git pre-commit** (`.githooks/pre-commit`): gofmt, `go vet`, `go test`. Enable once per clone: `ln -s ../../.githooks/pre-commit .git/hooks/pre-commit`.
 - **Claude Code Stop/SubagentStop** (`.claude/settings.json` -> `.claude/hooks/check-drift.sh`): the same checks when an agent finishes a turn; failures are fed back so the agent fixes the drift. Skipped when no `.go`/`.md` file changed since the last pass.
+
+## Roadmap
+
+Titles and text styling
+- Big titles: a `title_size` directive using kitty's text-sizing protocol where supported, block letters elsewhere
+- Inline markdown (bold, italic, code) in slide titles
+- Title styling: curly accent underline, framed title cards, subtitle line
+- More text styles from markdown: strikethrough, highlight, faint, underline variants
+- Callout boxes for GitHub-style `> [!NOTE]` / `> [!WARNING]` blocks
+
+Terminal capabilities
+- Clickable links (OSC 8)
+- Sixel and iTerm2 image protocols for WezTerm, iTerm2 and foot
+- Deck progress in the terminal tab via the OSC 9;4 progress bar
+
+Presenting
+- Slide overview grid and jump-to-slide by number
+- Navigate the presenter from the notes view
+- Step-through code line highlighting, like presenterm's `{1-3|5}`
+- Mouse navigation
+
+Sharing and export
+- Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
+
+Robustness
+- Unsupported `+exec` languages should error instead of silently running through bash
