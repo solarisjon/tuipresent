@@ -342,6 +342,10 @@ func applyValues(t *Theme, vals map[string]string, src string, warns *[]string) 
 	raw := t.raw
 	for _, k := range keys {
 		v := vals[k]
+		if k == "extends" {
+			*warns = append(*warns, fmt.Sprintf("%s: extends only works in a theme file; use name: to pick the base theme", src))
+			continue
+		}
 		if k == "code_style" {
 			s := strings.TrimSpace(v)
 			if _, ok := chromastyles.Registry[s]; ok {

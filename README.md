@@ -96,6 +96,8 @@ Twenty built-in themes, using each scheme's official palette and a matching synt
 | `everforest-dark` | dark | evergarden (chroma has no everforest; this is its closest relative) |
 | `kanagawa` | dark | kanagawa (built into tuipresent; chroma has none) |
 
+A deck that already works in presenterm keeps working: presenterm's built-in names render with tuipresent's palette, and presenterm-only settings such as an `override:` block are ignored with a warning (presenterm theme files aren't supported).
+
 Run `tuipresent -themes` to print them all with a color swatch, and `tuipresent -theme NAME deck.md` to preview any deck in another theme without editing it (`-theme` also survives live reload). `examples/themes.md` is a gallery deck made for this: `./bin/tuipresent -theme nord examples/themes.md`.
 
 Older spellings still work: `tokyo-night` and `tokyonight` mean `tokyonight-storm`, `catppuccin` means `catppuccin-mocha`, `gruvbox` means `gruvbox-dark`, `solarized` means `solarized-dark`, `everforest` means `everforest-dark`, and `terminal-dark`/`terminal-light` mean `dark`/`light`. Names are never matched by substring. An unknown name renders in `dark` and warns: on the status line while presenting, and on stderr with `-check` and `-dump`.

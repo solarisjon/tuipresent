@@ -79,18 +79,18 @@ func main() {
 	flags := deckFlags{transition: *trans, theme: *themeName, background: *themeBg}
 	flags.apply(d)
 
+	r := render.New(d)
+	if err := r.ThemeErr(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
+		os.Exit(1)
+	}
+
 	if *notesView {
 		if err := runNotes(path, d, flags); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		return
-	}
-
-	r := render.New(d)
-	if err := r.ThemeErr(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
-		os.Exit(1)
 	}
 	if *check || *dump {
 		for _, w := range r.ThemeWarnings() {

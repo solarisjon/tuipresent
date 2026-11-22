@@ -180,9 +180,9 @@ func TestCustomThemeErrors(t *testing.T) {
 			t.Errorf("%+v: error should fall back to dark, got %q", tc.spec, th.Name)
 		}
 	}
-	_, warns, err := ResolveTheme(deck.Theme{Name: "nord", Background: "bogus", Overrides: map[string]string{"code_style": "no-such-style", "acent": "#88c0d0"}, Nested: []string{"override"}}, "")
-	if err != nil || len(warns) != 4 || !strings.Contains(strings.Join(warns, "|"), `unknown key "acent"`) {
-		t.Errorf("want 4 warnings, got %q, %v", warns, err)
+	_, warns, err := ResolveTheme(deck.Theme{Name: "nord", Background: "bogus", Overrides: map[string]string{"code_style": "no-such-style", "acent": "#88c0d0", "extends": "dracula"}, Nested: []string{"override"}}, "")
+	if err != nil || len(warns) != 5 || !strings.Contains(strings.Join(warns, "|"), `unknown key "acent"`) || !strings.Contains(strings.Join(warns, "|"), "extends only works in a theme file") {
+		t.Errorf("want 5 warnings, got %q, %v", warns, err)
 	}
 	// A presenterm-style theme file (nested sections) renders its base with a warning.
 	writeTheme(t, dir, "presenterm.yaml", "extends: nord\ndefault:\n  colors:\n    foreground: \"e5e5e5\"\n")
