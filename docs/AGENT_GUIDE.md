@@ -135,6 +135,7 @@ Optional. The first line of the file must be exactly `---`. It ends at the next 
 | `date` | string | On the cover after the author (`author · date`). Any string is accepted. |
 | `theme` | string, or mapping with `name` | Color theme (mapping below). `theme: dracula` and `theme:` / `  name: dracula` are equivalent. |
 | `transition` | string | Default transition for every slide (tuipresent extension). |
+| `fade` | bool | `false` makes pause reveals instant deck-wide. Default on (tuipresent extension). |
 
 Both forms are accepted:
 
@@ -191,6 +192,7 @@ Anything else (uppercase names, multi-line comments other than `speaker_note`, a
 | `<!-- jump_to_middle -->` | Centers the whole slide vertically and horizontally, and removes the top margin. The title is centered and its rule shrinks to title width + 4. If the slide is plain prose and headings (no list, table, blockquote or code lines in the source), each body line is centered on its own. Otherwise the body is centered as one left-aligned block. Vertical and horizontal offsets use the fully revealed slide, so pauses do not shift it. Applies to the whole slide wherever the directive is placed. |
 | `<!-- transition: KIND -->` | Transition used when entering this slide (tuipresent extension). Also used when leaving this slide backwards. |
 | `<!-- speaker_note: text -->` | A speaker note (presenterm). Never rendered on the slide and consumes no rows. Also accepts the multi-line form: `<!-- speaker_note:` on its own line, note lines (markdown), then `-->` on its own line. Several notes on one slide are shown in order. Ignored inside fences. Shown by `tuipresent -notes deck.md` in a second terminal. |
+| `<!-- fade: off -->` | Makes this slide's pause reveals instant instead of fading in (tuipresent extension). `on` re-enables the fade when front matter `fade: false` disabled it. See "Reveal fade". |
 
 Presenterm directives that are **not supported** and silently dropped include `incremental_lists`, `new_lines`/`newline`, `alignment`, `font_size`, `include`, `skip_slide`, and `no_footer`. Do not use them. You cannot insert vertical space with a directive.
 
@@ -213,7 +215,19 @@ Resolution order when moving to a slide:
 3. Otherwise `slide`.
 4. When moving backwards, the departing slide's directive wins if it has one.
 
-The CLI flag `-transition KIND` replaces the front matter default but not per-slide directives. It still applies after `r` (reload). Values are case-insensitive. An unknown value falls back to `slide` without an error. Reveal steps within a slide (pauses) never animate.
+The CLI flag `-transition KIND` replaces the front matter default but not per-slide directives. It still applies after `r` (reload). Values are case-insensitive. An unknown value falls back to `slide` without an error. Slide transitions never run between reveal steps within a slide; those fade instead (next section).
+
+### Reveal fade
+
+Stepping forward through a `<!-- pause -->` fades the newly revealed content in from the slide background to its final colors over 280 ms (ease-out, truecolor). The fade is per cell: anything already visible, including other columns on the same rows, stays exactly as it was. Stepping backward within a slide is instant. Moving to another slide uses its transition, never the fade. The background is the terminal's own (queried at startup via OSC 11) and falls back to the theme's: `dark` `#1a1b26`, `tokyonight-storm` `#24283b`, `dracula` `#282a36`, `light` `#e1e2e7`. 256- and 16-color codes are blended through their standard RGB values and land on the exact original codes when the fade ends.
+
+Turning it off, from broadest to narrowest:
+
+1. CLI `-fade=false`: every reveal is instant and the deck cannot re-enable it.
+2. Front matter `fade: false` (also `off`, `no`, `none`): instant reveals for the whole deck.
+3. `<!-- fade: off -->` on a slide: instant reveals on that slide. `<!-- fade: on -->` re-enables it on one slide when the front matter turned it off. The slide directive beats front matter.
+
+`-dump` and `-check` print static frames, so the fade never affects them.
 
 ### Code blocks and `+exec`
 
@@ -366,6 +380,13 @@ Use `<!-- jump_to_middle -->` with a setext title for a single sentence that sho
   - `none` for consecutive slides that should feel like one evolving slide (for example a diagram that gains a step).
 - Do not cycle through all kinds for variety. It reads as noise.
 
+### Designing pauses
+
+- Every reveal fades in, so a pause draws the eye to exactly what it adds. Use pauses where the order of ideas matters (problem before fix, question before answer, bullets argued one at a time), not on every slide.
+- Reveal whole units (a bullet, a column, a takeaway line). A pause that adds one word fades in too little to notice.
+- Keep revealed content in place. Columns and centered slides already reserve the space, so earlier content never moves when the fade starts.
+- Leave the fade on by default. Add `<!-- fade: off -->` for slides stepped through rapidly (a long build-up the presenter clicks through quickly). Use front matter `fade: false` for recordings or slow remote terminals where animation stutters.
+
 ### `+exec` safety
 
 The presenter runs these live, on their machine, in front of an audience.
@@ -499,7 +520,7 @@ Verified with:
 - [ ] Front matter starts at line 1 with `---`. `theme` (plain or nested `name:`) is one of `dark`, `tokyonight-storm`, `dracula`, `light`.
 - [ ] Every transition value is one of `slide`, `wipe`, `cover`, `dissolve`, `none`.
 - [ ] Every slide has a setext title (`Title` + `===`) as its first content, 60 characters or fewer.
-- [ ] Every directive is lowercase, alone on its line, spelled exactly, and one of: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`.
+- [ ] Every directive is lowercase, alone on its line, spelled exactly, and one of: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`, `fade`.
 - [ ] Every code fence is closed.
 - [ ] No pauses in earlier columns unless delayed later columns are intended.
 - [ ] `+exec` blocks are bash, sh or python only. They are harmless, offline, idempotent and under 15 s, with rows reserved for their output.

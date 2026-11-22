@@ -225,6 +225,8 @@ func (p *slideParser) directive(name, arg string) {
 		if note := strings.TrimSpace(arg); note != "" {
 			p.slide.Notes = append(p.slide.Notes, note)
 		}
+	case "fade":
+		p.slide.Fade = strings.TrimSpace(arg)
 	}
 }
 

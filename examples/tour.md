@@ -105,8 +105,9 @@ Pauses reveal one step at a time
 
 <!-- reset_layout -->
 
-Press space to step. The source sits in the left column because a
-pause delays every column after it.
+Press space to step: each new item fades in. The source sits in the
+left column because a pause delays every column after it. For
+instant reveals use `<!-- fade: off -->`, `fade: false` or `-fade=false`.
 
 <!-- end_slide -->
 
