@@ -325,6 +325,26 @@ func TestTransitionPerSlide(t *testing.T) {
 	}
 }
 
+func TestFadeEnabled(t *testing.T) {
+	body := "a\n<!-- end_slide -->\n<!-- fade: off -->\nb\n<!-- end_slide -->\n<!-- fade: on -->\nc\n"
+	tests := []struct {
+		front string
+		want  [3]bool
+	}{
+		{"", [3]bool{true, false, true}},
+		{"---\nfade: false\n---\n", [3]bool{false, false, true}},
+		{"---\nfade: true\n---\n", [3]bool{true, false, true}},
+	}
+	for _, tt := range tests {
+		d := mustParse(t, tt.front+body)
+		for i, want := range tt.want {
+			if got := d.FadeEnabled(i); got != want {
+				t.Errorf("front %q slide %d: FadeEnabled = %v, want %v", tt.front, i, got, want)
+			}
+		}
+	}
+}
+
 func TestExec(t *testing.T) {
 	src := "intro\n```bash +exec\necho hi\necho there\n```\n<!-- end_slide -->\n" +
 		"<!-- pause -->\n```python3 +exec\nprint(1)\n```\n" +

@@ -202,6 +202,8 @@ func (p *slideParser) directive(name, arg string) {
 		p.slide.Centered = true
 	case "transition":
 		p.slide.Transition = strings.TrimSpace(arg)
+	case "fade":
+		p.slide.Fade = strings.TrimSpace(arg)
 	}
 }
 

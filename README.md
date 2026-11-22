@@ -22,6 +22,7 @@ tuipresent [flags] deck.md
 |------|---------|-------------|
 | `-slide N` | `1` | Slide to start on (1-based) |
 | `-transition KIND` | | Default transition: `slide`, `wipe`, `cover`, `dissolve`, `none`. Overrides front matter. |
+| `-fade` | `true` | Fade in content revealed by `<!-- pause -->` (truecolor, about 280 ms). `-fade=false` makes reveals instant and overrides the deck. |
 | `-dump` | | Print every frame (each slide at each pause step) to stdout and exit. Doesn't need a TTY. |
 | `-check` | | Report slides that overflow a `-w` x `-h` screen and exit 1 if any do (exit 0 and print `N slides fit WxH` otherwise). Doesn't need a TTY. |
 | `-exec` | | With `-check` or `-dump`: run every `+exec` block first so its output is measured and shown. This executes the deck's code, so only use it on decks you trust. |
@@ -57,6 +58,7 @@ date: 2026-12-08
 theme:
   name: tokyonight-storm   # dark (default), tokyonight-storm, dracula, light (or *-day); `theme: dracula` also works
 transition: wipe           # tuipresent extension
+fade: false                # tuipresent extension: instant pause reveals (fade is on by default)
 ---
 ```
 
@@ -76,6 +78,8 @@ A setext H1 (a line underlined with `===`) that comes before any other content o
 | `<!-- jump_to_middle -->` | presenterm | Center the slide vertically and horizontally |
 | `<!-- transition: KIND -->` | tuipresent | Transition used when entering this slide (`slide`, `wipe`, `cover`, `dissolve`, `none`) |
 | front matter `transition:` | tuipresent | Default transition for the whole deck (`slide` if unset) |
+| `<!-- fade: off -->` | tuipresent | Make this slide's pause reveals instant (`on` re-enables it when the front matter turned it off) |
+| front matter `fade:` | tuipresent | `false` makes pause reveals instant deck-wide. By default, content a pause reveals fades in from the background while what was already shown stays put. Stepping back is instant. |
 
 Directives tuipresent doesn't recognize are ignored.
 
@@ -163,7 +167,6 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 ## Roadmap
 
 - Inline images via the kitty graphics protocol, with a text fallback for other terminals
-- Per-element fade-in on pause, using truecolor interpolation
 - Speaker notes view
 - Live reload when the deck file changes
 - More themes

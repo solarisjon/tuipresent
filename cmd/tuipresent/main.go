@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"image/color"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,6 +19,7 @@ import (
 
 const (
 	transitionDuration = 380 * time.Millisecond
+	fadeDuration       = 280 * time.Millisecond
 	frameInterval      = time.Second / 60
 	execTimeout        = 15 * time.Second
 )
@@ -30,6 +32,7 @@ func main() {
 	dh := flag.Int("h", 30, "height for -dump")
 	start := flag.Int("slide", 1, "slide to start on (1-based)")
 	trans := flag.String("transition", "", "default transition: slide|wipe|cover|dissolve|none")
+	fade := flag.Bool("fade", true, "fade in content revealed by a pause; -fade=false makes reveals instant")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n")
 		flag.PrintDefaults()
@@ -85,7 +88,7 @@ func main() {
 		return
 	}
 
-	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans}
+	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans, noFade: !*fade}
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -104,7 +107,15 @@ type anim struct {
 	from, to string
 	kind     transition.Kind
 	reverse  bool
+	fade     bool // a pause reveal: to's new cells fade in over from
 	start    time.Time
+}
+
+func (a *anim) duration() time.Duration {
+	if a.fade {
+		return fadeDuration
+	}
+	return transitionDuration
 }
 
 type model struct {
@@ -117,20 +128,24 @@ type model struct {
 	status      string
 	// flagTransition is reapplied on reload so -transition beats front matter.
 	flagTransition string
+	noFade         bool        // -fade=false
+	termBg         color.Color // terminal background (OSC 11), nil until reported
 }
 
-func (m *model) Init() tea.Cmd { return nil }
+func (m *model) Init() tea.Cmd { return tea.RequestBackgroundColor }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 		m.anim = nil
+	case tea.BackgroundColorMsg:
+		m.termBg = msg.Color
 	case tickMsg:
 		if m.anim == nil {
 			return m, nil
 		}
-		if time.Since(m.anim.start) >= transitionDuration {
+		if time.Since(m.anim.start) >= m.anim.duration() {
 			m.anim = nil
 			return m, nil
 		}
@@ -168,7 +183,7 @@ func (m *model) forward() tea.Cmd {
 	s := m.deck.Slides[m.slide]
 	if m.step < s.Steps-1 {
 		m.step++
-		return nil
+		return m.reveal()
 	}
 	if m.slide == len(m.deck.Slides)-1 {
 		return nil
@@ -179,6 +194,7 @@ func (m *model) forward() tea.Cmd {
 func (m *model) back() tea.Cmd {
 	if m.step > 0 {
 		m.step--
+		m.anim = nil
 		return nil
 	}
 	if m.slide == 0 {
@@ -191,6 +207,7 @@ func (m *model) back() tea.Cmd {
 func (m *model) jump(slide, step int) tea.Cmd {
 	if slide == m.slide {
 		m.step = step
+		m.anim = nil
 		return nil
 	}
 	return m.go_(slide, step, slide < m.slide)
@@ -217,9 +234,27 @@ func (m *model) go_(slide, step int, reverse bool) tea.Cmd {
 	return tick()
 }
 
+// reveal fades in what the step just advanced to added; earlier steps stay put.
+func (m *model) reveal() tea.Cmd {
+	if m.noFade || m.w == 0 || !m.deck.FadeEnabled(m.slide) {
+		m.anim = nil
+		return nil
+	}
+	from := m.r.Frame(m.slide, m.step-1, m.w, m.h)
+	m.anim = &anim{from: from, to: m.r.Frame(m.slide, m.step, m.w, m.h), fade: true, start: time.Now()}
+	return tick()
+}
+
 func (m *model) current() string {
 	if m.anim != nil {
-		t := float64(time.Since(m.anim.start)) / float64(transitionDuration)
+		t := float64(time.Since(m.anim.start)) / float64(m.anim.duration())
+		if m.anim.fade {
+			bg := m.termBg
+			if bg == nil {
+				bg = m.r.Background()
+			}
+			return transition.FadeIn(m.anim.from, m.anim.to, transition.EaseOutCubic(min(t, 1)), bg, m.r.Foreground())
+		}
 		return transition.Composite(m.anim.kind, m.anim.from, m.anim.to, m.w, transition.EaseOutCubic(min(t, 1)), m.anim.reverse)
 	}
 	return m.r.Frame(m.slide, m.step, m.w, m.h)

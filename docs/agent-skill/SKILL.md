@@ -27,14 +27,15 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 
 ## Syntax
 
-- **Front matter** must start at line 1 with `---`. Keys: `title`, `sub_title`, `author`, `date`, `theme`, `transition`.
+- **Front matter** must start at line 1 with `---`. Keys: `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`.
   - `theme: dracula` and `theme:` / `  name: dracula` are equivalent. Use `dark`, `tokyonight-storm`, `dracula` or `light`.
   - Themes match by substring in this order: `light` or `day` gives light (so `tokyonight-day` is light), then `tokyo`, then `dracula`, otherwise `dark`.
   - Setting `title` adds a cover slide, so total slides = sections + 1.
 - **Slides** are separated by `<!-- end_slide -->` on its own line. It is ignored inside code fences.
 - **Slide title:** a setext H1 (`Title` then a `===` line) before any other content. `# Title` is NOT a title. It renders as a body heading.
 - **Directives** must be lowercase and alone on their line. Unknown ones are silently dropped.
-  - `<!-- pause -->` reveals the rest of the slide on the next key press.
+  - `<!-- pause -->` reveals the rest of the slide on the next key press. New content fades in from the background (280 ms); what was already visible stays put. Stepping back is instant.
+  - `<!-- fade: off -->` makes this slide's reveals instant. Front matter `fade: false` does it deck-wide; `<!-- fade: on -->` re-enables one slide.
   - `<!-- column_layout: [2, 1] -->` starts columns. `<!-- column: 0 -->` selects one (0-based). `<!-- reset_layout -->` ends them.
   - `<!-- jump_to_middle -->` centers the slide vertically and horizontally. Plain-prose bodies are centered line by line. Bodies with a list, table, quote or code are centered as one block.
   - `<!-- transition: slide|wipe|cover|dissolve|none -->` sets the transition for this slide. The front matter `transition:` sets the deck default, which is `slide` if unset. Unknown values fall back to `slide`.
@@ -42,7 +43,7 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload).
+- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-fade=false` (instant pause reveals, overrides the deck).
 
 ## Layout budget
 
@@ -77,13 +78,14 @@ Design for 80x24:
 - Charts go in ```` ```text ```` fences using block characters (`█▏▎▍▌▋▊▉`) and space-aligned labels.
 - Use `jump_to_middle` statement slides for a thesis or key number, at most 1 in 5 slides.
 - Transitions: one deck default (`slide` or `dissolve`). Override only with meaning: `cover` for a new section, `wipe` for a reveal, `none` for an evolving diagram.
+- Pauses fade in what they add, so reveal whole units (a bullet, a column, a takeaway) where order matters, not on every slide. Use `<!-- fade: off -->` only for slides clicked through quickly.
 - `+exec` must be harmless, offline, idempotent and fast (`echo`, `date`, `seq`, pure `python3`). Never use destructive commands (`rm`, `git push`, `sudo`, installs), network commands (`curl`, `ssh`, `ping`), or anything that prints secrets. The presenter runs it live.
 
 ## Pre-handoff checklist
 
 - [ ] Front matter is valid, and the theme and transition values are valid.
 - [ ] Every slide starts with a setext title of 60 characters or fewer. All fences are closed.
-- [ ] Directives are spelled exactly: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`.
+- [ ] Directives are spelled exactly: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `fade`.
 - [ ] No pauses in earlier columns unless intended. Exec blocks are safe and have rows reserved for output.
 - [ ] `-check` exits 0 at 100x30 and at 80x24. With `+exec`: `-exec -check` also passes if approved, otherwise output rows were budgeted by hand.
 - [ ] Both `-dump` outputs reviewed: no wrapped charts, clipped columns, cut-off titles or missing lines.

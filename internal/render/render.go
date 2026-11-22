@@ -23,19 +23,20 @@ type Theme struct {
 	Accent2 string
 	Dim     string
 	Fg      string
+	Bg      string // slide background that pause reveals fade up from
 }
 
 func themeFor(name string) Theme {
 	n := strings.ToLower(name)
 	switch {
 	case strings.Contains(n, "light") || strings.Contains(n, "day"):
-		return Theme{"light", "#2e7de9", "#9854f1", "#8990b3", "#3760bf"}
+		return Theme{"light", "#2e7de9", "#9854f1", "#8990b3", "#3760bf", "#e1e2e7"}
 	case strings.Contains(n, "tokyo"):
-		return Theme{"tokyo-night", "#7aa2f7", "#bb9af7", "#565f89", "#c0caf5"}
+		return Theme{"tokyo-night", "#7aa2f7", "#bb9af7", "#565f89", "#c0caf5", "#24283b"}
 	case strings.Contains(n, "dracula"):
-		return Theme{"dracula", "#bd93f9", "#ff79c6", "#6272a4", "#f8f8f2"}
+		return Theme{"dracula", "#bd93f9", "#ff79c6", "#6272a4", "#f8f8f2", "#282a36"}
 	default:
-		return Theme{"dark", "#7aa2f7", "#bb9af7", "#5c6370", "#d0d0d0"}
+		return Theme{"dark", "#7aa2f7", "#bb9af7", "#5c6370", "#d0d0d0", "#1a1b26"}
 	}
 }
 
@@ -567,6 +568,12 @@ func (r *Renderer) style(hex string) lipgloss.Style {
 }
 
 func (r *Renderer) Accent() color.Color { return lipgloss.Color(r.theme.Accent) }
+
+// Background is the theme's slide background, the fallback when the terminal's is unknown.
+func (r *Renderer) Background() color.Color { return lipgloss.Color(r.theme.Bg) }
+
+// Foreground stands in for text drawn in the terminal's default color.
+func (r *Renderer) Foreground() color.Color { return lipgloss.Color(r.theme.Fg) }
 
 // fit truncates or pads s to exactly w cells.
 func fit(s string, w int) string {
