@@ -3,8 +3,12 @@ package render
 
 import (
 	"fmt"
+	"image"
 	"image/color"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"charm.land/glamour/v2"
@@ -15,6 +19,7 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 
 	"tuipresent/internal/deck"
+	"tuipresent/internal/img"
 )
 
 type Theme struct {
@@ -51,6 +56,8 @@ type Renderer struct {
 	cache      map[[4]int]string
 	execOutput map[int]string
 	clip       int // widest column overflow seen since Overflow reset it
+	imgRows    int // max rows per image on the slide being laid out; 0 while measuring
+	images     map[string]*loadedImage
 }
 
 func New(d *deck.Deck) *Renderer {
@@ -60,6 +67,7 @@ func New(d *deck.Deck) *Renderer {
 		glam:       map[int]*glamour.TermRenderer{},
 		cache:      map[[4]int]string{},
 		execOutput: map[int]string{},
+		images:     map[string]*loadedImage{},
 	}
 }
 
@@ -98,6 +106,12 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 		}
 		head = append(head, "", r.title(s.Title, cw), r.rule(rule), "")
 	}
+
+	headRows := len(head)
+	if !s.Centered {
+		headRows++
+	}
+	r.sizeImages(s, cw, avail-headRows)
 
 	var body []string
 	if s.Cover {
@@ -208,6 +222,7 @@ func (r *Renderer) Overflow(idx, w, h int) (rows, cols int) {
 	if s.Title != "" {
 		used += 4
 	}
+	r.sizeImages(s, cw, avail-used)
 	r.clip = 0
 	body := r.bodyFull(s, cw)
 	used += len(body)
@@ -305,6 +320,13 @@ func (r *Renderer) body(blocks []deck.Block, step, width int) []string {
 			flushMD()
 			out = append(out, r.columns(b, step, width)...)
 			afterColumns = true
+		case deck.Image:
+			flushMD()
+			if len(out) > 0 {
+				out = append(out, "")
+			}
+			out = append(out, r.image(b, width)...)
+			afterColumns = true
 		}
 	}
 	flushMD()
@@ -326,7 +348,25 @@ func columnWidths(b deck.Block, width int) []int {
 
 func (r *Renderer) columns(b deck.Block, step, width int) []string {
 	var cols []string
-	for i, cw := range columnWidths(b, width) {
+	// Images in a column may also use the rows its taller neighbours leave free.
+	widths := columnWidths(b, width)
+	baseRows, extra := r.imgRows, make([]int, len(widths))
+	if baseRows > 0 {
+		r.imgRows = 0
+		tallest := 0
+		for i, cw := range widths {
+			extra[i] = len(r.body(b.Children[i], 1<<30, cw))
+			tallest = max(tallest, extra[i])
+		}
+		for i := range extra {
+			extra[i] = (tallest - extra[i]) / max(imageStack(b.Children[i]), 1)
+		}
+	}
+	defer func() { r.imgRows = baseRows }()
+	for i, cw := range widths {
+		if baseRows > 0 {
+			r.imgRows = baseRows + extra[i]
+		}
 		// Height from the fully revealed column keeps layout stable across pauses.
 		full := len(r.body(b.Children[i], 1<<30, cw))
 		lines := r.body(b.Children[i], step, cw)
@@ -579,3 +619,132 @@ func fit(s string, w int) string {
 
 // Fit is exported for transitions.
 func Fit(s string, w int) string { return fit(s, w) }
+
+// ImageConfig selects how image blocks are drawn.
+type ImageConfig struct {
+	Mode  img.Mode         // img.Kitty, img.Off; anything else draws half-blocks
+	Kitty *img.Transmitter // required for img.Kitty
+}
+
+// Images is the process-wide image configuration. The zero value draws
+// truecolor half-blocks, which is what -dump and -check use.
+var Images ImageConfig
+
+const minImageRows = 3
+
+type loadedImage struct {
+	src    image.Image
+	key    string // changes when the file does
+	err    error
+	blocks map[[2]int][]string
+}
+
+func (r *Renderer) loadImage(path string) *loadedImage {
+	if !filepath.IsAbs(path) && r.deck.Dir != "" {
+		path = filepath.Join(r.deck.Dir, path)
+	}
+	if li, ok := r.images[path]; ok {
+		return li
+	}
+	li := &loadedImage{blocks: map[[2]int][]string{}}
+	li.src, li.err = img.Load(path)
+	if fi, err := os.Stat(path); err == nil {
+		abs, _ := filepath.Abs(path)
+		li.key = fmt.Sprintf("%s@%d", abs, fi.ModTime().UnixNano())
+	}
+	r.images[path] = li
+	return li
+}
+
+// imageStack counts images that stack vertically: top-level images, plus the
+// most images in any one column of each column layout.
+func imageStack(blocks []deck.Block) int {
+	n := 0
+	for _, b := range blocks {
+		switch b.Kind {
+		case deck.Image:
+			n++
+		case deck.Columns:
+			most := 0
+			for _, c := range b.Children {
+				most = max(most, imageStack(c))
+			}
+			n += most
+		}
+	}
+	return n
+}
+
+// sizeImages shares the rows the fully revealed slide leaves free among its
+// images, so every reveal step lays out identically.
+func (r *Renderer) sizeImages(s deck.Slide, cw, rows int) {
+	r.imgRows = 0
+	if s.Cover {
+		return
+	}
+	n := imageStack(s.Blocks)
+	if n == 0 {
+		return
+	}
+	used := len(r.bodyFull(s, cw))
+	r.imgRows = max((rows-used)/n, minImageRows)
+}
+
+var imageWidthRe = regexp.MustCompile(`^image:width:(\d+)%$`)
+
+// image draws an image block centered in width, at most r.imgRows tall.
+// While measuring (imgRows 0) a decodable image takes no rows.
+func (r *Renderer) image(b deck.Block, width int) []string {
+	alt, maxCols := b.Text, width
+	if m := imageWidthRe.FindStringSubmatch(alt); m != nil {
+		pct, _ := strconv.Atoi(m[1])
+		maxCols, alt = max(width*min(pct, 100)/100, 1), ""
+	}
+	if alt == "" {
+		alt = filepath.Base(b.Path)
+	}
+	li := r.loadImage(b.Path)
+	if li.err != nil || Images.Mode == img.Off {
+		return r.missingImage(alt, width)
+	}
+	if r.imgRows == 0 {
+		return nil
+	}
+	bd := li.src.Bounds()
+	cols, rows := img.Fit(bd.Dx(), bd.Dy(), maxCols, r.imgRows)
+	if cols == 0 {
+		return nil
+	}
+	var lines []string
+	if Images.Mode == img.Kitty && Images.Kitty != nil {
+		lines = Images.Kitty.Place(li.key, li.src, cols, rows)
+	} else {
+		var ok bool
+		if lines, ok = li.blocks[[2]int{cols, rows}]; !ok {
+			lines = img.HalfBlocks(li.src, cols, rows)
+			li.blocks[[2]int{cols, rows}] = lines
+		}
+	}
+	pad := strings.Repeat(" ", (width-cols)/2)
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = pad + l
+	}
+	return out
+}
+
+// missingImage is a dim three-row box standing in for an image that can't be shown.
+func (r *Renderer) missingImage(alt string, width int) []string {
+	st := r.style(r.theme.Dim)
+	label := ansi.Truncate("[image: "+alt+"]", max(width-4, 1), "…")
+	inner := ansi.StringWidth(label) + 2
+	if width < inner+2 {
+		return []string{st.Render(ansi.Truncate(label, width, ""))}
+	}
+	pad := strings.Repeat(" ", (width-inner-2)/2)
+	return []string{
+		pad + st.Render("╭"+strings.Repeat("─", inner)+"╮"),
+		pad + st.Render("│ "+label+" │"),
+		pad + st.Render("╰"+strings.Repeat("─", inner)+"╯"),
+	}
+}

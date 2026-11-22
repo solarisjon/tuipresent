@@ -12,6 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"tuipresent/internal/deck"
+	"tuipresent/internal/img"
 	"tuipresent/internal/render"
 	"tuipresent/internal/transition"
 )
@@ -30,6 +31,7 @@ func main() {
 	dh := flag.Int("h", 30, "height for -dump")
 	start := flag.Int("slide", 1, "slide to start on (1-based)")
 	trans := flag.String("transition", "", "default transition: slide|wipe|cover|dissolve|none")
+	images := flag.String("images", "auto", "image drawing: auto|kitty|blocks|off (-dump and -check always use blocks unless off)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n")
 		flag.PrintDefaults()
@@ -38,6 +40,14 @@ func main() {
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(2)
+	}
+	imgMode, err := img.ParseMode(*images)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if imgMode == img.Off {
+		render.Images.Mode = img.Off
 	}
 	path := flag.Arg(0)
 	d, err := deck.Load(path)
@@ -85,9 +95,20 @@ func main() {
 		return
 	}
 
+	if imgMode == img.Auto {
+		imgMode = img.Detect(os.Getenv)
+	}
+	if imgMode == img.Kitty {
+		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
+	}
+
 	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans}
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	_, err = tea.NewProgram(m).Run()
+	if k := render.Images.Kitty; k != nil {
+		fmt.Print(k.Cleanup())
+	}
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -121,7 +142,8 @@ type model struct {
 
 func (m *model) Init() tea.Cmd { return nil }
 
-func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
+	defer func() { cmd = m.withImages(cmd) }()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
@@ -142,6 +164,22 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.key(msg.String())
 	}
 	return m, nil
+}
+
+// withImages uploads kitty images for every slide at the current size so
+// they are in the terminal before their placeholder cells are shown.
+func (m *model) withImages(cmd tea.Cmd) tea.Cmd {
+	k := render.Images.Kitty
+	if k == nil || m.w == 0 {
+		return cmd
+	}
+	for i, s := range m.deck.Slides {
+		m.r.Frame(i, s.Steps-1, m.w, m.h)
+	}
+	if seq := k.Flush(); seq != "" {
+		return tea.Batch(tea.Raw(seq), cmd)
+	}
+	return cmd
 }
 
 func (m *model) key(k string) tea.Cmd {

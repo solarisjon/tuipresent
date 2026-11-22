@@ -261,6 +261,34 @@ A `text` fence keeps alignment and skips highlighting. Tables work too.
 
 <!-- end_slide -->
 
+Pictures, too
+===
+
+<!-- transition: wipe -->
+<!-- column_layout: [1, 1] -->
+<!-- column: 0 -->
+
+![logo](assets/terminal.png)
+
+<!-- column: 1 -->
+
+## Source
+
+```markdown
+![logo](assets/terminal.png)
+```
+
+* PNG, JPEG or GIF
+* kitty, ghostty: real pixels
+* Elsewhere: half-blocks
+* Scaled to fit, aspect kept
+
+<!-- reset_layout -->
+
+Give the image a line of its own. A missing file shows `[image: alt]`.
+
+<!-- end_slide -->
+
 <!-- jump_to_middle -->
 <!-- transition: dissolve -->
 

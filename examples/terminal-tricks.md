@@ -122,6 +122,36 @@ it is off by one: the classic broken table in a TUI.
 
 <!-- end_slide -->
 
+Pictures are escape codes too
+===
+
+<!-- column_layout: [2, 3] -->
+<!-- column: 0 -->
+
+![a terminal window](assets/terminal.png)
+
+<!-- column: 1 -->
+
+The kitty graphics protocol sends a PNG once, base64 in chunks:
+
+```text
+ESC _G a=T,U=1,f=100,i=42,
+       c=24,r=6,q=2;iVBORw0K… ESC \
+```
+
+<!-- pause -->
+
+Then every cell of the picture is the
+character `U+10EEEE`, with the image id
+in its foreground color. Text moves, so
+the picture moves with it.
+
+<!-- reset_layout -->
+
+This slide uses it in kitty and ghostty, and half-blocks elsewhere.
+
+<!-- end_slide -->
+
 What happens when you press a key
 ===
 
