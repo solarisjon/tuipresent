@@ -97,7 +97,7 @@ A comfortable authoring setup: editor in one pane, `tuipresent deck.md` in anoth
 Slides with `+exec` code blocks (see [Authoring](authoring.md#runnable-code-exec)) do nothing until you press `e`. Then every runnable block visible on the slide runs, "running…" shows at the bottom, and the output appears under the code.
 
 - Each run has a 15-second limit.
-- Code runs in the directory you started `tuipresent` from. Start it from the directory the demo expects.
+- Code runs in the deck file's directory, wherever you started `tuipresent` from. Keep demo files next to the deck.
 - Read every block before the talk. You're running it on your machine, in front of people.
 - Do a dry run in the terminal you'll present from, on the network you'll have (or without one).
 
@@ -162,8 +162,12 @@ The slides window resizes live, so you can also just resize and step through the
 
 **Content is cut off.** The terminal is smaller than the deck was designed for. Slides are clipped at the bottom and right without a warning. Make the font smaller or the window bigger, or fix the deck after running `-check` at that size ([Fitting the projector](#fitting-the-projector)).
 
-**Very small terminals.** Under 6 rows the footer is hidden. Under 28 columns, the side margins shrink to a single cell. The slides still render but won't be readable; this is a sign to resize, not to redesign.
+**Very small terminals.** Under 6 rows the footer is hidden. Under 28 columns, the content is at most 20 cells wide. The slides still render but won't be readable; this is a sign to resize, not to redesign.
 
 **The notes view stays on "Waiting for the presenter".** Both must open the same deck file (relative paths and symlinks are fine; a copy isn't). They sync through a small file in the system temp directory, so both must also run as the same user with the same `TMPDIR`; running one over SSH on another machine won't work. If the presenter crashed, restart it.
+
+**A message appears at the bottom of the screen.** That's the status line. At start and after a reload it shows warnings about the deck for a few seconds: an unknown theme or transition name, an unknown theme key, or a speaker note missing its `-->`. Each one names the problem (with a line number where it has one); fix the deck and save. `tuipresent -check deck.md` prints the same warnings.
+
+**A light theme is unreadable, or colors clash with the terminal.** Without painting, slides use the terminal's own background. Add `background: paint` to the theme in front matter, or run with `-background paint`.
 
 **A directive did nothing.** Unknown or misspelled directives are silently ignored. Compare against the [directive list](reference.md#directives) and check the slide with `-dump`.

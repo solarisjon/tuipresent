@@ -5,7 +5,7 @@ description: Write and verify a terminal slide deck for tuipresent, a presenterm
 
 # tuipresent deck authoring
 
-Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rule here is unclear, or before using columns, pauses or `+exec` together.
+This skill is self-contained. In the tuipresent repo, `docs/AGENT_GUIDE.md` has the full workflow and design guidance and `docs/agent/LANGUAGE.md` the exact syntax rules; read them when a rule here is unclear, or before using columns, pauses or `+exec` together.
 
 ## Workflow
 
@@ -20,7 +20,7 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
    ./bin/tuipresent -dump -w 100 -h 30 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
    ./bin/tuipresent -dump -w 80 -h 24 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
    ```
-   `-check` reports rows over budget and these column overflows: wide body lines, too-long titles, text clipped in columns, and code lines over the no-wrap limit. It does not count `+exec` output unless you add `-exec`.
+   `-check` reports rows over budget and these column overflows: wide body lines, too-long titles, text clipped in columns, and code lines over the no-wrap limit. It does not count `+exec` output unless you add `-exec`. It prints warnings to stderr as `deck.md: warning: ...` (unknown theme or transition name, unknown theme key, a speaker note missing `-->`) without failing: fix every one.
    For decks with `+exec`, add `-exec` to `-check`/`-dump` to run every block first and measure its output. This executes the deck's code. Use it only on a deck you wrote or reviewed, with blocks that follow the safety rules below, and only with the user's approval. Otherwise budget output rows by hand. Read the dump for readability and reveal order.
 5. **Fix and re-verify** until both checks pass and the dumps look right.
 6. **Hand off.** Give the path, slide count, `./bin/tuipresent deck.md`, and the keys: `space`/`→` next, `←` back, `e` run exec, `r` reload, `q` quit. Also list what each `+exec` block runs.
@@ -28,22 +28,22 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 ## Syntax
 
 - **Front matter** must start at line 1 with `---`. Keys: `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`.
-  - `theme: dracula` and `theme:` / `  name: dracula` are equivalent. Exact names only (no substring matching): dark themes `dark` (default), `tokyonight-storm`, `tokyonight-night`, `tokyonight-moon`, `catppuccin-mocha`, `catppuccin-macchiato`, `catppuccin-frappe`, `gruvbox-dark`, `dracula`, `nord`, `rose-pine`, `solarized-dark`, `everforest-dark`, `kanagawa`; light themes `light`, `tokyonight-day`, `catppuccin-latte`, `gruvbox-light`, `rose-pine-dawn`, `solarized-light`. An unknown name renders in `dark` with a stderr warning from `-check`.
-  - Mapping keys: `background: paint` draws every cell on the theme background (use it for light themes, bright rooms/projectors, or when the presenting terminal is unknown); palette overrides such as `accent: "#88c0d0"` (always quote colors); `path: themes/x.yaml` for a custom theme file (`extends: nord` plus palette keys `background`, `foreground`, `dim`, `accent`, `accent2`, `heading`, `subheading`, `link`, `bullet`, `code`, `code_background`, `quote`, `border`, `code_style`). See `examples/themes/brand.yaml`.
+  - `theme: dracula` and `theme:` / `  name: dracula` are equivalent. Names are case-insensitive but otherwise exact (no substring matching): dark themes `dark` (default), `tokyonight-storm`, `tokyonight-night`, `tokyonight-moon`, `catppuccin-mocha`, `catppuccin-macchiato`, `catppuccin-frappe`, `gruvbox-dark`, `dracula`, `nord`, `rose-pine`, `solarized-dark`, `everforest-dark`, `kanagawa`; light themes `light`, `tokyonight-day`, `catppuccin-latte`, `gruvbox-light`, `rose-pine-dawn`, `solarized-light`. Aliases such as `tokyonight`, `catppuccin`, `gruvbox`, `solarized` map to the first variant. An unknown name renders in `dark` with a warning.
+  - Mapping keys: `name`; `background: terminal|paint` (the painting mode, not a color: `paint` draws every cell on the theme background; use it for light themes, bright rooms/projectors, or an unknown presenting terminal); palette overrides `foreground`, `dim`, `accent`, `accent2`, `heading`, `subheading`, `link`, `bullet`, `code`, `code_background`, `quote`, `border` as quoted colors (`accent: "#88c0d0"`; a bare `#` is a YAML comment); `code_style` (a chroma style); `path: themes/x.yaml` for a theme file relative to the deck. A theme file has `extends: nord` (only valid there) plus the same palette keys, where `background` is a color. Bad colors or an unreadable theme file are load errors.
   - Theme choice: light theme + `background: paint` for bright rooms/projectors; dark themes for dark rooms and screens.
   - Setting `title` adds a cover slide, so total slides = sections + 1.
-- **Slides** are separated by `<!-- end_slide -->` on its own line. It is ignored inside code fences.
+- **Slides** are separated by `<!-- end_slide -->` on its own line. It is ignored inside code fences. Sections with no title, content or notes are dropped; a section with only speaker notes is kept as a blank slide.
 - **Slide title:** a setext H1 (`Title` then a `===` line) before any other content. `# Title` is NOT a title. It renders as a body heading.
-- **Directives** must be lowercase and alone on their line. Unknown ones are silently dropped.
+- **Directives** must be lowercase and alone on their line, with blank lines around them (a directive between two lines does not separate paragraphs). Unknown ones are silently dropped.
   - `<!-- pause -->` reveals the rest of the slide on the next key press. New content fades in from the background (280 ms); what was already visible stays put. Stepping back is instant.
   - `<!-- fade: off -->` makes this slide's reveals instant. Front matter `fade: false` does it deck-wide; `<!-- fade: on -->` re-enables one slide.
   - `<!-- column_layout: [2, 1] -->` starts columns. `<!-- column: 0 -->` selects one (0-based). `<!-- reset_layout -->` ends them.
   - `<!-- jump_to_middle -->` centers the slide vertically and horizontally. Plain-prose bodies are centered line by line. Bodies with a list, table, quote or code are centered as one block.
-  - `<!-- transition: slide|wipe|cover|dissolve|none -->` sets the transition for this slide. The front matter `transition:` sets the deck default, which is `slide` if unset. Unknown values fall back to `slide`.
-  - `<!-- speaker_note: text -->`, or multi-line: `<!-- speaker_note:` / note lines / `-->`. Never shown on the slide and costs 0 rows. Put talking points here, not on the slide. Viewed with `tuipresent -notes deck.md` in a second terminal.
+  - `<!-- transition: slide|wipe|cover|dissolve|none -->` sets the transition into this slide; going back from it plays the same transition reversed. The front matter `transition:` sets the deck default, which is `slide` if unset. Unknown values fall back to `slide` with a warning.
+  - `<!-- speaker_note: text -->`, or multi-line: `<!-- speaker_note:` / note lines / `-->`. Never shown on the slide and costs 0 rows. Put talking points here, not on the slide. Viewed with `tuipresent -notes deck.md` in a second terminal. A missing `-->` makes the note run to the next `end_slide` (warned), swallowing any directive in between.
 - **Not supported** (silently dropped): `incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`.
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
-  - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
+  - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`, in the deck file's directory.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
 - **Images:** `![alt](path)` alone on its line; path relative to the deck; PNG, JPEG or GIF. Scaled to fit with aspect kept: height = body rows left free on the fully revealed slide (split between stacked images, min 3), width at most the content or column width. `![image:width:50%](path)` caps the width. kitty/ghostty draw real pixels; other terminals, `-dump` and `-check` use truecolor half-blocks with the same geometry. A missing file renders as a dim `[image: alt]` box (3 rows), never an error.
 - **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-fade=false` (instant pause reveals, overrides the deck), `-images auto|kitty|blocks|off` (image drawing; `auto` uses kitty graphics in kitty/ghostty outside tmux), `-theme NAME` (preview in another theme or a `.yaml` theme file, overrides front matter, also after reload), `-background terminal|paint`, `-themes` (list themes with swatches).

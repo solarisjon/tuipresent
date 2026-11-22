@@ -6,6 +6,7 @@ How to write a tuipresent deck that reads well on a terminal: every construct th
 
 - [Deck structure](#deck-structure)
 - [Front matter](#front-matter)
+- [Themes](#themes)
 - [Slide titles](#slide-titles)
 - [Text, lists, tables, quotes and code](#text-lists-tables-quotes-and-code)
 - [Pauses](#pauses)
@@ -40,7 +41,7 @@ Gotchas:
 - A `---` line is **not** a slide separator (it's a horizontal rule, or the front matter fence at the top of the file). Only `<!-- end_slide -->` splits slides.
 - Directives are HTML comments on a line of their own, with a lowercase name: `<!-- pause -->`, `<!-- column: 1 -->`. A misspelled or unknown directive is silently ignored, and glamour hides HTML comments, so a typo just vanishes. Run `-dump` if something didn't happen.
 - Directives inside fenced code blocks are ignored, so you can show markdown source on a slide. The flip side: an unclosed fence swallows every `end_slide` after it and merges the rest of the file into one slide.
-- Empty sections (for example after a trailing `end_slide`) are dropped, not shown as blank slides.
+- Empty sections (for example after a trailing `end_slide`) are dropped, not shown as blank slides. A section with only speaker notes is kept as a blank slide, which is handy for a "pause and talk" moment.
 - Put a blank line before and after each directive. Otherwise lines either side can join into one paragraph.
 
 ## Front matter
@@ -74,6 +75,25 @@ Gotchas:
 - Without a `title` there is no cover slide, and the footer shows only the slide number.
 - The cover counts as slide 1. `-slide 3` and the footer's `3 / 10` both count it.
 - Invalid YAML stops the deck from loading, with a `front matter:` error.
+
+## Themes
+
+Pick one of twenty built-in color themes by name, and add `background: paint` when you don't control the terminal:
+
+```markdown
+---
+theme:
+  name: catppuccin-latte
+  background: paint
+---
+```
+
+- `tuipresent -themes` lists them with color swatches; `tuipresent -theme nord deck.md` previews your deck in another theme without editing it. `examples/themes.md` is a gallery deck made for this.
+- By default slides are drawn on the terminal's own background, so a light theme in a dark terminal looks wrong. `background: paint` draws every cell in the theme's colors, so the deck looks the same anywhere.
+- Override a few colors inline (`accent: "#ff6b35"`, always quoted), or put a whole brand theme in a file and use `theme: {path: themes/brand.yaml}`. See `examples/brand.md`.
+- A misspelled theme name renders in `dark` and warns.
+
+The theme list, every color key and the theme file format are in the [Reference](reference.md#themes).
 
 ## Slide titles
 
@@ -287,7 +307,7 @@ date +%Y
 - `e` runs every `+exec` block visible on the current slide (blocks behind a pause you haven't reached yet are skipped).
 - stdout and stderr are both shown. A non-zero exit appends a line like `[exit status 1]`.
 - Each run is killed after 15 seconds.
-- Code runs in the directory you launched tuipresent from, not the deck's directory.
+- Code runs in the deck file's directory, so relative paths in a demo mean the same as image paths.
 - Output is cleared when the deck reloads (on save, or `r`).
 
 **Safety.** Nothing runs unless you press `e`, or pass `-exec` to `-check` / `-dump`. But you are still running code in front of an audience:
@@ -322,9 +342,9 @@ This slide drops in from the top.
 | `dissolve` | Rows switch over in random order |
 | `none` | Instant |
 
-- The slide's own `transition:` applies when you arrive at it. Going backwards from a slide with its own `transition:` plays that kind in reverse.
+- The slide's own `transition:` applies when you arrive at it. Going back from a slide undoes the transition that brought you there: its transition (its own, or the deck default) plays in reverse.
 - `-transition KIND` on the command line overrides the front matter default (but not per-slide directives).
-- An unrecognized kind silently becomes `slide`.
+- An unrecognized kind becomes `slide` and warns: on the status line while presenting, on stderr from `-check`.
 
 Pick one default and override only to mean something: `cover` for a new section, `wipe` for a before/after, `none` for a slide that continues the previous one.
 
@@ -351,7 +371,9 @@ Roadmap
 
 - A slide can have several notes; they're shown in order.
 - Notes are markdown, so lists and emphasis work.
-- The multi-line form is the only multi-line comment the parser understands.
+- The multi-line form is the only multi-line comment the parser understands. If you forget its closing `-->`, the note runs up to the next `<!-- end_slide -->` and tuipresent warns; but any other directive before that (say a `<!-- pause -->`) closes the note and is lost.
+- A note doesn't separate paragraphs. Put blank lines around it.
+- A slide with notes but nothing else is kept as a blank slide.
 
 Put the narrative, the numbers to mention and the segue to the next slide in notes, and keep the slide itself to the claim and its evidence.
 
