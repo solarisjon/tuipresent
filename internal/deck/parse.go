@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"tuipresent/internal/transition"
 )
 
 var (
@@ -42,10 +44,18 @@ func Parse(src string) (*Deck, error) {
 	if d.Meta.Title != "" {
 		d.Slides = append(d.Slides, Slide{Cover: true, Steps: 1, Centered: true})
 	}
+	if t := d.Meta.Transition; t != "" {
+		if _, ok := transition.Lookup(t); !ok {
+			d.Warnings = append(d.Warnings, "front matter: "+transition.UnknownWarning(t))
+		}
+	}
+	// Line numbers in warnings count from the top of the file.
+	line := 1 + strings.Count(src[:len(src)-len(body)], "\n")
 	execID := 0
-	for _, chunk := range splitSlides(body) {
-		s := parseSlide(chunk, &execID)
-		if len(s.Blocks) == 0 && s.Title == "" {
+	for _, c := range splitSlides(body) {
+		s, warns := parseSlide(c.lines, line+c.start, &execID)
+		d.Warnings = append(d.Warnings, warns...)
+		if s.Title == "" && !hasContent(s.Blocks) && len(s.Notes) == 0 {
 			continue
 		}
 		d.Slides = append(d.Slides, s)
@@ -56,11 +66,34 @@ func Parse(src string) (*Deck, error) {
 	return d, nil
 }
 
+// hasContent reports whether blocks draw anything: an empty column layout
+// does not.
+func hasContent(blocks []Block) bool {
+	for _, b := range blocks {
+		if b.Kind != Columns {
+			return true
+		}
+		for _, c := range b.Children {
+			if hasContent(c) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func splitFrontMatter(src string, meta *Meta) (string, error) {
 	if !strings.HasPrefix(src, "---\n") {
 		return src, nil
 	}
 	rest := src[4:]
+	// An empty block: the closing line follows the opening one directly.
+	if rest == "---" {
+		return "", nil
+	}
+	if strings.HasPrefix(rest, "---\n") {
+		return rest[4:], nil
+	}
 	end := strings.Index(rest, "\n---\n")
 	if end < 0 {
 		if strings.HasSuffix(rest, "\n---") {
@@ -78,52 +111,72 @@ func splitFrontMatter(src string, meta *Meta) (string, error) {
 	return rest[end+5:], nil
 }
 
+// chunk is the source of one slide: its lines and the 0-based index of its
+// first line in the body.
+type chunk struct {
+	lines []string
+	start int
+}
+
 // splitSlides splits on end_slide directives that are outside code fences.
-func splitSlides(body string) [][]string {
-	var slides [][]string
-	var cur []string
+func splitSlides(body string) []chunk {
+	var slides []chunk
+	cur := chunk{}
 	fence := ""
 	lines := strings.Split(body, "\n")
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
 		if fence == "" {
-			if _, end, ok := multiLineNote(lines, i); ok {
-				cur = append(cur, lines[i:end+1]...)
+			if _, end, _, ok := multiLineNote(lines, i); ok {
+				cur.lines = append(cur.lines, lines[i:end+1]...)
 				i = end
 				continue
 			}
 		}
-		if m := fenceRe.FindStringSubmatch(line); m != nil {
-			if fence == "" {
-				fence = m[1]
-			} else if toggleFence(fence, m[1]) == "" && strings.TrimSpace(m[2]) == "" {
-				fence = ""
-			}
-		}
 		if fence == "" {
-			if m := directiveRe.FindStringSubmatch(line); m != nil && m[1] == "end_slide" {
-				slides = append(slides, cur)
-				cur = nil
-				continue
+			if m, _, ok := FenceOpen(line); ok {
+				fence = m
 			}
+		} else if ClosesFence(fence, line) {
+			fence = ""
 		}
-		cur = append(cur, line)
+		if fence == "" && isEndSlide(line) {
+			slides = append(slides, cur)
+			cur = chunk{start: i + 1}
+			continue
+		}
+		cur.lines = append(cur.lines, line)
 	}
 	return append(slides, cur)
 }
 
-func toggleFence(open, marker string) string {
-	if open == "" {
-		return marker
+func isEndSlide(line string) bool {
+	m := directiveRe.FindStringSubmatch(line)
+	return m != nil && m[1] == "end_slide"
+}
+
+// FenceOpen reports whether line opens a fenced code block: optional
+// indentation, a run of 3 or more backticks or tildes (the marker), then the
+// info string.
+func FenceOpen(line string) (marker, info string, ok bool) {
+	m := fenceRe.FindStringSubmatch(line)
+	if m == nil {
+		return "", "", false
 	}
-	if marker[0] == open[0] && len(marker) >= len(open) {
-		return ""
-	}
-	return open
+	return m[1], m[2], true
+}
+
+// ClosesFence reports whether line closes a fence opened with marker: the
+// same character, at least as many of them, and nothing else on the line.
+func ClosesFence(marker, line string) bool {
+	m := fenceRe.FindStringSubmatch(line)
+	return m != nil && m[1][0] == marker[0] && len(m[1]) >= len(marker) && strings.TrimSpace(m[2]) == ""
 }
 
 type slideParser struct {
 	slide   Slide
+	line    int // file line number of lines[0], for warnings
+	warns   []string
 	step    int
 	lines   []string
 	colIdx  int // index into slide.Blocks of the active Columns block, -1 if none
@@ -132,26 +185,30 @@ type slideParser struct {
 	content bool // any content seen yet (for title detection)
 }
 
-func parseSlide(lines []string, execID *int) Slide {
-	p := &slideParser{colIdx: -1, curCol: -1, execID: execID}
+// parseSlide parses one chunk; line is the file line number of lines[0].
+func parseSlide(lines []string, line int, execID *int) (Slide, []string) {
+	p := &slideParser{colIdx: -1, curCol: -1, execID: execID, line: line}
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
 
-		if m := fenceRe.FindStringSubmatch(line); m != nil {
-			i = p.fence(lines, i, m[1], m[2])
+		if marker, info, ok := FenceOpen(line); ok {
+			i = p.fence(lines, i, marker, info)
 			continue
 		}
 
-		if note, end, ok := multiLineNote(lines, i); ok {
+		if note, end, closed, ok := multiLineNote(lines, i); ok {
 			if note != "" {
 				p.slide.Notes = append(p.slide.Notes, note)
+			}
+			if !closed {
+				p.warn(i, "speaker_note has no closing -->; the note runs to the end of the slide")
 			}
 			i = end
 			continue
 		}
 
 		if m := directiveRe.FindStringSubmatch(line); m != nil {
-			p.directive(m[1], m[2])
+			p.directive(i, m[1], m[2])
 			continue
 		}
 
@@ -176,7 +233,12 @@ func parseSlide(lines []string, execID *int) Slide {
 	}
 	p.flush()
 	p.slide.Steps = p.step + 1
-	return p.slide
+	return p.slide, p.warns
+}
+
+// warn records a problem found on lines[i] of the chunk.
+func (p *slideParser) warn(i int, msg string) {
+	p.warns = append(p.warns, fmt.Sprintf("line %d: %s", p.line+i, msg))
 }
 
 // fence consumes a fenced code block starting at lines[i] and returns the index of its last line.
@@ -190,10 +252,8 @@ func (p *slideParser) fence(lines []string, i int, marker, info string) int {
 		}
 	}
 	j := i + 1
-	for ; j < len(lines); j++ {
-		if m := fenceRe.FindStringSubmatch(lines[j]); m != nil && toggleFence(marker, m[1]) == "" && strings.TrimSpace(m[2]) == "" {
-			break
-		}
+	for j < len(lines) && !ClosesFence(marker, lines[j]) {
+		j++
 	}
 	end := min(j, len(lines)-1)
 	if !isExec {
@@ -210,7 +270,7 @@ func (p *slideParser) fence(lines []string, i int, marker, info string) int {
 	return end
 }
 
-func (p *slideParser) directive(name, arg string) {
+func (p *slideParser) directive(i int, name, arg string) {
 	switch name {
 	case "pause":
 		p.flush()
@@ -234,6 +294,11 @@ func (p *slideParser) directive(name, arg string) {
 		p.slide.Centered = true
 	case "transition":
 		p.slide.Transition = strings.TrimSpace(arg)
+		if t := p.slide.Transition; t != "" {
+			if _, ok := transition.Lookup(t); !ok {
+				p.warn(i, transition.UnknownWarning(t))
+			}
+		}
 	case "speaker_note":
 		if note := strings.TrimSpace(arg); note != "" {
 			p.slide.Notes = append(p.slide.Notes, note)
@@ -244,26 +309,31 @@ func (p *slideParser) directive(name, arg string) {
 }
 
 // multiLineNote reports whether lines[i] opens a speaker_note comment that
-// closes on a later line. It returns the note text (dedented and trimmed) and
-// the index of the closing line. An unclosed note runs to the end of lines.
-func multiLineNote(lines []string, i int) (string, int, bool) {
+// closes on a later line. It returns the note text (dedented and trimmed),
+// the index of the note's last line, and whether a closing --> was found.
+// An unclosed note stops before the next end_slide directive, which it
+// leaves in place, or runs to the end of lines.
+func multiLineNote(lines []string, i int) (note string, end int, closed, ok bool) {
 	if strings.Contains(lines[i], "-->") {
-		return "", i, false
+		return "", i, false, false
 	}
 	m := noteOpenRe.FindStringSubmatch(lines[i])
 	if m == nil {
-		return "", i, false
+		return "", i, false, false
 	}
 	body := []string{m[1]}
 	j := i + 1
 	for ; j < len(lines); j++ {
+		if isEndSlide(lines[j]) {
+			break
+		}
 		if k := strings.Index(lines[j], "-->"); k >= 0 {
 			body = append(body, lines[j][:k])
-			break
+			return strings.TrimSpace(dedent(body)), j, true, true
 		}
 		body = append(body, lines[j])
 	}
-	return strings.TrimSpace(dedent(body)), min(j, len(lines)-1), true
+	return strings.TrimSpace(dedent(body)), j - 1, false, true
 }
 
 // dedent removes the indentation shared by all non-blank lines after the first

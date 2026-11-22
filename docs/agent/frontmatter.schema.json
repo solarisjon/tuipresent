@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "tuipresent deck front matter",
-  "description": "The YAML block between the opening '---' (first line of the file) and the next line that is exactly '---'. Mirrors deck.Meta in internal/deck/deck.go. Unknown keys are ignored by the parser, so additionalProperties is true. See docs/agent/LANGUAGE.md section 2.",
+  "description": "The YAML block between the opening '---' (first line of the file) and the next line that is exactly '---'. Mirrors deck.Meta in internal/deck/deck.go and the theme keys in internal/render/theme.go; internal/docscheck fails if they drift apart. Unknown keys are ignored by the parser, so additionalProperties is true. See docs/agent/LANGUAGE.md sections 2 and 18.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -22,27 +22,21 @@
       "description": "Shown on the cover after the author as 'author  ·  date'. Free text; not parsed as a date."
     },
     "theme": {
-      "description": "Color theme. A scalar name, or a mapping with a name. Accepted names and any further theme properties are defined by the theme system (being rewritten); extra mapping keys are currently ignored.",
-      "$comment": "TODO(themes): fill names and properties from the theme system.",
+      "description": "Color theme: a built-in name (or alias), or a mapping. Unknown names render in 'dark' with a warning. Run 'tuipresent -themes' for the list.",
+      "default": "dark",
       "anyOf": [
-        { "$ref": "#/$defs/text" },
-        {
-          "type": "object",
-          "properties": {
-            "name": { "$ref": "#/$defs/text" }
-          },
-          "additionalProperties": true
-        }
+        { "$ref": "#/$defs/themeName" },
+        { "$ref": "#/$defs/themeObject" }
       ]
     },
     "transition": {
-      "description": "Default transition into every slide. The parser lowercases and trims the value and silently treats anything else as 'slide'; this schema only allows the five meaningful values so typos are caught.",
+      "description": "Default transition into every slide. The parser lowercases and trims the value; anything else acts as 'slide' and produces a warning. This schema only allows the five meaningful values so typos are caught.",
       "type": "string",
       "enum": ["slide", "wipe", "cover", "dissolve", "none"],
       "default": "slide"
     },
     "fade": {
-      "description": "Pause-reveal fade for the whole deck. Disabled by false or by the strings 'false', 'off', 'no', 'none' (case-insensitive); any other value, or absence, leaves it on. A slide's <!-- fade: ... --> directive overrides it.",
+      "description": "Pause-reveal fade for the whole deck. Disabled by false or by the strings 'false', 'off', 'no', 'none' (case-insensitive); any other value, or absence, leaves it on. A slide's <!-- fade: ... --> directive overrides it, and the -fade=false flag overrides both.",
       "anyOf": [
         { "type": "boolean" },
         { "type": "string" }
@@ -54,6 +48,56 @@
     "text": {
       "description": "Any YAML scalar is accepted and used as its text (123 becomes \"123\"). Write a string. Sequences and mappings are a load error.",
       "type": ["string", "number", "boolean", "null"]
+    },
+    "themeName": {
+      "description": "A built-in theme name or alias, matched case-insensitively. Other strings are accepted by the parser but fall back to 'dark' with a warning.",
+      "type": "string",
+      "examples": [
+        "dark", "light",
+        "tokyonight-storm", "tokyonight-night", "tokyonight-moon", "tokyonight-day",
+        "catppuccin-mocha", "catppuccin-macchiato", "catppuccin-frappe", "catppuccin-latte",
+        "gruvbox-dark", "gruvbox-light", "dracula", "nord", "rose-pine", "rose-pine-dawn",
+        "solarized-dark", "solarized-light", "everforest-dark", "kanagawa"
+      ]
+    },
+    "color": {
+      "description": "A hex color, #rgb or #rrggbb. Quote it in YAML: a bare # starts a comment and leaves the value empty, which is a load error.",
+      "type": "string",
+      "pattern": "^\\s*#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\s*$"
+    },
+    "themeObject": {
+      "description": "Theme mapping. Palette keys override colors of the theme chosen by name or path. Other keys (including 'extends', which only works in theme files) are ignored with a warning.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": { "$ref": "#/$defs/themeName" },
+        "path": {
+          "description": "Custom theme file (YAML with optional 'extends' plus palette keys), relative to the deck file. Wins over name (with a warning if both are set).",
+          "type": "string"
+        },
+        "background": {
+          "description": "Painting mode, not a color: 'terminal' draws on the terminal's own background, 'paint' paints the theme background and foreground into every cell. Other values warn and mean 'terminal'. Set the background color in a theme file.",
+          "type": "string",
+          "enum": ["terminal", "paint"],
+          "default": "terminal"
+        },
+        "foreground": { "$ref": "#/$defs/color", "description": "Body text." },
+        "dim": { "$ref": "#/$defs/color", "description": "Footer, cover byline, missing-image boxes." },
+        "accent": { "$ref": "#/$defs/color", "description": "Title gradient start, rules, progress bar, status line; default for heading, link and bullet." },
+        "accent2": { "$ref": "#/$defs/color", "description": "Title gradient end; default for subheading and code." },
+        "heading": { "$ref": "#/$defs/color", "description": "# headings. Default: accent." },
+        "subheading": { "$ref": "#/$defs/color", "description": "## to ###### headings. Default: accent2." },
+        "link": { "$ref": "#/$defs/color", "description": "Links. Default: accent." },
+        "bullet": { "$ref": "#/$defs/color", "description": "List bullets and numbers. Default: accent." },
+        "code": { "$ref": "#/$defs/color", "description": "Inline code text. Default: accent2." },
+        "code_background": { "$ref": "#/$defs/color", "description": "Inline code and code-block panels. Default: background mixed 8% toward foreground." },
+        "quote": { "$ref": "#/$defs/color", "description": "Blockquote text and bar. Default: dim." },
+        "border": { "$ref": "#/$defs/color", "description": "Table borders and horizontal rules. Default: dim." },
+        "code_style": {
+          "description": "Chroma syntax-highlighting style name, e.g. monokai. Unknown names warn and keep the base theme's style.",
+          "type": "string"
+        }
+      }
     }
   }
 }

@@ -153,4 +153,4 @@ Leave the deck open and edit `hello.md` in another window: the slides reload as 
 - [Authoring](authoring.md): columns, images, runnable code, speaker notes, transitions, and advice on designing slides that read well in a terminal.
 - [Presenting](presenting.md): a speaker-notes window in a split pane, live demos, checking the projector size, troubleshooting.
 - [Reference](reference.md): every flag, key, directive and layout number in tables.
-- [`examples/`](../../examples/README.md): four complete decks to copy from.
+- [`examples/`](../../examples/README.md): complete decks to copy from.

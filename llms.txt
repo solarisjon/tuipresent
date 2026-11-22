@@ -1,27 +1,28 @@
 # tuipresent
 
-> tuipresent is a Go terminal presentation tool. It renders presenterm-compatible markdown decks as full-screen slides with transitions, pause fade-in reveals, columns, kitty graphics images with a half-block fallback, speaker notes in a second terminal, live reload on save, and runnable `+exec` code blocks. `tuipresent -check` and `-dump` verify a deck's layout without a TTY.
+> tuipresent is a Go terminal presentation tool. It renders presenterm-compatible markdown decks as full-screen slides with transitions, pause fade-in reveals, columns, twenty built-in color themes (plus custom theme files and background painting), kitty graphics images with a half-block fallback, speaker notes in a second terminal, live reload on save, and runnable `+exec` code blocks. `tuipresent -check` and `-dump` verify a deck's layout without a TTY.
 
-Build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./bin/tuipresent -check -w 80 -h 24 deck.md` and read `./bin/tuipresent -dump -w 80 -h 24 deck.md`. Never pass `-exec` without the user's approval: it runs the deck's code.
+Build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./bin/tuipresent -check -w 80 -h 24 deck.md` (fix any `warning:` lines on stderr too) and read `./bin/tuipresent -dump -w 80 -h 24 deck.md`. Never pass `-exec` without the user's approval: it runs the deck's code.
 
 ## Language reference
 
-- [Language specification](docs/agent/LANGUAGE.md): normative grammar, parse order, directives, reveal steps, speaker notes, images, `+exec`, layout formulas with numbers for 80x24, 100x30 and 120x40, centering rules, and what `-check` measures
-- [Verified examples](docs/agent/EXAMPLES.md): minimal decks with their real `-check` and `-dump` output, covering each construct and tricky edge case
-- [Front matter JSON Schema](docs/agent/frontmatter.schema.json): JSON Schema 2020-12 for the YAML front matter, usable with yaml-language-server
+- [Language specification](docs/agent/LANGUAGE.md): normative grammar, parse order, directives, reveal steps, speaker notes, images, `+exec`, layout formulas with numbers for 80x24, 100x30 and 120x40, centering, themes (names, aliases, palette keys, theme files, painting), warnings and errors, and what `-check` measures
+- [Verified examples](docs/agent/EXAMPLES.md): minimal decks with their real `-check` and `-dump` output, covering each construct and tricky edge case (checked by `go test`)
+- [Front matter JSON Schema](docs/agent/frontmatter.schema.json): JSON Schema 2020-12 for the YAML front matter, including the theme mapping, usable with yaml-language-server
 
 ## Agent workflow
 
 - [Agent docs index](docs/agent/README.md): read order and which file answers which question
-- [Agent guide](docs/AGENT_GUIDE.md): workflow from brief to verified deck, layout budget, design guidance and a pre-handoff checklist
-- [Agent skill](docs/agent-skill/SKILL.md): condensed deck-authoring skill for agent runtimes
+- [Agent guide](docs/AGENT_GUIDE.md): workflow from brief to verified deck, layout budget and rules of thumb, design guidance (including choosing a theme) and a pre-handoff checklist
+- [Agent skill](docs/agent-skill/SKILL.md): condensed, self-contained deck-authoring skill for agent runtimes
 
 ## User documentation
 
 - [User guide](docs/guide/README.md): human-oriented guide to writing and presenting decks
-- [README](README.md): overview, installation and usage
+- [Reference](docs/guide/reference.md): complete tables of flags, keys, warnings, front matter, themes, directives, images, `+exec`, transitions and layout numbers
+- [README](README.md): overview, installation and quick start
 
 ## Examples
 
-- [Example decks](examples/README.md): verified reference decks (feature tour, incident postmortem, product pitch, technical talk) that pass `-check` at 100x30 and 80x24
+- [Example decks](examples/README.md): verified reference decks (feature tour, incident postmortem, product pitch, technical talk, theme gallery, custom theme) that pass `-check` at 100x30 and 80x24
 - [Feature tour](examples/tour.md): self-demonstrating deck showing each feature next to its source

@@ -65,6 +65,10 @@ type Deck struct {
 	Meta   Meta
 	Slides []Slide
 	Dir    string // directory of the deck file; image paths resolve against it
+	// Warnings are recoverable problems found while parsing, such as an
+	// unknown transition or an unclosed speaker note, each prefixed with
+	// where it is ("line 12: ...", "front matter: ...").
+	Warnings []string
 }
 
 // FadeEnabled reports whether content revealed by a pause on slide i fades in:

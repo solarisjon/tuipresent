@@ -189,12 +189,15 @@ func padLeft(s string, n int) string {
 	return strings.Repeat(" ", n) + s
 }
 
+// contentWidth is the width slide content is laid out in: w less a 4-cell
+// margin each side, at most maxContentWidth. Narrow screens keep at least
+// 20 cells (or w - 2 when that is less), so the width never shrinks as w grows.
 func contentWidth(w int) int {
-	if cw := min(w-8, maxContentWidth); cw >= 20 {
-		return cw
-	}
-	return max(w-2, 1)
+	return max(min(w-8, maxContentWidth), min(w-2, 20), 1)
 }
+
+// ContentWidth is the content width of a w-cell-wide screen.
+func ContentWidth(w int) int { return contentWidth(w) }
 
 // Overflow reports how many rows and columns the fully revealed slide exceeds a w×h screen by.
 func (r *Renderer) Overflow(idx, w, h int) (rows, cols int) {
@@ -251,22 +254,23 @@ func codeOverflow(blocks []deck.Block, width int, execOut map[int]string) int {
 	return over
 }
 
+// fencedCode returns the lines inside fenced code blocks in md, using the
+// parser's fence rules, so lines of a nested fence count as code.
 func fencedCode(md string) string {
 	var out []string
 	fence := ""
 	for _, l := range strings.Split(md, "\n") {
-		t := strings.TrimSpace(l)
-		if strings.HasPrefix(t, "```") || strings.HasPrefix(t, "~~~") {
-			if fence == "" {
-				fence = t[:3]
-			} else if strings.HasPrefix(t, fence) {
-				fence = ""
+		if fence == "" {
+			if m, _, ok := deck.FenceOpen(l); ok {
+				fence = m
 			}
 			continue
 		}
-		if fence != "" {
-			out = append(out, l)
+		if deck.ClosesFence(fence, l) {
+			fence = ""
+			continue
 		}
+		out = append(out, l)
 	}
 	return strings.Join(out, "\n")
 }
@@ -323,13 +327,19 @@ func (r *Renderer) body(blocks []deck.Block, step, width int) []string {
 }
 
 func columnWidths(b deck.Block, width int) []int {
+	return ColumnWidths(b.Widths, width)
+}
+
+// ColumnWidths is the width of each column of a column_layout with these
+// relative widths, laid out in width cells.
+func ColumnWidths(weights []int, width int) []int {
 	total := 0
-	for _, wt := range b.Widths {
+	for _, wt := range weights {
 		total += wt
 	}
-	avail := width - columnGap*(len(b.Widths)-1)
-	out := make([]int, len(b.Widths))
-	for i, wt := range b.Widths {
+	avail := width - columnGap*(len(weights)-1)
+	out := make([]int, len(weights))
+	for i, wt := range weights {
 		out[i] = max(avail*wt/total, 1)
 	}
 	return out

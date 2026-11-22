@@ -14,7 +14,10 @@ import (
 
 const root = "../.."
 
-var docs = []string{"README.md", "docs/AGENT_GUIDE.md", "docs/agent-skill/SKILL.md"}
+// docs must each mention every directive, transition kind, CLI flag and
+// built-in theme: the human reference, the agent spec, the agent guide and
+// the standalone agent skill.
+var docs = []string{"docs/guide/reference.md", "docs/agent/LANGUAGE.md", "docs/AGENT_GUIDE.md", "docs/agent-skill/SKILL.md"}
 
 func read(t *testing.T, rel string) string {
 	t.Helper()
@@ -95,7 +98,7 @@ func TestDocsCoverThemes(t *testing.T) {
 	if len(names) == 0 {
 		t.Fatal("no themes found")
 	}
-	for _, doc := range []string{"README.md", "docs/AGENT_GUIDE.md", "docs/agent-skill/SKILL.md", "examples/themes.md"} {
+	for _, doc := range append(docs, "examples/themes.md") {
 		text := read(t, doc)
 		for _, n := range names {
 			if !regexp.MustCompile(`(^|[^a-z-])` + regexp.QuoteMeta(n) + `($|[^a-z-])`).MatchString(text) {
@@ -105,12 +108,15 @@ func TestDocsCoverThemes(t *testing.T) {
 	}
 }
 
+// requireMentions requires each token as a whole word in every doc, so
+// "-theme" is not satisfied by "-themes" nor "column" by "column_layout".
 func requireMentions(t *testing.T, items []string, token func(string) string) {
 	t.Helper()
 	for _, doc := range docs {
 		text := read(t, doc)
 		for _, it := range items {
-			if !strings.Contains(text, token(it)) {
+			re := regexp.MustCompile(`(^|[^A-Za-z0-9_-])` + regexp.QuoteMeta(token(it)) + `($|[^A-Za-z0-9_-])`)
+			if !re.MatchString(text) {
 				t.Errorf("%s does not mention %q", doc, token(it))
 			}
 		}
