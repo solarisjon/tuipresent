@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -23,19 +24,21 @@ func checkFrame(t *testing.T, f string, w, h int) {
 	}
 }
 
-func TestFrameDimensionsDemoDeck(t *testing.T) {
-	d, err := deck.Load("../../cpe-staff-meeting-demo.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, size := range [][2]int{{40, 15}, {100, 30}, {220, 60}} {
-		w, h := size[0], size[1]
-		r := New(d)
-		for i, s := range d.Slides {
-			for st := range s.Steps {
-				t.Run(fmt.Sprintf("%dx%d/slide%d/step%d", w, h, i+1, st+1), func(t *testing.T) {
-					checkFrame(t, r.Frame(i, st, w, h), w, h)
-				})
+func TestFrameDimensionsExampleDecks(t *testing.T) {
+	for _, path := range exampleDecks(t) {
+		d, err := deck.Load(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, size := range [][2]int{{40, 15}, {100, 30}, {220, 60}} {
+			w, h := size[0], size[1]
+			r := New(d)
+			for i, s := range d.Slides {
+				for st := range s.Steps {
+					t.Run(fmt.Sprintf("%s/%dx%d/slide%d/step%d", filepath.Base(path), w, h, i+1, st+1), func(t *testing.T) {
+						checkFrame(t, r.Frame(i, st, w, h), w, h)
+					})
+				}
 			}
 		}
 	}

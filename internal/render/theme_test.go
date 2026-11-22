@@ -201,7 +201,7 @@ func exampleDecks(t *testing.T) []string {
 			out = append(out, p)
 		}
 	}
-	return append(out, "../../cpe-staff-meeting-demo.md")
+	return out
 }
 
 // cellBackgrounds reports, per cell of a line, whether it has an explicit

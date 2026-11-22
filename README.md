@@ -81,7 +81,7 @@ For AI agents and tools:
 - [AGENT_GUIDE.md](docs/AGENT_GUIDE.md): the workflow for writing and verifying a deck, with layout budgets and design guidance.
 - [SKILL.md](docs/agent-skill/SKILL.md): a condensed, standalone Claude Code skill.
 
-[`examples/`](examples/README.md) has ready-to-run decks: a feature tour, an incident postmortem, a keynote-style pitch, a technical talk with live demos, a theme gallery and a deck in a custom theme. [`cpe-staff-meeting-demo.md`](cpe-staff-meeting-demo.md) is a longer example.
+[`examples/`](examples/README.md) has ready-to-run decks: a feature tour, an incident postmortem, a keynote-style pitch, a technical talk with live demos, a theme gallery and a deck in a custom theme.
 
 ## For AI agents
 

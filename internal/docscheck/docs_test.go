@@ -37,8 +37,7 @@ func decks(t *testing.T) []string {
 			out = append(out, p)
 		}
 	}
-	root, _ := filepath.Glob(filepath.Join(root, "*-demo.md"))
-	return append(out, root...)
+	return out
 }
 
 func TestDecksFitStandardScreens(t *testing.T) {

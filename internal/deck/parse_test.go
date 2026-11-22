@@ -422,12 +422,73 @@ func TestUnclosedFence(t *testing.T) {
 	}
 }
 
-func TestDemoDeck(t *testing.T) {
-	d, err := Load("../../cpe-staff-meeting-demo.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if d.Meta.Title != "CPE Staff Meeting" || d.Meta.Theme.Name != "tokyonight-storm" {
+// structureDeck mirrors a typical presenterm deck: cover, table, centered
+// statement with a pause, pauses inside columns, and a trailing exec block.
+const structureDeck = `---
+title: Team Sync
+author: Example Author
+theme:
+  name: tokyonight-storm
+---
+
+Agenda
+===
+
+| Time | Topic |
+|------|-------|
+| 3:40 | Opening |
+
+<!-- end_slide -->
+
+<!-- jump_to_middle -->
+
+We ship small changes
+===
+
+# often.
+
+<!-- pause -->
+
+Measure, then decide.
+
+<!-- end_slide -->
+
+Capacity
+===
+
+<!-- column_layout: [1, 1] -->
+
+<!-- column: 0 -->
+
+* one
+<!-- pause -->
+* two
+<!-- pause -->
+* three
+
+<!-- column: 1 -->
+
+` + "```text" + `
+levers
+` + "```" + `
+
+<!-- end_slide -->
+
+Runbook
+===
+
+Owner: on-call
+
+<!-- pause -->
+
+` + "```bash +exec" + `
+echo "assigned: within 2 hours"
+` + "```" + `
+`
+
+func TestDeckStructure(t *testing.T) {
+	d := mustParse(t, structureDeck)
+	if d.Meta.Title != "Team Sync" || d.Meta.Theme.Name != "tokyonight-storm" {
 		t.Errorf("Meta = %+v", d.Meta)
 	}
 	want := []struct {
@@ -436,13 +497,9 @@ func TestDemoDeck(t *testing.T) {
 	}{
 		{"", 1}, // cover
 		{"Agenda", 1},
-		{"We are an escalation-sustaining", 2},
-		{"Offsite: how we create capacity", 4},
-		{"Thrive: engagement 71, four-year slide", 2},
-		{"Thrive: strong teams, strained above", 2},
-		{"CSE culture ambassadors", 1},
-		{"Sev1: one owner, one source of truth", 2},
-		{"Before the year closes", 2},
+		{"We ship small changes", 2},
+		{"Capacity", 3},
+		{"Runbook", 2},
 	}
 	if len(d.Slides) != len(want) {
 		t.Fatalf("got %d slides, want %d", len(d.Slides), len(want))
@@ -456,9 +513,9 @@ func TestDemoDeck(t *testing.T) {
 	if !d.Slides[0].Cover || !d.Slides[2].Centered {
 		t.Error("expected cover slide 0 and centered slide 2")
 	}
-	sev := d.Slides[7].Blocks
-	if last := sev[len(sev)-1]; last.Kind != Exec || last.Lang != "bash" || last.Step != 1 || last.ExecID != 1 {
-		t.Errorf("sev1 exec block = %+v", last)
+	run := d.Slides[4].Blocks
+	if last := run[len(run)-1]; last.Kind != Exec || last.Lang != "bash" || last.Step != 1 || last.ExecID != 1 {
+		t.Errorf("exec block = %+v", last)
 	}
 }
 
