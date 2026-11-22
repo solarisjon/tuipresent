@@ -73,6 +73,12 @@ func PaletteKeys() []string {
 	return out
 }
 
+// ThemeKeys lists every key a theme file, or the front-matter theme mapping
+// besides name, path and background, may set: the palette keys and code_style.
+func ThemeKeys() []string {
+	return append(PaletteKeys(), "code_style")
+}
+
 type builtin struct {
 	name  string
 	style string // chroma style
@@ -362,7 +368,7 @@ func applyValues(t *Theme, vals map[string]string, src string, warns *[]string) 
 			}
 		}
 		if field == nil {
-			*warns = append(*warns, fmt.Sprintf("%s: ignoring unknown key %q (valid: %s, code_style)", src, k, strings.Join(PaletteKeys(), ", ")))
+			*warns = append(*warns, fmt.Sprintf("%s: ignoring unknown key %q (valid: %s)", src, k, strings.Join(ThemeKeys(), ", ")))
 			continue
 		}
 		if strings.TrimSpace(v) == "" {

@@ -18,6 +18,7 @@ import (
 	"tuipresent/internal/img"
 	"tuipresent/internal/notes"
 	"tuipresent/internal/render"
+	"tuipresent/internal/report"
 	"tuipresent/internal/transition"
 )
 
@@ -25,7 +26,14 @@ const (
 	transitionDuration = 380 * time.Millisecond
 	fadeDuration       = 280 * time.Millisecond
 	frameInterval      = time.Second / 60
-	execTimeout        = 15 * time.Second
+)
+
+var (
+	execTimeout = 15 * time.Second
+	// execWaitDelay bounds how long a run waits for its output pipe after
+	// the command exits or times out, so a background child that keeps the
+	// pipe open can't hold the run past the timeout.
+	execWaitDelay = 500 * time.Millisecond
 )
 
 func main() {
@@ -93,9 +101,7 @@ func main() {
 		return
 	}
 	if *check || *dump {
-		for _, w := range r.ThemeWarnings() {
-			fmt.Fprintf(os.Stderr, "%s: warning: %s\n", path, w)
-		}
+		report.PrintWarnings(os.Stderr, path, report.Warnings(d, r, flags.transition))
 	}
 	if *runExec && (*check || *dump) {
 		var blocks []deck.Block
@@ -103,32 +109,19 @@ func main() {
 			collectExec(s.Blocks, 1<<30, &blocks)
 		}
 		for _, b := range blocks {
-			r.SetExecOutput(b.ExecID, runBlock(b))
+			r.SetExecOutput(b.ExecID, runBlock(b, d.Dir))
 		}
 	}
 
 	if *check {
-		bad := 0
-		for i := range d.Slides {
-			rows, cols := r.Overflow(i, *dw, *dh)
-			if rows > 0 || cols > 0 {
-				bad++
-				fmt.Printf("%s: slide %d overflows %dx%d by %d rows, %d cols\n", path, i+1, *dw, *dh, rows, cols)
-			}
-		}
-		if bad > 0 {
+		if report.Check(os.Stdout, path, d, r, *dw, *dh) > 0 {
 			os.Exit(1)
 		}
-		fmt.Printf("%s: %d slides fit %dx%d\n", path, len(d.Slides), *dw, *dh)
 		return
 	}
 
 	if *dump {
-		for i, s := range d.Slides {
-			for st := range s.Steps {
-				fmt.Printf("=== slide %d step %d/%d ===\n%s\n", i+1, st+1, s.Steps, r.Frame(i, st, *dw, *dh))
-			}
-		}
+		report.Dump(os.Stdout, d, r, *dw, *dh)
 		return
 	}
 
@@ -139,11 +132,9 @@ func main() {
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
 	}
 
-	m := &model{path: path, deck: d, r: render.New(d), flags: flags, watch: *watch, stamp: stat(path),
-		statePath: notes.StatePath(path), started: time.Now(),
-		noFade: !*fade}
-	m.themePath, m.themeStamp = themeFile(d), stat(themeFile(d))
-	m.status = strings.Join(m.r.ThemeWarnings(), "; ")
+	m := newModel(path, d, flags)
+	m.watch, m.noFade = *watch, !*fade
+	m.statePath, m.started = notes.StatePath(path), time.Now()
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
 	_, err = tea.NewProgram(m).Run()
@@ -155,6 +146,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// newModel is the presenter for deck d loaded from path, with flags already
+// applied. Its status line starts with the deck's warnings, if any.
+func newModel(path string, d *deck.Deck, flags deckFlags) *model {
+	m := &model{path: path, deck: d, r: render.New(d), flags: flags, stamp: stat(path)}
+	m.themePath, m.themeStamp = themeFile(d), stat(themeFile(d))
+	m.status = strings.Join(report.Warnings(d, m.r, flags.transition), "; ")
+	return m
 }
 
 type tickMsg time.Time
@@ -326,13 +326,21 @@ func (m *model) jump(slide, step int) tea.Cmd {
 	return m.go_(slide, step, slide < m.slide)
 }
 
-func (m *model) go_(slide, step int, reverse bool) tea.Cmd {
-	kind := transition.Parse(m.deck.Slides[slide].Transition)
-	if m.deck.Slides[slide].Transition == "" {
-		kind = transition.Parse(m.deck.Meta.Transition)
+// transitionInto is slide i's effective transition: its own directive, else
+// the deck default (front matter, or -transition), else slide.
+func transitionInto(d *deck.Deck, i int) transition.Kind {
+	if t := d.Slides[i].Transition; t != "" {
+		return transition.Parse(t)
 	}
-	if reverse && m.deck.Slides[m.slide].Transition != "" {
-		kind = transition.Parse(m.deck.Slides[m.slide].Transition)
+	return transition.Parse(d.Meta.Transition)
+}
+
+func (m *model) go_(slide, step int, reverse bool) tea.Cmd {
+	// Going back undoes the transition that brought us to the current slide,
+	// so it plays the current slide's transition in reverse.
+	kind := transitionInto(m.deck, slide)
+	if reverse {
+		kind = transitionInto(m.deck, m.slide)
 	}
 	var from string
 	if m.w > 0 {
@@ -385,7 +393,7 @@ func (m *model) runExec() tea.Cmd {
 	m.status = "running…"
 	var cmds []tea.Cmd
 	for _, b := range blocks {
-		cmds = append(cmds, execCmd(b))
+		cmds = append(cmds, execCmd(b, m.deck.Dir))
 	}
 	return tea.Batch(cmds...)
 }
@@ -406,11 +414,14 @@ func collectExec(blocks []deck.Block, step int, out *[]deck.Block) {
 	}
 }
 
-func execCmd(b deck.Block) tea.Cmd {
-	return func() tea.Msg { return execMsg{id: b.ExecID, out: runBlock(b)} }
+func execCmd(b deck.Block, dir string) tea.Cmd {
+	return func() tea.Msg { return execMsg{id: b.ExecID, out: runBlock(b, dir)} }
 }
 
-func runBlock(b deck.Block) string {
+// runBlock runs an exec block in dir (the deck's directory, so relative
+// paths in the code mean what they mean for images) and returns its combined
+// output, with any error appended.
+func runBlock(b deck.Block, dir string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), execTimeout)
 	defer cancel()
 	var c *exec.Cmd
@@ -422,6 +433,8 @@ func runBlock(b deck.Block) string {
 	default:
 		c = exec.CommandContext(ctx, "bash", "-c", b.Text)
 	}
+	c.Dir = dir
+	c.WaitDelay = execWaitDelay
 	out, err := c.CombinedOutput()
 	s := string(out)
 	if err != nil {
@@ -452,7 +465,7 @@ func (m *model) reload() tea.Cmd {
 	m.deck, m.r, m.anim = d, r, nil
 	m.slide = min(m.slide, len(d.Slides)-1)
 	m.step = min(m.step, d.Slides[m.slide].Steps-1)
-	if w := r.ThemeWarnings(); len(w) > 0 {
+	if w := report.Warnings(d, r, m.flags.transition); len(w) > 0 {
 		m.status = strings.Join(w, "; ")
 		return m.clearStatusLater(statusWarnTime)
 	}

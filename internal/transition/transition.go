@@ -2,6 +2,7 @@
 package transition
 
 import (
+	"fmt"
 	"math"
 	"math/rand/v2"
 	"strings"
@@ -19,12 +20,36 @@ const (
 	Cover    Kind = "cover"
 )
 
-func Parse(s string) Kind {
-	switch k := Kind(strings.ToLower(strings.TrimSpace(s))); k {
-	case None, Slide, Wipe, Dissolve, Cover:
-		return k
+// Kinds lists every transition kind.
+var Kinds = []Kind{Slide, Wipe, Cover, Dissolve, None}
+
+// Lookup returns the kind named s (case-insensitive, trimmed) and whether
+// s names one.
+func Lookup(s string) (Kind, bool) {
+	k := Kind(strings.ToLower(strings.TrimSpace(s)))
+	for _, v := range Kinds {
+		if k == v {
+			return k, true
+		}
 	}
-	return Slide
+	return Slide, false
+}
+
+// Parse returns the kind named s, or Slide if s names none. Unknown names
+// are reported by the deck parser and the command as warnings
+// (UnknownWarning), never as errors.
+func Parse(s string) Kind {
+	k, _ := Lookup(s)
+	return k
+}
+
+// UnknownWarning describes the fallback for an unknown transition name.
+func UnknownWarning(s string) string {
+	names := make([]string, len(Kinds))
+	for i, k := range Kinds {
+		names[i] = string(k)
+	}
+	return fmt.Sprintf("unknown transition %q, using slide (valid: %s)", s, strings.Join(names, ", "))
 }
 
 // EaseOutCubic decelerates into the destination frame.
