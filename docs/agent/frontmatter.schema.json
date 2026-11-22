@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tuipresent deck front matter",
+  "description": "The YAML block between the opening '---' (first line of the file) and the next line that is exactly '---'. Mirrors deck.Meta in internal/deck/deck.go. Unknown keys are ignored by the parser, so additionalProperties is true. See docs/agent/LANGUAGE.md section 2.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "title": {
+      "$ref": "#/$defs/text",
+      "description": "Deck title. When non-empty, a cover slide is inserted as slide 1 and the title appears in the footer."
+    },
+    "sub_title": {
+      "$ref": "#/$defs/text",
+      "description": "Italic line on the cover slide. Only shown when title is set (the cover exists only then)."
+    },
+    "author": {
+      "$ref": "#/$defs/text",
+      "description": "Shown on the cover and in the footer as 'title  ·  author'."
+    },
+    "date": {
+      "$ref": "#/$defs/text",
+      "description": "Shown on the cover after the author as 'author  ·  date'. Free text; not parsed as a date."
+    },
+    "theme": {
+      "description": "Color theme. A scalar name, or a mapping with a name. Accepted names and any further theme properties are defined by the theme system (being rewritten); extra mapping keys are currently ignored.",
+      "$comment": "TODO(themes): fill names and properties from the theme system.",
+      "anyOf": [
+        { "$ref": "#/$defs/text" },
+        {
+          "type": "object",
+          "properties": {
+            "name": { "$ref": "#/$defs/text" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "transition": {
+      "description": "Default transition into every slide. The parser lowercases and trims the value and silently treats anything else as 'slide'; this schema only allows the five meaningful values so typos are caught.",
+      "type": "string",
+      "enum": ["slide", "wipe", "cover", "dissolve", "none"],
+      "default": "slide"
+    },
+    "fade": {
+      "description": "Pause-reveal fade for the whole deck. Disabled by false or by the strings 'false', 'off', 'no', 'none' (case-insensitive); any other value, or absence, leaves it on. A slide's <!-- fade: ... --> directive overrides it.",
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "string" }
+      ],
+      "default": true
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Any YAML scalar is accepted and used as its text (123 becomes \"123\"). Write a string. Sequences and mappings are a load error.",
+      "type": ["string", "number", "boolean", "null"]
+    }
+  }
+}
