@@ -30,6 +30,7 @@ func main() {
 	dh := flag.Int("h", 30, "height for -dump")
 	start := flag.Int("slide", 1, "slide to start on (1-based)")
 	trans := flag.String("transition", "", "default transition: slide|wipe|cover|dissolve|none")
+	watch := flag.Bool("watch", true, "reload the deck automatically when the file changes")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n")
 		flag.PrintDefaults()
@@ -85,7 +86,7 @@ func main() {
 		return
 	}
 
-	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans}
+	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans, watch: *watch, stamp: stat(path)}
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -117,9 +118,17 @@ type model struct {
 	status      string
 	// flagTransition is reapplied on reload so -transition beats front matter.
 	flagTransition string
+	// watch polls the deck file and reloads on change; stamp is its last seen state.
+	watch bool
+	stamp os.FileInfo
 }
 
-func (m *model) Init() tea.Cmd { return nil }
+func (m *model) Init() tea.Cmd {
+	if m.watch {
+		return watchTick()
+	}
+	return nil
+}
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -138,6 +147,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case execMsg:
 		m.r.SetExecOutput(msg.id, msg.out)
 		m.status = ""
+	case watchMsg:
+		return m, m.pollWatch()
+	case clearStatusMsg:
+		if m.status == msg.text {
+			m.status = ""
+		}
 	case tea.KeyPressMsg:
 		return m, m.key(msg.String())
 	}
@@ -281,6 +296,7 @@ func runBlock(b deck.Block) string {
 }
 
 func (m *model) reload() tea.Cmd {
+	m.stamp = stat(m.path)
 	d, err := deck.Load(m.path)
 	if err != nil {
 		m.status = err.Error()
@@ -293,7 +309,7 @@ func (m *model) reload() tea.Cmd {
 	m.slide = min(m.slide, len(d.Slides)-1)
 	m.step = min(m.step, d.Slides[m.slide].Steps-1)
 	m.status = "reloaded"
-	return tea.Tick(1200*time.Millisecond, func(time.Time) tea.Msg { return execMsg{id: -1} })
+	return tea.Tick(1200*time.Millisecond, func(time.Time) tea.Msg { return clearStatusMsg{"reloaded"} })
 }
 
 func (m *model) View() tea.View {

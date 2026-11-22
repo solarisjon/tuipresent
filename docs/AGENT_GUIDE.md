@@ -39,6 +39,8 @@ Follow these steps in order. Do not skip step 4.
 
    Keys: `→`/`space`/`l` next, `←`/`h` back, `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs.
 
+   Live reload: while the deck is open, tuipresent watches the file and reloads it on every save (also when editors or agents replace the file via rename), keeping the current slide and step. So the user can keep the deck presenting in one terminal while you edit it, and see each change immediately. If a save fails to parse, the old deck stays up and the error shows in the bottom status line until the next good save. `-watch=false` turns this off. Live reload is not a substitute for step 4: still run `-check` and `-dump`.
+
 ---
 
 ## 2. Verification (mandatory)
@@ -322,7 +324,7 @@ These come from the code. Each one fails silently.
 11. **Leading and trailing blank lines are trimmed** from every rendered block. Blank lines and `&nbsp;` cannot add vertical space.
 12. **Theme names match by substring.** A name containing `day` or `light` selects the light theme, even when it also contains `tokyo` or `dracula`. Stick to `dark`, `tokyonight-storm`, `dracula`, `light`.
 13. **Exec language fallback.** Any language other than python, python3, py or sh runs through bash.
-14. **`r` (reload) clears exec output.**
+14. **`r` (reload) clears exec output.** So does every automatic reload on save (`-watch`, on by default).
 
 ---
 

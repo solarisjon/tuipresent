@@ -42,7 +42,7 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload).
+- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables).
 
 ## Layout budget
 
