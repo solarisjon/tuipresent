@@ -290,6 +290,19 @@ Give the image a line of its own. A missing file shows `[image: alt]`.
 
 <!-- end_slide -->
 
+Photographs fill the slide
+===
+
+<!-- transition: cover -->
+
+![Mountain goat on Mount Evans](assets/mt-evans-goat.jpg)
+
+*Mountain goat, Mount Evans, Colorado.* The image takes every row the slide leaves free.
+
+<!-- speaker_note: A real 3:2 photo. In kitty or ghostty this is full resolution; elsewhere it falls back to half-blocks at the same size. -->
+
+<!-- end_slide -->
+
 <!-- jump_to_middle -->
 <!-- transition: dissolve -->
 
