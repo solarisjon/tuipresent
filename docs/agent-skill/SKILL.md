@@ -38,11 +38,12 @@ Full reference: `docs/AGENT_GUIDE.md` in the tuipresent repo. Read it when a rul
   - `<!-- column_layout: [2, 1] -->` starts columns. `<!-- column: 0 -->` selects one (0-based). `<!-- reset_layout -->` ends them.
   - `<!-- jump_to_middle -->` centers the slide vertically and horizontally. Plain-prose bodies are centered line by line. Bodies with a list, table, quote or code are centered as one block.
   - `<!-- transition: slide|wipe|cover|dissolve|none -->` sets the transition for this slide. The front matter `transition:` sets the deck default, which is `slide` if unset. Unknown values fall back to `slide`.
-- **Not supported** (silently dropped): `speaker_note`, `incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`.
+  - `<!-- speaker_note: text -->`, or multi-line: `<!-- speaker_note:` / note lines / `-->`. Never shown on the slide and costs 0 rows. Put talking points here, not on the slide. Viewed with `tuipresent -notes deck.md` in a second terminal.
+- **Not supported** (silently dropped): `incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`.
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload).
+- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-notes` (speaker notes view that follows a presenter of the same deck).
 
 ## Layout budget
 
@@ -83,7 +84,7 @@ Design for 80x24:
 
 - [ ] Front matter is valid, and the theme and transition values are valid.
 - [ ] Every slide starts with a setext title of 60 characters or fewer. All fences are closed.
-- [ ] Directives are spelled exactly: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`.
+- [ ] Directives are spelled exactly: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`.
 - [ ] No pauses in earlier columns unless intended. Exec blocks are safe and have rows reserved for output.
 - [ ] `-check` exits 0 at 100x30 and at 80x24. With `+exec`: `-exec -check` also passes if approved, otherwise output rows were budgeted by hand.
 - [ ] Both `-dump` outputs reviewed: no wrapped charts, clipped columns, cut-off titles or missing lines.

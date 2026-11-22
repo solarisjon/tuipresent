@@ -14,6 +14,8 @@ var (
 	directiveRe = regexp.MustCompile(`^\s*<!--\s*([a-z_]+)\s*(?::\s*(.*?))?\s*-->\s*$`)
 	setextH1Re  = regexp.MustCompile(`^=+\s*$`)
 	fenceRe     = regexp.MustCompile("^\\s*(```+|~~~+)\\s*(.*)$")
+	// noteOpenRe matches the first line of a multi-line speaker_note comment.
+	noteOpenRe = regexp.MustCompile(`^\s*<!--\s*speaker_note\s*(?::(.*))?$`)
 )
 
 func Load(path string) (*Deck, error) {
@@ -75,7 +77,16 @@ func splitSlides(body string) [][]string {
 	var slides [][]string
 	var cur []string
 	fence := ""
-	for _, line := range strings.Split(body, "\n") {
+	lines := strings.Split(body, "\n")
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		if fence == "" {
+			if _, end, ok := multiLineNote(lines, i); ok {
+				cur = append(cur, lines[i:end+1]...)
+				i = end
+				continue
+			}
+		}
 		if m := fenceRe.FindStringSubmatch(line); m != nil {
 			if fence == "" {
 				fence = m[1]
@@ -122,6 +133,14 @@ func parseSlide(lines []string, execID *int) Slide {
 
 		if m := fenceRe.FindStringSubmatch(line); m != nil {
 			i = p.fence(lines, i, m[1], m[2])
+			continue
+		}
+
+		if note, end, ok := multiLineNote(lines, i); ok {
+			if note != "" {
+				p.slide.Notes = append(p.slide.Notes, note)
+			}
+			i = end
 			continue
 		}
 
@@ -202,7 +221,57 @@ func (p *slideParser) directive(name, arg string) {
 		p.slide.Centered = true
 	case "transition":
 		p.slide.Transition = strings.TrimSpace(arg)
+	case "speaker_note":
+		if note := strings.TrimSpace(arg); note != "" {
+			p.slide.Notes = append(p.slide.Notes, note)
+		}
 	}
+}
+
+// multiLineNote reports whether lines[i] opens a speaker_note comment that
+// closes on a later line. It returns the note text (dedented and trimmed) and
+// the index of the closing line. An unclosed note runs to the end of lines.
+func multiLineNote(lines []string, i int) (string, int, bool) {
+	if strings.Contains(lines[i], "-->") {
+		return "", i, false
+	}
+	m := noteOpenRe.FindStringSubmatch(lines[i])
+	if m == nil {
+		return "", i, false
+	}
+	body := []string{m[1]}
+	j := i + 1
+	for ; j < len(lines); j++ {
+		if k := strings.Index(lines[j], "-->"); k >= 0 {
+			body = append(body, lines[j][:k])
+			break
+		}
+		body = append(body, lines[j])
+	}
+	return strings.TrimSpace(dedent(body)), min(j, len(lines)-1), true
+}
+
+// dedent removes the indentation shared by all non-blank lines after the first
+// (the first line is the remainder of the opening comment line).
+func dedent(lines []string) string {
+	indent := -1
+	for _, l := range lines[1:] {
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		n := len(l) - len(strings.TrimLeft(l, " \t"))
+		if indent < 0 || n < indent {
+			indent = n
+		}
+	}
+	out := []string{strings.TrimSpace(lines[0])}
+	for _, l := range lines[1:] {
+		if len(l) >= indent && indent > 0 {
+			l = l[indent:]
+		}
+		out = append(out, strings.TrimRight(l, " \t"))
+	}
+	return strings.Join(out, "\n")
 }
 
 func (p *slideParser) flush() {

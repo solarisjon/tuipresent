@@ -177,7 +177,7 @@ All directives are HTML comments. To be recognized, a directive must:
 - use a lowercase name matching `[a-z_]+`,
 - follow the form `<!-- name -->` or `<!-- name: arg -->`.
 
-Anything else (uppercase names, multi-line comments, a directive sharing a line with text) is not a directive. Glamour hides HTML comments, so it vanishes silently. Unknown directive names are also dropped silently. Directives inside fenced code blocks are ignored and render as code.
+Anything else (uppercase names, multi-line comments other than `speaker_note`, a directive sharing a line with text) is not a directive. Glamour hides HTML comments, so it vanishes silently. Unknown directive names are also dropped silently. Directives inside fenced code blocks are ignored and render as code.
 
 | Directive | Semantics |
 |-----------|-----------|
@@ -188,8 +188,9 @@ Anything else (uppercase names, multi-line comments, a directive sharing a line 
 | `<!-- reset_layout -->` | Ends the column layout. Content after it is full width, below the columns, separated by one blank row. |
 | `<!-- jump_to_middle -->` | Centers the whole slide vertically and horizontally, and removes the top margin. The title is centered and its rule shrinks to title width + 4. If the slide is plain prose and headings (no list, table, blockquote or code lines in the source), each body line is centered on its own. Otherwise the body is centered as one left-aligned block. Vertical and horizontal offsets use the fully revealed slide, so pauses do not shift it. Applies to the whole slide wherever the directive is placed. |
 | `<!-- transition: KIND -->` | Transition used when entering this slide (tuipresent extension). Also used when leaving this slide backwards. |
+| `<!-- speaker_note: text -->` | A speaker note (presenterm). Never rendered on the slide and consumes no rows. Also accepts the multi-line form: `<!-- speaker_note:` on its own line, note lines (markdown), then `-->` on its own line. Several notes on one slide are shown in order. Ignored inside fences. Shown by `tuipresent -notes deck.md` in a second terminal. |
 
-Presenterm directives that are **not supported** and silently dropped include `incremental_lists`, `speaker_note`, `new_lines`/`newline`, `alignment`, `font_size`, `include`, `skip_slide`, and `no_footer`. Do not use them. You cannot insert vertical space with a directive.
+Presenterm directives that are **not supported** and silently dropped include `incremental_lists`, `new_lines`/`newline`, `alignment`, `font_size`, `include`, `skip_slide`, and `no_footer`. Do not use them. You cannot insert vertical space with a directive.
 
 ### Transitions
 
@@ -287,6 +288,7 @@ All numbers come from `render.go` and match `-check` and `-dump`. "Rows" means t
 - A table: header, separator and one row per entry.
 - A columns block: the height of its tallest column, fully revealed. Markdown that follows it gets 1 blank row before it. Markdown right before it (including content before the first `column:`) gets no blank row.
 - `+exec` output: an extra block of output lines plus 1 to 2 rows of spacing, added at runtime.
+- `speaker_note` comments: 0 rows. They never appear on the slide, and `-dump` does not show them.
 
 ### Rules of thumb
 
@@ -334,6 +336,7 @@ These come from the code. Each one fails silently.
 - 3 to 6 bullets. Use short phrases, not sentences. No nested bullets deeper than one level.
 - Put numbers on slides. Terminals are good at aligned numbers.
 - End with a slide of next steps or asks, and optionally "Questions?" behind a pause.
+- **Talking points go in speaker notes, not on the slide.** Keep the slide to the claim and its evidence. Put the narrative, numbers to mention and the segue to the next slide in `speaker_note` comments. Notes cost no layout budget, so they never cause overflow.
 
 ### Text-art charts
 
@@ -494,7 +497,7 @@ Verified with:
 - [ ] Front matter starts at line 1 with `---`. `theme` (plain or nested `name:`) is one of `dark`, `tokyonight-storm`, `dracula`, `light`.
 - [ ] Every transition value is one of `slide`, `wipe`, `cover`, `dissolve`, `none`.
 - [ ] Every slide has a setext title (`Title` + `===`) as its first content, 60 characters or fewer.
-- [ ] Every directive is lowercase, alone on its line, spelled exactly, and one of: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`.
+- [ ] Every directive is lowercase, alone on its line, spelled exactly, and one of: `end_slide`, `pause`, `column_layout`, `column`, `reset_layout`, `jump_to_middle`, `transition`, `speaker_note`.
 - [ ] Every code fence is closed.
 - [ ] No pauses in earlier columns unless delayed later columns are intended.
 - [ ] `+exec` blocks are bash, sh or python only. They are harmless, offline, idempotent and under 15 s, with rows reserved for their output.

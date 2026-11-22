@@ -12,6 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"tuipresent/internal/deck"
+	"tuipresent/internal/notes"
 	"tuipresent/internal/render"
 	"tuipresent/internal/transition"
 )
@@ -30,6 +31,7 @@ func main() {
 	dh := flag.Int("h", 30, "height for -dump")
 	start := flag.Int("slide", 1, "slide to start on (1-based)")
 	trans := flag.String("transition", "", "default transition: slide|wipe|cover|dissolve|none")
+	notesView := flag.Bool("notes", false, "show speaker notes for a presenter running the same deck in another terminal")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n")
 		flag.PrintDefaults()
@@ -47,6 +49,14 @@ func main() {
 	}
 	if *trans != "" {
 		d.Meta.Transition = *trans
+	}
+
+	if *notesView {
+		if err := runNotes(path, d); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	r := render.New(d)
@@ -85,9 +95,13 @@ func main() {
 		return
 	}
 
-	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans}
+	m := &model{path: path, deck: d, r: render.New(d), flagTransition: *trans,
+		statePath: notes.StatePath(path), started: time.Now()}
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	m.publish()
+	_, err = tea.NewProgram(m).Run()
+	notes.Remove(m.statePath)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -117,11 +131,16 @@ type model struct {
 	status      string
 	// flagTransition is reapplied on reload so -transition beats front matter.
 	flagTransition string
+	// Speaker-notes sync (see notes.go).
+	statePath string
+	started   time.Time
+	published *notes.State
 }
 
 func (m *model) Init() tea.Cmd { return nil }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	defer m.publish()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height

@@ -22,6 +22,7 @@ tuipresent [flags] deck.md
 |------|---------|-------------|
 | `-slide N` | `1` | Slide to start on (1-based) |
 | `-transition KIND` | | Default transition: `slide`, `wipe`, `cover`, `dissolve`, `none`. Overrides front matter. |
+| `-notes` | | Show the speaker notes view instead of the slides. It follows a presenter of the same deck running in another terminal (see [Speaker notes](#speaker-notes)). |
 | `-dump` | | Print every frame (each slide at each pause step) to stdout and exit. Doesn't need a TTY. |
 | `-check` | | Report slides that overflow a `-w` x `-h` screen and exit 1 if any do (exit 0 and print `N slides fit WxH` otherwise). Doesn't need a TTY. |
 | `-exec` | | With `-check` or `-dump`: run every `+exec` block first so its output is measured and shown. This executes the deck's code, so only use it on decks you trust. |
@@ -75,9 +76,32 @@ A setext H1 (a line underlined with `===`) that comes before any other content o
 | `<!-- reset_layout -->` | presenterm | End the column layout and go back to full width |
 | `<!-- jump_to_middle -->` | presenterm | Center the slide vertically and horizontally |
 | `<!-- transition: KIND -->` | tuipresent | Transition used when entering this slide (`slide`, `wipe`, `cover`, `dissolve`, `none`) |
+| `<!-- speaker_note: text -->` | presenterm | Speaker note for this slide, shown only in the `-notes` view (multi-line form under [Speaker notes](#speaker-notes)) |
 | front matter `transition:` | tuipresent | Default transition for the whole deck (`slide` if unset) |
 
 Directives tuipresent doesn't recognize are ignored.
+
+### Speaker notes
+
+Notes never appear on the slide and take no space on it. A slide can have several; they're shown in order. Note text is markdown. Use either form:
+
+```markdown
+<!-- speaker_note: Mention the 40% number first. -->
+
+<!-- speaker_note:
+- Pause for questions here
+- Then demo the check flag
+-->
+```
+
+To present with notes, split your terminal (kitty: `ctrl+shift+enter` in the splits layout; ghostty: `cmd+d` on macOS, `ctrl+shift+o` on Linux) and run the notes view in the pane only you can see:
+
+```sh
+tuipresent deck.md          # presenter, in the window the audience sees
+tuipresent -notes deck.md   # notes, in the other pane
+```
+
+The notes view shows the current slide's notes, `slide N/M` and the reveal step, the next slide's title and the time since the presenter started. It follows the presenter through a small state file in the system temp directory, keyed by the deck's absolute path, so no network is involved and either one can start first. When the presenter quits, the notes view goes back to "waiting". Press `q` to quit it.
 
 ### Executable code
 
@@ -164,6 +188,5 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 
 - Inline images via the kitty graphics protocol, with a text fallback for other terminals
 - Per-element fade-in on pause, using truecolor interpolation
-- Speaker notes view
 - Live reload when the deck file changes
 - More themes

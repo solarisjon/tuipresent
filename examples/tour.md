@@ -306,6 +306,51 @@ Try `-transition dissolve` on the command line to change the default.
 
 <!-- end_slide -->
 
+Speaker notes stay off the slide
+===
+
+<!-- transition: slide -->
+<!-- column_layout: [1, 1] -->
+<!-- column: 0 -->
+
+## Source
+
+```markdown
+<!-- speaker_note: Short -->
+
+
+<!-- speaker_note:
+- Or several lines
+- of **markdown**
+-->
+```
+
+<!-- column: 1 -->
+
+## Presenting
+
+```bash
+tuipresent deck.md
+tuipresent -notes deck.md
+```
+
+Run the second in a split
+that only you can see.
+
+<!-- reset_layout -->
+
+The notes pane adds slide, step, next title and a clock.
+
+<!-- speaker_note: This slide has two notes. If you can read this, the notes view works. -->
+
+<!-- speaker_note:
+- Notes take **no rows** on the slide, so put talking points here
+- The notes view follows this window; start either one first
+- Quit the presenter and the notes view waits for it to come back
+-->
+
+<!-- end_slide -->
+
 Check it before you present it
 ===
 

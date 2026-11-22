@@ -36,8 +36,9 @@ type Slide struct {
 	Blocks     []Block
 	Steps      int // number of reveal steps; 1 means no pauses
 	Centered   bool
-	Transition string // overrides Meta.Transition when set
-	Cover      bool   // synthesized title slide from front matter
+	Transition string   // overrides Meta.Transition when set
+	Cover      bool     // synthesized title slide from front matter
+	Notes      []string // speaker notes (markdown), in source order; never rendered on the slide
 }
 
 type BlockKind int
