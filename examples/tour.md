@@ -306,6 +306,39 @@ Try `-transition dissolve` on the command line to change the default.
 
 <!-- end_slide -->
 
+Edit while you present
+===
+
+<!-- transition: wipe -->
+<!-- column_layout: [1, 1] -->
+<!-- column: 0 -->
+
+## Try it
+
+Keep this deck open, then open
+`examples/tour.md` in an editor
+and change this sentence.
+
+Save: the slide redraws within
+half a second, on the same
+slide and pause step.
+
+<!-- column: 1 -->
+
+## How it works
+
+* Polls the file every 400 ms
+* Rename-on-save editors work
+* Bad saves keep the old deck,
+  with the error shown below
+* `-watch=false` turns it off
+
+<!-- reset_layout -->
+
+Handy when an agent writes the deck: watch each edit land live.
+
+<!-- end_slide -->
+
 Check it before you present it
 ===
 

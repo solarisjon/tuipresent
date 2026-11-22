@@ -2,7 +2,7 @@
 
 Each deck passes `-check` at 100x30 and 80x24. Run them from the repo root after building (`go build -o bin/tuipresent ./cmd/tuipresent`). Press `e` on a slide with code to run its `+exec` blocks; all of them are offline, read-only and finish in well under a second.
 
-**[tour.md](tour.md)**, 11 slides. "tuipresent in 5 minutes": a self-demonstrating feature tour. Each slide shows a feature next to the markdown that produced it: front matter, titles, pauses, columns, syntax highlighting, `+exec` (`date`, `uname -s`, a `python3` calculation), text charts, `jump_to_middle`, and all five transitions set per slide.
+**[tour.md](tour.md)**, 12 slides. "tuipresent in 5 minutes": a self-demonstrating feature tour. Each slide shows a feature next to the markdown that produced it: front matter, titles, pauses, columns, syntax highlighting, `+exec` (`date`, `uname -s`, a `python3` calculation), text charts, `jump_to_middle`, live reload on save, and all five transitions set per slide.
 
 ```sh
 ./bin/tuipresent examples/tour.md

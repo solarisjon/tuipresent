@@ -27,6 +27,7 @@ tuipresent [flags] deck.md
 | `-exec` | | With `-check` or `-dump`: run every `+exec` block first so its output is measured and shown. This executes the deck's code, so only use it on decks you trust. |
 | `-w W` | `100` | Frame width for `-dump` and `-check` |
 | `-h H` | `30` | Frame height for `-dump` and `-check` |
+| `-watch` | `true` | Reload the deck automatically when the file changes on disk (polled every 400 ms, so editors that save by rename work too). Keeps the current slide and step. If the new file fails to parse, the old deck stays up and the error shows in the status line. Disable with `-watch=false`. |
 
 ### Keys
 
@@ -37,7 +38,7 @@ tuipresent [flags] deck.md
 | `g` `home` | First slide |
 | `G` `end` | Last slide |
 | `e` | Run the visible `+exec` code blocks on this slide |
-| `r` | Reload the deck from disk |
+| `r` | Reload the deck from disk (happens automatically on save unless `-watch=false`) |
 | `q` `esc` `ctrl+c` | Quit |
 
 ## Deck format
@@ -165,5 +166,4 @@ cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
 - Inline images via the kitty graphics protocol, with a text fallback for other terminals
 - Per-element fade-in on pause, using truecolor interpolation
 - Speaker notes view
-- Live reload when the deck file changes
 - More themes
