@@ -16,6 +16,8 @@ transition: dissolve
 
 Your phone buzzes.
 
+<!-- speaker_note: Let the silence sit for a beat before pressing space. -->
+
 <!-- end_slide -->
 
 <!-- jump_to_middle -->
@@ -40,6 +42,11 @@ of pages go to someone who cannot fix the problem.
 <!-- pause -->
 
 *Design-partner survey, 212 on-call engineers, 2026.*
+
+<!-- speaker_note:
+- Say the number, then stop talking
+- If asked: the survey ran across all six design partners in March
+-->
 
 <!-- end_slide -->
 
@@ -93,6 +100,11 @@ How it works
 
 No new agent. Connects to the alerting and CI you already run.
 
+<!-- speaker_note:
+Correlation is the hard part. Mention the **deploy + flag** signals
+by name; skip the model details unless someone asks.
+-->
+
 <!-- end_slide -->
 
 Eight weeks with six design partners
@@ -109,6 +121,8 @@ minutes to mitigate (median)
 before   ██████████████████████████████████  42
 after    ██████████████▌                      18
 ```
+
+<!-- speaker_note: Pages dropped 79%. Mitigation time fell by more than half. -->
 
 <!-- end_slide -->
 
@@ -135,6 +149,11 @@ The ask
 <!-- pause -->
 
 Pilot spots open now: 8 weeks, free, one team.
+
+<!-- speaker_note:
+- Two of the six partners have already signed letters of intent
+- Close by asking who on their team gets paged the most
+-->
 
 <!-- end_slide -->
 

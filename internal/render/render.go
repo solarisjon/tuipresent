@@ -579,3 +579,6 @@ func fit(s string, w int) string {
 
 // Fit is exported for transitions.
 func Fit(s string, w int) string { return fit(s, w) }
+
+// Markdown renders src in the deck's theme wrapped to width, for the notes view.
+func (r *Renderer) Markdown(src string, width int) []string { return r.markdown(src, width) }
