@@ -181,7 +181,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 10.2. Exec block: INFO contains a whitespace-separated field exactly `+exec` (`+exec_replace`, `+exec:x` do not count). Language = first INFO field unless it starts with `+` (```` ```+exec ```` has language empty). Body = lines between the fences (to end of chunk if unclosed). Ids are assigned 1, 2, ... in source order across the deck (E20).
 10.3. Rendering: the body renders as a fenced block ```` ```LANG ````. After a run, output (stdout+stderr combined, trailing newlines trimmed) renders as a ```` ```text ```` block directly below. Output is wrapped in a ``` fence, so output containing a ``` line breaks the slide.
 10.4. Execution (never at load, never in `-dump`/`-check` without `-exec`):
-    - Interpreter by language: `python`, `python3`, `py` -> `python3 -c BODY`; `sh` -> `sh -c BODY`; anything else, including empty and unknown (`go`, `js`) -> `bash -c BODY`.
+    - Interpreter by language: `python`, `python3`, `py` -> `python3 -c BODY`; `sh` -> `sh -c BODY`; `bash` and empty -> `bash -c BODY`; anything else (`go`, `js`, `zsh`) is not run and its output is `[unsupported +exec language "LANG" (supported: bash, sh, python, python3, py)]`.
     - Working directory: the deck file's directory (the same base as image paths). Environment: that of the tuipresent process.
     - Timeout 15 s; the process is killed (`[signal: killed]` appended). Non-zero exit appends `\n[exit status N]`; a missing interpreter appends the exec error. After the process exits or is killed, a background child still holding the output pipe gets at most 0.5 s more (`WaitDelay`), then the pipe is closed and the error is appended.
     - Key `e`: runs every Exec block with `s <= current step` on the current slide (columns included), concurrently. Status row shows `running…` until the first result arrives. Re-pressing re-runs and replaces output. Reload (`r` or file watch) discards all outputs.
@@ -375,4 +375,4 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 
 19.2. Errors (exit 1 at startup with the message on stderr; during a reload the old deck stays and the message shows on the status row): invalid front-matter YAML (`front matter: yaml: ...`), no slides (`deck has no slides`), invalid custom theme (§18.4, also an empty or malformed inline color). Usage errors exit 2.
 
-19.3. Silent: everything else, including misspelled or unknown directives, an out-of-range `column`, a missing image, an unclosed fence, a title after content, and unknown `+exec` languages (run by bash). Read `-dump`.
+19.3. Silent: everything else, including misspelled or unknown directives, an out-of-range `column`, a missing image, an unclosed fence, a title after content. Read `-dump`.

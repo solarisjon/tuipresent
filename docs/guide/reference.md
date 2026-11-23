@@ -302,7 +302,8 @@ A fenced code block whose info string contains the word `+exec` is runnable: ```
 |------------------------------------------|---------|
 | `python`, `python3`, `py` | `python3 -c CODE` |
 | `sh` | `sh -c CODE` |
-| anything else, or none | `bash -c CODE` |
+| `bash`, or none | `bash -c CODE` |
+| anything else | not run; the output is `[unsupported +exec language "X" (supported: bash, sh, python, python3, py)]` |
 
 | Behavior | Detail |
 |----------|--------|

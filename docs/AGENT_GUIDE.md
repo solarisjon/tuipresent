@@ -134,7 +134,7 @@ More body.
 - **Transitions** (§15.3): `slide`, `wipe`, `cover`, `dissolve`, `none`. Going back from a slide plays its transition in reverse.
 - **Titles** (§7): only a setext H1 (`Title` + `===`) before any other content. `# Title` is a body heading.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
-- **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else runs through bash), in the deck's directory.
+- **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory.
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
 - **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-watch=false`, `-images auto|kitty|blocks|off` (presenting).
 - **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
@@ -207,7 +207,7 @@ Each of these fails silently or only warns. LANGUAGE.md §19 lists what warns an
 11. **Blank lines and `&nbsp;` cannot add vertical space;** leading and trailing blank lines are trimmed.
 12. **Unknown theme or transition names fall back** (to `dark` and `slide`) with only a stderr warning; `-check` still exits 0. Copy names from the tables. In YAML an unquoted `#88c0d0` is a comment: always quote colors.
 13. **A speaker note missing `-->`** runs to the next `end_slide` (warned), but any directive before that closes it and is swallowed.
-14. **Exec language fallback.** Any language other than python, python3, py or sh runs through bash.
+14. **Unsupported exec language.** Any language other than bash, sh, python, python3, py or none is not run; the output is an `unsupported +exec language` error.
 15. **Reload clears exec output,** including every automatic reload on save.
 
 ---

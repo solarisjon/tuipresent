@@ -302,7 +302,7 @@ date +%Y
 |----------------|---------|
 | `python`, `python3`, `py` | `python3 -c <code>` |
 | `sh` | `sh -c <code>` |
-| `bash`, none, or anything else | `bash -c <code>` |
+| `bash`, or none | `bash -c <code>` |
 
 - `e` runs every `+exec` block visible on the current slide (blocks behind a pause you haven't reached yet are skipped).
 - stdout and stderr are both shown. A non-zero exit appends a line like `[exit status 1]`.
@@ -318,7 +318,7 @@ date +%Y
 
 Gotchas:
 
-- `go +exec`, `js +exec` and similar are run **by bash**, and fail. Only bash, sh and Python are supported.
+- `go +exec`, `js +exec` and similar are **not run**: the output shows `[unsupported +exec language "go" (supported: bash, sh, python, python3, py)]`. Only bash, sh and Python are supported.
 - Output takes space on the slide that `-check` can't see unless you pass `-exec`. Leave room: keep output to about 5 lines.
 
 ## Transitions and fade

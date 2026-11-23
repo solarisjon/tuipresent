@@ -144,6 +144,5 @@ Sharing and export
 - Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
 
 Robustness
-- Unsupported `+exec` languages should error instead of silently running through bash
 - A multi-line speaker note missing `-->` should not swallow a following `pause` (or other) directive
 - Show deck and theme warnings in the `-notes` view

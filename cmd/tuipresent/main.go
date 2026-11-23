@@ -430,8 +430,10 @@ func runBlock(b deck.Block, dir string) string {
 		c = exec.CommandContext(ctx, "python3", "-c", b.Text)
 	case "sh":
 		c = exec.CommandContext(ctx, "sh", "-c", b.Text)
-	default:
+	case "bash", "":
 		c = exec.CommandContext(ctx, "bash", "-c", b.Text)
+	default:
+		return "[unsupported +exec language \"" + b.Lang + "\" (supported: bash, sh, python, python3, py)]"
 	}
 	c.Dir = dir
 	c.WaitDelay = execWaitDelay
