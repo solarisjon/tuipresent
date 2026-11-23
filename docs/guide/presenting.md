@@ -47,6 +47,7 @@ The notes view follows the presenter automatically. It shows:
 - the current slide's title, `slide N/M`, the reveal step and the time since the presenter started,
 - that slide's notes (from `speaker_note` comments; see [Authoring](authoring.md#speaker-notes)),
 - the title of the next slide.
+- any warnings about the deck or its theme (the same ones the status line and `-check` give), in yellow above the bottom, for as long as they apply.
 
 Either one can be started first; the notes view says "Waiting for the presenter" until the slides are running, and goes back to waiting when they quit. Press `q` to close it. The notes view can't drive the slides; use the presenter window for that.
 
@@ -166,7 +167,7 @@ The slides window resizes live, so you can also just resize and step through the
 
 **The notes view stays on "Waiting for the presenter".** Both must open the same deck file (relative paths and symlinks are fine; a copy isn't). They sync through a small file in the system temp directory, so both must also run as the same user with the same `TMPDIR`; running one over SSH on another machine won't work. If the presenter crashed, restart it.
 
-**A message appears at the bottom of the screen.** That's the status line. At start and after a reload it shows warnings about the deck for a few seconds: an unknown theme or transition name, an unknown theme key, or a speaker note missing its `-->`. Each one names the problem (with a line number where it has one); fix the deck and save. `tuipresent -check deck.md` prints the same warnings.
+**A message appears at the bottom of the screen.** That's the status line. At start and after a reload it shows warnings about the deck for a few seconds: an unknown theme or transition name, an unknown theme key, or a speaker note missing its `-->`. Each one names the problem (with a line number where it has one); fix the deck and save. `tuipresent -check deck.md` prints the same warnings. The notes view lists them too, without a timeout.
 
 **A light theme is unreadable, or colors clash with the terminal.** Without painting, slides use the terminal's own background. Add `background: paint` to the theme in front matter, or run with `-background paint`.
 

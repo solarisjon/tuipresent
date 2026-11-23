@@ -360,7 +360,7 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 
 ## 19. Warnings and errors
 
-19.1. Warnings: the deck loads with a fallback. Printed to stderr as `PATH: warning: TEXT` before `-check`/`-dump` output (exit status unchanged); while presenting, joined with `; ` on the status row for 6 s, at start and after each reload. The `-notes` view does not show them.
+19.1. Warnings: the deck loads with a fallback. Printed to stderr as `PATH: warning: TEXT` before `-check`/`-dump` output (exit status unchanged); while presenting, joined with `; ` on the status row for 6 s, at start and after each reload. The `-notes` view lists them (`warning: TEXT`, above its footer, kept up while they apply, recomputed on reload; extra ones collapse to `… N more warning(s)`).
 
 | Source | TEXT (prefix) | Fallback |
 |---|---|---|
