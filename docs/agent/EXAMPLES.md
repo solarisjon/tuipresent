@@ -38,7 +38,7 @@ Conventions for each result:
 14. [`jump_to_middle`: prose is centered line by line](#case-14)
 15. [`jump_to_middle`: a list is centered as one block](#case-15)
 16. [Speaker notes: single-line, multi-line, notes-only slide](#case-16)
-17. [A multi-line note without `-->` stops before the next `end_slide` and warns](#case-17)
+17. [A multi-line note without `-->` stops before the next directive and warns](#case-17)
 18. [Image lines: missing file, width percentage, inline image](#case-18)
 19. [Image sizing from free rows](#case-19)
 20. [`+exec` blocks render as code until run](#case-20)
@@ -766,7 +766,7 @@ deck.md: 2 slides fit 80x24   (exit 0)
 
 <a id="case-17"></a>
 
-## 17. A multi-line note without `-->` stops before the next `end_slide` and warns
+## 17. A multi-line note without `-->` stops before the next directive and warns
 
 ````markdown
 One
@@ -780,7 +780,7 @@ Two
 
 ```text
 $ tuipresent -check -w 80 -h 24 deck.md
-deck.md: warning: line 4: speaker_note has no closing -->; the note runs to the end of the slide
+deck.md: warning: line 4: speaker_note has no closing -->; the note ends before the next directive or at the end of the slide
 deck.md: 2 slides fit 80x24   (exit 0)
 ```
 
@@ -799,7 +799,7 @@ deck.md: 2 slides fit 80x24   (exit 0)
 
 - The unclosed note ends on the line before `<!-- end_slide -->`, which still splits: 2 slides, and the note `forgot to close` belongs to slide 1.
 - Loading warns with the line of the opening comment (stderr under `-check`/`-dump`, status line while presenting).
-- Without an `end_slide` the note would run to the end of the file. A note left open before another directive, such as `<!-- pause -->`, still ends at that directive's `-->` and swallows it, without a warning.
+- Any line that is a complete directive (`<!-- pause -->`, `<!-- column: 1 -->`, ...) ends an unclosed note the same way and is still applied. Without any later directive the note would run to the end of the slide.
 
 <a id="case-18"></a>
 

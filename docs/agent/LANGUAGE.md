@@ -114,7 +114,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 
 | Directive | Argument | Semantics | Repeats / edge cases |
 |---|---|---|---|
-| `end_slide` | ignored | Ends the chunk (§3.3). | Inside a fence: code. Ends an unclosed multi-line note and still splits (E17). |
+| `end_slide` | ignored | Ends the chunk (§3.3). | Inside a fence: code. Ends an unclosed multi-line note and still splits (E17); any other directive ends it too. |
 | `pause` | ignored | Flush; `step += 1`. | Each occurrence adds one step. A trailing pause adds an empty final step (E7). A pause before all content leaves step 1 with only the title (E8). Not per column (§6.3). |
 | `column_layout` | `[w1, w2, ...]` | Flush; append a Columns block (`step` = current) with the parsed widths; make it the active layout `L`; `c = none`. | Brackets optional. Entries are split on `,`, trimmed, parsed as integers; non-integers and values <= 0 are dropped. No valid entry (or no argument) gives `[1]`, one full-width column. A second `column_layout` replaces `L` with a new layout placed after the first (E11, E12). |
 | `column` | integer N (0-based) | Flush; if `L` is active and N parses as an integer: `c = clamp(N, 0, len(widths) - 1)`. | Out of range clamps (7 -> last, -3 -> 0). Non-integer: ignored, `c` unchanged. No active layout: ignored (E11, E12). |
@@ -147,7 +147,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 
 8.1. Single-line form: the directive `<!-- speaker_note: TEXT -->` (§5.1). TEXT is trimmed; empty is ignored.
 8.2. Multi-line form: an opening line that contains no `-->` and matches `^\s*<!--\s*speaker_note\s*(?::(.*))?$` (the colon is optional). The note continues to the first later line containing `-->`; that line's text before `-->` is included, text after it is discarded. Body = the opener's remainder (trimmed) + following lines, with the smallest indentation among non-blank following lines removed (bytes; tabs count as one), trailing whitespace stripped, then the whole note trimmed. Empty notes are dropped.
-8.3. Forgetting `-->`: the note stops before the next `end_slide` directive line (which is not consumed and still splits), or at the end of the file, and loading warns `line N: speaker_note has no closing -->; ...` with the opener's line (E17). But a line containing `-->` before that, typically another directive such as `<!-- pause -->`, closes the note and is swallowed, without a warning.
+8.3. Forgetting `-->`: the note stops before the next line that is a complete directive (§5.1 form, e.g. `<!-- pause -->` or `<!-- end_slide -->`; it is not consumed and takes effect normally), or at the end of the chunk, and loading warns `line N: speaker_note has no closing -->; ...` with the opener's line (E17). A line that merely contains `-->` after other text still closes the note.
 8.4. Notes are never rendered on the slide, use no rows, do not set `content` and do not flush pending markdown (§6.6). Inside fences they are code.
 8.5. A chunk with notes but no visible content or title is kept as a blank slide that carries the notes (§3.4, E16).
 8.6. Display: `tuipresent -notes deck.md` in a second terminal (§15.6) shows the current slide's notes, joined by a blank line and rendered as markdown.

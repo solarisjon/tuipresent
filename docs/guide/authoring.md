@@ -371,7 +371,7 @@ Roadmap
 
 - A slide can have several notes; they're shown in order.
 - Notes are markdown, so lists and emphasis work.
-- The multi-line form is the only multi-line comment the parser understands. If you forget its closing `-->`, the note runs up to the next `<!-- end_slide -->` and tuipresent warns; but any other directive before that (say a `<!-- pause -->`) closes the note and is lost.
+- The multi-line form is the only multi-line comment the parser understands. If you forget its closing `-->`, the note ends before the next directive line (a `<!-- pause -->`, `<!-- end_slide -->` and so on, which still takes effect) and tuipresent warns; with no later directive it runs to the end of the slide.
 - A note doesn't separate paragraphs. Put blank lines around it.
 - A slide with notes but nothing else is kept as a blank slide.
 
