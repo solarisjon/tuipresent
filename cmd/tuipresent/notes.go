@@ -9,6 +9,7 @@ import (
 	"tuipresent/internal/deck"
 	"tuipresent/internal/notes"
 	"tuipresent/internal/render"
+	"tuipresent/internal/report"
 )
 
 const notesPoll = 200 * time.Millisecond
@@ -38,12 +39,14 @@ type notesModel struct {
 	r         *render.Renderer
 	mtime     time.Time
 	w, h      int
+	warnings  []string
 	state     notes.State
 	running   bool
 }
 
 func runNotes(path string, d *deck.Deck, flags deckFlags) error {
 	m := &notesModel{path: path, statePath: notes.StatePath(path), deck: d, flags: flags, r: render.New(d)}
+	m.warnings = report.Warnings(d, m.r, flags.transition)
 	if fi, err := os.Stat(path); err == nil {
 		m.mtime = fi.ModTime()
 	}
@@ -84,11 +87,12 @@ func (m *notesModel) reloadIfChanged() {
 	if d, err := deck.Load(m.path); err == nil {
 		m.flags.apply(d)
 		m.deck, m.r, m.mtime = d, render.New(d), fi.ModTime()
+		m.warnings = report.Warnings(d, m.r, m.flags.transition)
 	}
 }
 
 func (m *notesModel) View() tea.View {
-	v := tea.NewView(notes.Frame(m.deck, m.r, m.path, m.state, m.running, time.Now(), m.w, m.h))
+	v := tea.NewView(notes.Frame(m.deck, m.r, m.path, m.state, m.running, time.Now(), m.w, m.h, m.warnings))
 	v.AltScreen = true
 	return v
 }

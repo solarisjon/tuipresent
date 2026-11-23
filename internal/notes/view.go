@@ -14,7 +14,9 @@ import (
 
 // Frame renders the notes view: exactly h lines of exactly w cells. running is
 // false when no presenter is following deckPath, which shows a waiting screen.
-func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running bool, now time.Time, w, h int) string {
+// warnings (see report.Warnings) are listed above the footer, or under the
+// waiting message, for as long as they apply.
+func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running bool, now time.Time, w, h int, warnings []string) string {
 	if w <= 0 || h <= 0 {
 		return ""
 	}
@@ -31,6 +33,12 @@ func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running b
 		add(" Waiting for the presenter…")
 		add("")
 		add(dim.Render(" Start it in another pane:  tuipresent " + deckPath))
+		if len(warnings) > 0 {
+			add("")
+			for _, l := range warningLines(warnings, h-len(out), w) {
+				add(l)
+			}
+		}
 		return pad(out, w, h)
 	}
 
@@ -50,6 +58,9 @@ func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running b
 	footer := []string{rule, " Next: " + accent.Render(next)}
 
 	room := h - len(out) - len(footer)
+	// Warnings take at most half of the room, so the notes stay readable.
+	warn := warningLines(warnings, room/2, w)
+	room -= len(warn)
 	var body []string
 	if len(cur.Notes) == 0 {
 		body = []string{dim.Render(" (no notes for this slide)")}
@@ -64,13 +75,37 @@ func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running b
 	for _, l := range body[:min(len(body), max(room, 0))] {
 		add(l)
 	}
-	for len(out) < h-len(footer) {
+	for len(out) < h-len(footer)-len(warn) {
 		add("")
+	}
+	for _, l := range warn {
+		add(l)
 	}
 	for _, l := range footer {
 		add(l)
 	}
 	return pad(out, w, h)
+}
+
+// warningLines formats warnings as " warning: text" lines, at most limit of
+// them; when some don't fit, the last line counts the hidden ones.
+func warningLines(warnings []string, limit, w int) []string {
+	if len(warnings) == 0 || limit <= 0 {
+		return nil
+	}
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Bold(true)
+	shown := warnings
+	if len(shown) > limit {
+		shown = warnings[:limit-1]
+	}
+	var out []string
+	for _, s := range shown {
+		out = append(out, style.Render(" warning: ")+s)
+	}
+	if hidden := len(warnings) - len(shown); hidden > 0 {
+		out = append(out, style.Render(fmt.Sprintf(" … %d more warning(s); run tuipresent -check", hidden)))
+	}
+	return out
 }
 
 func pad(lines []string, w, h int) string {

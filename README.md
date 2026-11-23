@@ -143,5 +143,3 @@ Presenting
 Sharing and export
 - Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
 
-Robustness
-- Show deck and theme warnings in the `-notes` view

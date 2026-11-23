@@ -63,7 +63,7 @@ Exit statuses: `0` success; `1` when the deck can't be read or parsed, its custo
 
 ## Warnings and errors
 
-Problems tuipresent can recover from are **warnings**: the deck still loads and renders, with a fallback. With `-check` and `-dump` each one is printed to stderr as `deck.md: warning: ...` (the exit status doesn't change); while presenting they show on the status line (the bottom row) for 6 seconds, at start and after every reload.
+Problems tuipresent can recover from are **warnings**: the deck still loads and renders, with a fallback. With `-check` and `-dump` each one is printed to stderr as `deck.md: warning: ...` (the exit status doesn't change); while presenting they show on the status line (the bottom row) for 6 seconds, at start and after every reload. The `-notes` view lists them too, without a timeout, since it has no status line.
 
 | Warning | Fallback |
 |---------|----------|
