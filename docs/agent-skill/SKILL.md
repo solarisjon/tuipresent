@@ -40,7 +40,7 @@ This skill is self-contained. In the tuipresent repo, `docs/AGENT_GUIDE.md` has 
   - `<!-- column_layout: [2, 1] -->` starts columns. `<!-- column: 0 -->` selects one (0-based). `<!-- reset_layout -->` ends them.
   - `<!-- jump_to_middle -->` centers the slide vertically and horizontally. Plain-prose bodies are centered line by line. Bodies with a list, table, quote or code are centered as one block.
   - `<!-- transition: slide|wipe|cover|dissolve|none -->` sets the transition into this slide; going back from it plays the same transition reversed. The front matter `transition:` sets the deck default, which is `slide` if unset. Unknown values fall back to `slide` with a warning.
-  - `<!-- speaker_note: text -->`, or multi-line: `<!-- speaker_note:` / note lines / `-->`. Never shown on the slide and costs 0 rows. Put talking points here, not on the slide. Viewed with `tuipresent -notes deck.md` in a second terminal. A missing `-->` makes the note run to the next `end_slide` (warned), swallowing any directive in between.
+  - `<!-- speaker_note: text -->`, or multi-line: `<!-- speaker_note:` / note lines / `-->`. Never shown on the slide and costs 0 rows. Put talking points here, not on the slide. Viewed with `tuipresent -notes deck.md` in a second terminal. A missing `-->` ends the note before the next directive line (warned); the directive still applies.
 - **Not supported** (silently dropped): `incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`.
 - **`+exec`**: ```` ```bash +exec ````, `sh`, or `python`/`python3`/`py`. Any other language runs through bash.
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`, in the deck file's directory.

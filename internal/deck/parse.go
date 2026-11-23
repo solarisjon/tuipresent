@@ -201,7 +201,7 @@ func parseSlide(lines []string, line int, execID *int) (Slide, []string) {
 				p.slide.Notes = append(p.slide.Notes, note)
 			}
 			if !closed {
-				p.warn(i, "speaker_note has no closing -->; the note runs to the end of the slide")
+				p.warn(i, "speaker_note has no closing -->; the note ends before the next directive or at the end of the slide")
 			}
 			i = end
 			continue
@@ -311,8 +311,9 @@ func (p *slideParser) directive(i int, name, arg string) {
 // multiLineNote reports whether lines[i] opens a speaker_note comment that
 // closes on a later line. It returns the note text (dedented and trimmed),
 // the index of the note's last line, and whether a closing --> was found.
-// An unclosed note stops before the next end_slide directive, which it
-// leaves in place, or runs to the end of lines.
+// An unclosed note stops before the next line that is a complete directive
+// (such as pause or end_slide), which it leaves in place, or runs to the end
+// of lines.
 func multiLineNote(lines []string, i int) (note string, end int, closed, ok bool) {
 	if strings.Contains(lines[i], "-->") {
 		return "", i, false, false
@@ -324,7 +325,7 @@ func multiLineNote(lines []string, i int) (note string, end int, closed, ok bool
 	body := []string{m[1]}
 	j := i + 1
 	for ; j < len(lines); j++ {
-		if isEndSlide(lines[j]) {
+		if directiveRe.MatchString(lines[j]) {
 			break
 		}
 		if k := strings.Index(lines[j], "-->"); k >= 0 {

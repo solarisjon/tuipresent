@@ -45,6 +45,28 @@ func TestUnclosedNoteAtEndWarns(t *testing.T) {
 	}
 }
 
+func TestUnclosedNoteStopsBeforeDirective(t *testing.T) {
+	src := "One\n===\n\nBefore\n\n<!-- speaker_note: forgot to close\nmore note\n<!-- pause -->\nAfter\n"
+	d := mustParse(t, src)
+	s := d.Slides[0]
+	if s.Steps != 2 {
+		t.Errorf("steps = %d, want 2 (pause must not be swallowed)", s.Steps)
+	}
+	if want := []string{"forgot to close\nmore note"}; !reflect.DeepEqual(s.Notes, want) {
+		t.Errorf("notes = %q, want %q", s.Notes, want)
+	}
+	if len(d.Warnings) != 1 || !strings.HasPrefix(d.Warnings[0], "line 6: speaker_note has no closing -->") {
+		t.Errorf("warnings = %q", d.Warnings)
+	}
+}
+
+func TestClosedNoteWithArrowMidLineIsNotCut(t *testing.T) {
+	d := mustParse(t, "A\n<!-- speaker_note:\nsay this --> then\n<!-- pause -->\nB\n")
+	if d.Slides[0].Steps != 2 || len(d.Warnings) != 0 {
+		t.Errorf("steps = %d, warnings = %q", d.Slides[0].Steps, d.Warnings)
+	}
+}
+
 func TestClosedNoteHasNoWarning(t *testing.T) {
 	d := mustParse(t, "A\n<!-- speaker_note:\nx\n-->\n")
 	if len(d.Warnings) != 0 {

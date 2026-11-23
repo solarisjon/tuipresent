@@ -206,7 +206,7 @@ Each of these fails silently or only warns. LANGUAGE.md §19 lists what warns an
 10. **Directives do not separate paragraphs.** A line, then any directive (`pause`, `speaker_note`, `column`, ...), then another line can merge into one paragraph. Put blank lines around every directive.
 11. **Blank lines and `&nbsp;` cannot add vertical space;** leading and trailing blank lines are trimmed.
 12. **Unknown theme or transition names fall back** (to `dark` and `slide`) with only a stderr warning; `-check` still exits 0. Copy names from the tables. In YAML an unquoted `#88c0d0` is a comment: always quote colors.
-13. **A speaker note missing `-->`** runs to the next `end_slide` (warned), but any directive before that closes it and is swallowed.
+13. **A speaker note missing `-->`** ends before the next directive line (warned), and that directive still applies.
 14. **Exec language fallback.** Any language other than python, python3, py or sh runs through bash.
 15. **Reload clears exec output,** including every automatic reload on save.
 
