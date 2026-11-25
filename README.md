@@ -14,6 +14,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 - **Speaker notes** in a second terminal that follows the presenter.
 - **Navigation**: `o` opens a grid overview of every slide, type a number and `enter` to jump, and the mouse works too (click the left or right third, scroll the wheel).
 - **Live reload**: save the file and the open deck updates in place.
+- **Sharing**: record a deck to GIF/MP4 with Charm's VHS, or export one PNG/SVG per slide (and a PDF) with Charm's Freeze.
 - **Verifiable**: `-check` reports every slide that overflows a given screen size; `-dump` prints every frame as text.
 
 ## Install
@@ -75,6 +76,7 @@ The [user guide](docs/guide/README.md) covers everything:
 - [Getting started](docs/guide/getting-started.md): build, write a first deck, check it, present it.
 - [Authoring](docs/guide/authoring.md): every slide construct with examples, gotchas and design advice.
 - [Presenting](docs/guide/presenting.md): keys, a speaker-notes window, live reload, live demos, fitting the projector, troubleshooting.
+- [Sharing and export](docs/guide/sharing.md): record a GIF/MP4 and export slide images or a PDF.
 - [Reference](docs/guide/reference.md): complete tables of flags, keys, warnings, front matter, themes, directives, images, `+exec`, transitions and layout numbers.
 
 For AI agents and tools:
@@ -85,6 +87,19 @@ For AI agents and tools:
 - [SKILL.md](docs/agent-skill/SKILL.md): a condensed, standalone Claude Code skill.
 
 [`examples/`](examples/README.md) has ready-to-run decks: a feature tour, an incident postmortem, a keynote-style pitch, a technical talk with live demos, a theme gallery and a deck in a custom theme.
+
+## Sharing
+
+Both tools are shelled out to, not linked; install them separately (`brew install vhs`, `brew install charmbracelet/tap/freeze`). `-dry-run` shows what would happen without them.
+
+```sh
+tuipresent -export tape deck.md > deck.tape      # a VHS tape that steps through every slide and pause
+tuipresent -export vhs deck.md                   # write the tape and record deck-recording/deck.gif
+tuipresent -export freeze -out slides deck.md    # slides/slide-NN-title.png, one per slide (-format svg too)
+magick slides/slide-*.png deck.pdf               # Freeze has no PDF output; combine the PNGs
+```
+
+See [Sharing and export](docs/guide/sharing.md).
 
 ## For AI agents
 
@@ -133,7 +148,4 @@ Terminal capabilities
 
 Presenting
 - Navigate the presenter from the notes view
-
-Sharing and export
-- Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
 

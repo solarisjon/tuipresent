@@ -7,6 +7,7 @@ Documentation for people writing and giving talks with tuipresent. Read the page
 | [Getting started](getting-started.md) | Build tuipresent, write a three-slide deck step by step, check it and present it |
 | [Authoring](authoring.md) | Every slide construct with an example and its gotchas, plus advice on designing slides for a terminal |
 | [Presenting](presenting.md) | Keys, a speaker-notes window in kitty or ghostty, live reload, live demos, fitting the projector, troubleshooting |
+| [Sharing and export](sharing.md) | Record a deck to GIF/MP4 with VHS, export slide images with Freeze, combine them into a PDF |
 | [Reference](reference.md) | The complete reference: every flag, key, warning, front-matter key, theme and theme key, directive, image option, exec rule, transition and layout number |
 
 Also useful:

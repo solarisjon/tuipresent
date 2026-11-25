@@ -19,6 +19,7 @@ Build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./
 ## User documentation
 
 - [User guide](docs/guide/README.md): human-oriented guide to writing and presenting decks
+- [Sharing and export](docs/guide/sharing.md): record a deck to GIF/MP4 with VHS (`-export tape|vhs`), export slide images with Freeze (`-export freeze`), combine into a PDF
 - [Reference](docs/guide/reference.md): complete tables of flags, keys, warnings, front matter, themes, directives, images, `+exec`, transitions and layout numbers
 - [README](README.md): overview, installation and quick start
 

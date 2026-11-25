@@ -54,6 +54,11 @@ func main() {
 	themeName := flag.String("theme", "", "theme name or theme file (.yaml), overriding front matter; see -themes")
 	themeBg := flag.String("background", "", "terminal|paint: paint the theme background into every cell, overriding front matter")
 	listThemes := flag.Bool("themes", false, "list the built-in themes with a color swatch and exit")
+	export := flag.String("export", "", "share the deck: tape (write a VHS tape), vhs (record it) or freeze (one image per slide); see -out, -format, -dry-run")
+	exportOut := flag.String("out", "", "with -export: tape file (tape) or output directory (vhs, freeze)")
+	exportFormat := flag.String("format", "", "with -export: gif|mp4|webm (tape, vhs; default gif) or png|svg (freeze; default png)")
+	dryRun := flag.Bool("dry-run", false, "with -export: print what would be written and run, touching nothing")
+	dwell := flag.Duration("dwell", 0, "with -export tape|vhs: time to rest on every slide and step (default: by amount of text)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n")
 		flag.PrintDefaults()
@@ -88,6 +93,9 @@ func main() {
 		os.Exit(1)
 	}
 	flags := deckFlags{transition: *trans, theme: *themeName, background: *themeBg}
+	if *export == "freeze" && flags.background == "" {
+		flags.background = "paint" // frames carry their own colors, whatever the viewer
+	}
 	flags.apply(d)
 
 	r := render.New(d)
@@ -103,10 +111,14 @@ func main() {
 		}
 		return
 	}
-	if *check || *dump {
+	if *export != "" && (*check || *dump) {
+		fmt.Fprintln(os.Stderr, "-export cannot be combined with -check or -dump")
+		os.Exit(2)
+	}
+	if *check || *dump || *export != "" {
 		report.PrintWarnings(os.Stderr, path, report.Warnings(d, r, flags.transition))
 	}
-	if *runExec && (*check || *dump) {
+	if *runExec && (*check || *dump || *export == "freeze") {
 		var blocks []deck.Block
 		for _, s := range d.Slides {
 			collectExec(s.Blocks, 1<<30, &blocks)
@@ -114,6 +126,17 @@ func main() {
 		for _, b := range blocks {
 			r.SetExecOutput(b.ExecID, runBlock(b, d.Dir))
 		}
+	}
+
+	if *export != "" {
+		err := runExport(exportOpts{mode: *export, out: *exportOut, format: *exportFormat, dryRun: *dryRun,
+			exec: *runExec, dwell: *dwell, w: *dw, h: *dh, deckPath: path, flags: flags,
+			stdout: os.Stdout, stderr: os.Stderr}, d, r)
+		if ee, ok := err.(*exitError); ok {
+			fmt.Fprintln(os.Stderr, ee.msg)
+			os.Exit(ee.code)
+		}
+		return
 	}
 
 	if *check {
