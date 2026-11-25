@@ -137,7 +137,3 @@ Two hooks run it automatically:
 
 - **Git pre-commit** (`.githooks/pre-commit`): gofmt, `go vet`, `go test`. Enable once per clone: `ln -s ../../.githooks/pre-commit .git/hooks/pre-commit`.
 - **Claude Code Stop/SubagentStop** (`.claude/settings.json` -> `.claude/hooks/check-drift.sh`): the same checks when an agent finishes a turn; failures are fed back so the agent fixes the drift. Skipped when no `.go`/`.md` file changed since the last pass.
-
-## Roadmap
-
-
