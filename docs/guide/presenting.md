@@ -25,9 +25,46 @@ tuipresent -slide 7 deck.md   # resume at slide 7 (the cover counts as slide 1)
 | `←` `h` `p` `k` `↑` `backspace` `pgup` | Previous step, or previous slide (arriving fully revealed) |
 | `g` `home` | First slide |
 | `G` `end` | Last slide |
+| `o` | Open or close the slide overview grid |
+| `0`-`9` then `enter` | Jump to that slide number (see below) |
 | `e` | Run the visible `+exec` blocks on this slide |
 | `r` | Reload the deck from disk |
 | `q` `esc` `ctrl+c` | Quit |
+
+### Jump to a slide by number
+
+Type the slide number and press `enter`: `12` then `enter` goes to slide 12 (the cover counts as slide 1, like `-slide`). The number you are typing shows on the status line. `backspace` erases a digit, `esc` cancels without quitting, and any other key cancels the number and does its normal job. Numbers past the end go to the last slide. Jumping lands on the slide's first step.
+
+### Slide overview
+
+`o` replaces the slide with a grid of cards, one per slide, each showing the slide number and title (the cover shows the deck title). The current slide is selected and highlighted.
+
+| Key | Action |
+|-----|--------|
+| `←` `h` / `→` `l` | Move the selection |
+| `↑` `k` / `↓` `j` | Move up / down a row |
+| `pgup` / `pgdown` | Move a page of rows |
+| `g` `home` / `G` `end` | First / last slide |
+| `enter` `space` | Jump to the selected slide and close the overview |
+| `o` `esc` | Close the overview, staying on the current slide |
+| `q` `ctrl+c` | Quit |
+
+The grid fits as many columns as the width allows (4 at 100 columns, 3 at 80) and shows a page of rows at a time, scrolling as the selection moves. On a screen too short for cards it shows one line per slide.
+
+### Mouse
+
+The mouse is on by default (turn it off with `-mouse=false`, which also gives the terminal back its text selection; most terminals let you hold `shift` to select anyway). Only the left button and the wheel do anything.
+
+| Mouse | Action |
+|-------|--------|
+| Click the left third of the screen | Back (like `←`) |
+| Click the right third | Forward (like `→`) |
+| Click the middle third | Nothing, so a stray click on the speaker's screen is harmless |
+| Wheel up / down | Back / forward |
+| In the overview: click a card | Jump to that slide |
+| In the overview: wheel | Move the selection a row up or down |
+
+Mouse reporting is switched on at start and off again on exit, including after `ctrl+c`.
 
 Presentation remotes ("clickers") usually send `pgdown`/`pgup` or the arrow keys, so they work without setup.
 

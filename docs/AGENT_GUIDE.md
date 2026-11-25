@@ -37,7 +37,7 @@ Follow these steps in order. Do not skip step 4.
    ./bin/tuipresent deck.md          # or: tuipresent deck.md if installed
    ```
 
-   Keys: `→`/`space`/`l` next, `←`/`h` back, `g`/`G` first/last slide, `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs. Mention `tuipresent -notes deck.md` in a second terminal if the deck has speaker notes, and `-theme NAME` to preview other themes.
+   Keys: `→`/`space`/`l` next, `←`/`h` back, `g`/`G` first/last slide, `o` slide overview grid, a number then `enter` jumps to that slide, mouse click on the left/right third or the wheel goes back/forward (`-mouse=false` disables), `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs. Mention `tuipresent -notes deck.md` in a second terminal if the deck has speaker notes, and `-theme NAME` to preview other themes.
 
    Live reload: while the deck is open, tuipresent watches the file (and its custom theme file) and reloads on every save, also when editors or agents replace the file via rename, keeping the current slide and step. So the user can keep the deck presenting in one terminal while you edit it. If a save fails to load, the old deck stays up and the error shows in the bottom status line; warnings show there too. `-watch=false` turns this off. Live reload is not a substitute for step 4.
 
@@ -136,7 +136,7 @@ More body.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
 - **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory.
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
-- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-watch=false`, `-images auto|kitty|blocks|off` (presenting).
+- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-watch=false`, `-mouse=false`, `-images auto|kitty|blocks|off` (presenting).
 - **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
 
 ---

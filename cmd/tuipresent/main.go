@@ -45,6 +45,7 @@ func main() {
 	start := flag.Int("slide", 1, "slide to start on (1-based)")
 	trans := flag.String("transition", "", "default transition: slide|wipe|cover|dissolve|none")
 	watch := flag.Bool("watch", true, "reload the deck automatically when the file changes")
+	mouse := flag.Bool("mouse", true, "mouse navigation: click the left/right third to go back/forward, wheel to step, click in the overview; -mouse=false leaves the mouse to the terminal (text selection)")
 	notesView := flag.Bool("notes", false, "show speaker notes for a presenter running the same deck in another terminal")
 	fade := flag.Bool("fade", true, "fade in content revealed by a pause; -fade=false makes reveals instant")
 	images := flag.String("images", "auto", "image drawing: auto|kitty|blocks|off (-dump and -check always use blocks unless off)")
@@ -133,7 +134,7 @@ func main() {
 	}
 
 	m := newModel(path, d, flags)
-	m.watch, m.noFade = *watch, !*fade
+	m.watch, m.noFade, m.mouse = *watch, !*fade, *mouse
 	m.statePath, m.started = notes.StatePath(path), time.Now()
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
@@ -199,8 +200,14 @@ type model struct {
 	statePath string
 	started   time.Time
 	published *notes.State
-	noFade    bool        // -fade=false
-	termBg    color.Color // terminal background (OSC 11), nil until reported
+	noFade    bool // -fade=false
+	mouse     bool // -mouse: report mouse clicks and wheel
+	// Navigation (see nav.go): the overview grid and its selected slide, and
+	// the slide number being typed.
+	overview bool
+	sel      int
+	num      string
+	termBg   color.Color // terminal background (OSC 11), nil until reported
 }
 
 func (m *model) Init() tea.Cmd {
@@ -252,6 +259,14 @@ func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 		}
 	case tea.KeyPressMsg:
 		return m, m.key(msg.String())
+	case tea.MouseClickMsg:
+		if msg.Button == tea.MouseLeft {
+			return m, m.mouseClick(msg.X, msg.Y)
+		}
+	case tea.MouseWheelMsg:
+		if msg.Button == tea.MouseWheelUp || msg.Button == tea.MouseWheelDown {
+			return m, m.mouseWheel(msg.Button == tea.MouseWheelUp)
+		}
 	}
 	return m, nil
 }
@@ -273,7 +288,15 @@ func (m *model) withImages(cmd tea.Cmd) tea.Cmd {
 }
 
 func (m *model) key(k string) tea.Cmd {
+	if m.overview {
+		return m.overviewKey(k)
+	}
+	if cmd, ok := m.numberKey(k); ok {
+		return cmd
+	}
 	switch k {
+	case "o":
+		m.openOverview()
 	case "q", "ctrl+c", "esc":
 		return tea.Quit
 	case "right", "l", "space", "n", "pgdown", "enter", "j", "down":
@@ -467,6 +490,7 @@ func (m *model) reload() tea.Cmd {
 	m.deck, m.r, m.anim = d, r, nil
 	m.slide = min(m.slide, len(d.Slides)-1)
 	m.step = min(m.step, d.Slides[m.slide].Steps-1)
+	m.sel = min(m.sel, len(d.Slides)-1)
 	if w := report.Warnings(d, r, m.flags.transition); len(w) > 0 {
 		m.status = strings.Join(w, "; ")
 		return m.clearStatusLater(statusWarnTime)
@@ -480,16 +504,28 @@ func (m *model) View() tea.View {
 	if m.w == 0 {
 		v = tea.NewView("")
 	} else {
-		frame := m.current()
-		if m.status != "" && m.anim == nil {
-			lines := strings.Split(frame, "\n")
-			lines[len(lines)-1] = m.r.StatusLine(m.status, m.w)
-			frame = strings.Join(lines, "\n")
-		}
-		v = tea.NewView(frame)
+		v = tea.NewView(m.screen())
 	}
 	v.AltScreen = true
+	if m.mouse {
+		v.MouseMode = tea.MouseModeCellMotion
+	}
 	return v
+}
+
+// screen is what fills the terminal: the overview grid, or the current frame
+// with the status line over its last row.
+func (m *model) screen() string {
+	if m.overview {
+		return m.r.Overview(m.sel, m.w, m.h)
+	}
+	frame := m.current()
+	if status := m.statusText(); status != "" && m.anim == nil {
+		lines := strings.Split(frame, "\n")
+		lines[len(lines)-1] = m.r.StatusLine(status, m.w)
+		frame = strings.Join(lines, "\n")
+	}
+	return frame
 }
 
 func tick() tea.Cmd {

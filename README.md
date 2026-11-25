@@ -10,6 +10,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 - **Images**: PNG, JPEG and GIF via the kitty graphics protocol, with a truecolor half-block fallback everywhere else.
 - **Live demos**: `+exec` code blocks run on a key press (bash, sh, Python) and show their output under the code.
 - **Speaker notes** in a second terminal that follows the presenter.
+- **Navigation**: `o` opens a grid overview of every slide, type a number and `enter` to jump, and the mouse works too (click the left or right third, scroll the wheel).
 - **Live reload**: save the file and the open deck updates in place.
 - **Verifiable**: `-check` reports every slide that overflows a given screen size; `-dump` prints every frame as text.
 
@@ -54,7 +55,7 @@ That's it.
 Present it, and check that it fits a small screen:
 
 ```sh
-tuipresent hello.md                    # space / → next, ← back, q quit
+tuipresent hello.md                    # space / → next, ← back, o overview, 12<enter> jump, q quit
 tuipresent -check -w 80 -h 24 hello.md # hello.md: 3 slides fit 80x24
 ```
 
@@ -135,10 +136,8 @@ Terminal capabilities
 - Deck progress in the terminal tab via the OSC 9;4 progress bar
 
 Presenting
-- Slide overview grid and jump-to-slide by number
 - Navigate the presenter from the notes view
 - Step-through code line highlighting, like presenterm's `{1-3|5}`
-- Mouse navigation
 
 Sharing and export
 - Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
