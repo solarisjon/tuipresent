@@ -81,6 +81,8 @@ Problems tuipresent can recover from are **warnings**: the deck still loads and 
 | Unknown transition kind: front matter, `-transition`, or a `transition:` directive (with its line number) | `slide` |
 | Code fence line highlights: a bad item, a line past the end of the block, an empty group, or an unclosed `{` (with the fence's line number) | The item or group is skipped (a range past the end is clipped); a fence with no usable group is plain code |
 | Unknown `title_style`: front matter, or a directive (with its line number) | `rule` |
+| Unknown `title_size`: front matter, or a directive (with its line number) | `1` |
+| `title_size` 2 or 3 on a title with a character the block font lacks, or wider than the slide (printed by `-check` and `-dump` for their width; not shown while presenting) | The normal title |
 | Multi-line `speaker_note` with no closing `-->` (with its line number) | The note ends before the next `<!-- end_slide -->`, or at the end of the file |
 
 **Errors** stop the deck from loading: invalid front-matter YAML, a deck with no slides, and an invalid custom theme (unreadable theme file, a color that isn't `#rgb`/`#rrggbb`, an empty color, or `extends` naming an unknown theme). At startup they exit 1; during a reload the old deck stays up and the error shows on the status line until the next good save.
@@ -144,6 +146,7 @@ Notes view (`-notes`):
 | `fade` | string or bool | `false`, `off`, `no` or `none` (any case) disables the pause fade deck-wide. Anything else, or unset, leaves it on. |
 | `progress` | string or bool | `false`, `off`, `no` or `none` (any case) stops the deck reporting progress to the terminal tab. Anything else, or unset, leaves it on. |
 | `title_style` | string | Default [title style](#slide-titles) for every slide: `rule` (default), `curly` or `frame` |
+| `title_size` | string or integer | Default [title size](#slide-titles) for every slide: `1` (default), `2` or `3` |
 
 Other keys are ignored. A JSON Schema for editors is in [`docs/agent/frontmatter.schema.json`](../agent/frontmatter.schema.json).
 
@@ -278,10 +281,11 @@ A directive is an HTML comment alone on a line: `<!-- name -->` or `<!-- name: a
 | `<!-- transition: KIND -->` | transition kind | Transition used when entering this slide, and in reverse when going back from it. Unknown kinds act as `slide` and warn. |
 | `<!-- fade: off -->` | `off`/`false`/`no`/`none`, or `on` | Disables (or re-enables) the pause fade for this slide, overriding front matter |
 | `<!-- title_style: curly -->` | `rule`, `curly` or `frame` | Title style for this slide, overriding front matter. Unknown values warn and act as `rule`. |
+| `<!-- title_size: 2 -->` | `1`, `2` or `3` | Title size for this slide, overriding front matter. Unknown values warn and act as `1`. |
 | `<!-- subtitle: text -->` | inline markdown | A line under the slide title (ignored on untitled slides) |
 | `<!-- speaker_note: text -->` | markdown | Adds a speaker note, shown only in the `-notes` view |
 
-`transition`, `fade`, `title_style` and `subtitle` (and the matching front-matter keys) are tuipresent extensions; the other directives come from presenterm. Content placed between `column_layout` and the first `column:` goes full width above the columns. Unsupported presenterm directives (`incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`, ...) are ignored.
+`transition`, `fade`, `title_style`, `title_size` and `subtitle` (and the matching front-matter keys) are tuipresent extensions; the other directives come from presenterm. Content placed between `column_layout` and the first `column:` goes full width above the columns. Unsupported presenterm directives (`incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`, ...) are ignored.
 
 ## Slide titles
 
@@ -299,7 +303,9 @@ The title text takes inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~s
 | `curly` | Gradient title with a curly underline in the accent color instead of the rule. Where the terminal does not draw curly underlines (anything but kitty, Ghostty, WezTerm and iTerm2, and always in tmux, `-check` and `-dump`) it falls back to `rule`. | 4 |
 | `frame` | Title (and subtitle) inside a rounded accent-gradient box, sized to the text | 5 |
 
-Each takes one more row with a subtitle. A framed title is 4 cells wider than its text; `-check` reports it when that exceeds the content width.
+**Title size.** `title_size: 1 | 2 | 3`, as a front-matter key or a directive. Sizes 2 and 3 replace the 1-row title with block letters, 3 and 5 rows tall (+2 and +4 rows on any style, so `rule` takes 6 and 8 rows, `frame` 7 and 9), which `-check` counts. In kitty (outside tmux; `TUIPRESENT_TEXT_SIZING=on` forces it, `off` disables it) the presenter draws the same title as scaled text (OSC 66, scale 3 or 5) over the block letters once the slide has settled; during a transition the block letters show. Letters are colored by the title gradient, one color per character; `code` and `==highlight==` runs use their theme colors. The block font has `A-Z`, `0-9`, space and `. , : ! ? - _ / + = ' " & ( )`; a title that needs anything else, or more columns than the content width (block width, plus 4 in a `frame`), is drawn normally and warned about. The subtitle stays normal size, and `curly` draws the rule.
+
+A subtitle takes one more row in every style. A framed title is 4 cells wider than its text; `-check` reports it when that exceeds the content width.
 
 ## Text styles
 

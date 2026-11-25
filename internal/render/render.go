@@ -31,6 +31,7 @@ type Renderer struct {
 	theme      Theme
 	glam       map[int]*glamour.TermRenderer
 	cache      map[[4]int]string
+	places     map[[4]int]place // big-title placement of each cached frame
 	execOutput map[int]string
 	clip       int // widest column overflow seen since Overflow reset it
 	imgRows    int // max rows per image on the slide being laid out; 0 while measuring
@@ -50,6 +51,7 @@ func New(d *deck.Deck) *Renderer {
 		themeErr:   err,
 		glam:       map[int]*glamour.TermRenderer{},
 		cache:      map[[4]int]string{},
+		places:     map[[4]int]place{},
 		execOutput: map[int]string{},
 		images:     map[string]*loadedImage{},
 	}
@@ -58,6 +60,7 @@ func New(d *deck.Deck) *Renderer {
 func (r *Renderer) SetExecOutput(id int, out string) {
 	r.execOutput[id] = out
 	clear(r.cache)
+	clear(r.places)
 }
 
 // Frame returns exactly h lines, each exactly w cells wide.
@@ -82,7 +85,7 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 	}
 	avail := max(h-len(footer), 0)
 
-	head, _ := r.head(idx, s, cw)
+	head, _, bh := r.headBig(idx, s, cw)
 
 	headRows := len(head)
 	if !s.Centered {
@@ -100,7 +103,11 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 		// Center head lines individually and the body as one block, offset from the
 		// fully revealed body so pauses don't shift it sideways.
 		for i, l := range head {
-			head[i] = padLeft(l, (cw-visibleWidth(l))/2)
+			lw := visibleWidth(l)
+			if bh != nil && i >= bh.first && i < bh.first+bh.rows {
+				lw = bh.lineW // block rows have ragged trailing spaces: center them as one block
+			}
+			head[i] = padLeft(l, (cw-lw)/2)
 		}
 		if statementOnly(s.Blocks) {
 			for i, l := range body {
@@ -127,6 +134,14 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 		full := len(head) + len(r.bodyFull(s, cw))
 		pad := max((avail-full)/2, 0)
 		top = append(make([]string, pad), head...)
+	}
+
+	if bh != nil && bh.first+bh.rows+len(top)-len(head) <= avail {
+		pad := 0
+		if s.Centered {
+			pad = (cw - bh.lineW) / 2
+		}
+		r.places[[4]int{idx, step, w, h}] = place{bh: bh, row: len(top) - len(head) + bh.first, col: left + pad + bh.xoff}
 	}
 
 	lines := append(top, body...)

@@ -104,7 +104,7 @@ func main() {
 		return
 	}
 	if *check || *dump {
-		report.PrintWarnings(os.Stderr, path, report.Warnings(d, r, flags.transition))
+		report.PrintWarnings(os.Stderr, path, append(report.Warnings(d, r, flags.transition), report.LayoutWarnings(r, *dw)...))
 	}
 	if *runExec && (*check || *dump) {
 		var blocks []deck.Block
@@ -143,6 +143,7 @@ func main() {
 		imgMode = img.Detect(os.Getenv)
 	}
 	render.Curly = render.DetectCurly(os.Getenv)
+	render.TextSizing = render.DetectTextSizing(os.Getenv)
 	if imgMode == img.Kitty {
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
 	}
@@ -220,6 +221,7 @@ type model struct {
 	mouse     bool // -mouse: report mouse clicks and wheel
 	// Navigation (see nav.go): the overview grid and its selected slide, and
 	// the slide number being typed.
+	big      bigTitleState // scaled title overlay, see bigtitle.go
 	overview bool
 	sel      int
 	num      string
@@ -255,6 +257,7 @@ func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 	defer m.publish()
 	defer func() { cmd = m.withImages(cmd) }()
 	defer func() { cmd = m.withProgress(cmd) }()
+	defer func() { cmd = m.withBigTitle(msg, cmd) }()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height

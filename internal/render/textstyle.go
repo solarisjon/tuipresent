@@ -185,10 +185,23 @@ func (r *Renderer) styledSubtitle(sub string) string {
 // style is 4 rows (5 with a subtitle); frame is 5 (6). It is empty for an
 // untitled slide. width is the widest line of the head.
 func (r *Renderer) head(idx int, s deck.Slide, cw int) (lines []string, width int) {
+	lines, width, _ = r.headBig(idx, s, cw)
+	return lines, width
+}
+
+// headBig is head plus, for a slide whose title_size applies, where its block
+// letters sit. A title that cannot be drawn big (see TitleSizeWarnings) gets
+// the normal head. title_size adds TitleRows(size)-1 rows to each style.
+func (r *Renderer) headBig(idx int, s deck.Slide, cw int) (lines []string, width int, bh *bigHead) {
 	if s.Title == "" {
-		return nil, 0
+		return nil, 0, nil
 	}
 	style := r.deck.TitleStyle(idx)
+	if size := r.deck.TitleSize(idx); size > 1 && !s.Cover {
+		if l, w, b, reason := r.bigHead(s, size, style, cw); reason == "" {
+			return l, w, b
+		}
+	}
 	tw := ansi.StringWidth(PlainTitle(s.Title))
 	sw := ansi.StringWidth(PlainTitle(s.Subtitle))
 	inner := max(tw, sw)
@@ -209,14 +222,14 @@ func (r *Renderer) head(idx int, s deck.Slide, cw int) (lines []string, width in
 			lines = append(lines, row(sub, sw))
 		}
 		lines = append(lines, border("╰"+strings.Repeat("─", bw-2)+"╯"), "")
-		return lines, bw
+		return lines, bw, nil
 	case "curly":
 		if Curly {
 			lines = []string{"", r.styledTitle(s.Title, true)}
 			if sub != "" {
 				lines = append(lines, sub)
 			}
-			return append(lines, "", ""), inner
+			return append(lines, "", ""), inner, nil
 		}
 	}
 	rule := cw
@@ -227,7 +240,7 @@ func (r *Renderer) head(idx int, s deck.Slide, cw int) (lines []string, width in
 	if sub != "" {
 		lines = append(lines, sub)
 	}
-	return append(lines, r.rule(rule), ""), inner
+	return append(lines, r.rule(rule), ""), inner, nil
 }
 
 // ---- inline marks in body text ----

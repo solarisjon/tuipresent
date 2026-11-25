@@ -18,6 +18,7 @@ type Meta struct {
 	Fade       string `yaml:"fade"`     // off/false disables the pause reveal fade deck-wide
 	Progress   string `yaml:"progress"` // off/false disables the terminal tab progress bar
 	TitleStyle string `yaml:"title_style"`
+	TitleSize  string `yaml:"title_size"` // a string so "huge" warns instead of failing the YAML decode
 }
 
 // TitleStyles are the values of the title_style directive and front-matter key.
@@ -129,6 +130,7 @@ type Slide struct {
 	Transition string   // overrides Meta.Transition when set
 	Fade       string   // overrides Meta.Fade when set
 	TitleStyle string   // overrides Meta.TitleStyle when set
+	TitleSize  string   // overrides Meta.TitleSize when set
 	Subtitle   string   // line under the title (inline markdown)
 	Cover      bool     // synthesized title slide from front matter
 	Notes      []string // speaker notes (markdown), in source order; never rendered on the slide

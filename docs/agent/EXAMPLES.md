@@ -53,6 +53,7 @@ Conventions for each result:
 29. [Subtitle and the frame title style](#case-29)
 30. [Highlight, strikethrough, faint and underline marks](#case-30)
 31. [Callout boxes](#case-31)
+32. [Big titles: block letters, their row cost and the width fallback](#case-32)
 
 <a id="case-1"></a>
 
@@ -1380,3 +1381,124 @@ deck.md: 1 slides fit 80x24   (exit 0)
 
 - Each callout is its lines plus 2 border rows, with the type in the top border. The box is as wide as its widest line plus 4, up to the content width.
 - Its text wraps 4 cells narrower than normal prose. An unknown type such as `[!BOGUS]`, or a quote without `[!TYPE]`, is an ordinary blockquote.
+
+<a id="case-32"></a>
+
+## 32. Big titles: block letters, their row cost and the width fallback
+
+<!-- frames: full -->
+
+````markdown
+Big idea
+===
+<!-- title_size: 2 -->
+<!-- subtitle: block letters, 3 rows -->
+
+One short title, drawn large.
+
+<!-- end_slide -->
+
+This title is far too long for size three
+===
+<!-- title_size: 3 -->
+
+Falls back to the normal title.
+
+<!-- end_slide -->
+
+Bad
+===
+<!-- title_size: huge -->
+
+Unknown size.
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: warning: line 20: unknown title_size "huge" (valid: 1 to 3); using 1
+deck.md: warning: slide 2: title_size 3 does not fit (it needs 458 columns but the slide is 72 wide); using the normal title
+deck.md: 3 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    █▀▀▀▄ ▀▀█▀▀ ▄▀▀▀▀     ▀▀█▀▀ █▀▀▀▄ █▀▀▀▀ ▄▀▀▀▄
+    █▀▀▀▄   █   █  ▀█       █   █   █ █▀▀   █▀▀▀█
+    ▀▀▀▀  ▀▀▀▀▀  ▀▀▀      ▀▀▀▀▀ ▀▀▀▀  ▀▀▀▀▀ ▀   ▀
+    block letters, 3 rows
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    One short title, drawn large.
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━──────────────────────────────────────────────────────
+                                                                          1 / 3
+=== slide 2 step 1/1 ===
+
+
+    This title is far too long for size three
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Falls back to the normal title.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────────────────────
+                                                                          2 / 3
+=== slide 3 step 1/1 ===
+
+
+    Bad
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Unknown size.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                                          3 / 3
+```
+
+- `title_size: 2` replaces the 1-row title with 3 rows of block letters (+2 rows); size 3 uses 5 rows (+4). `-check` counts them, so a slide's body gets 2 or 4 fewer rows. A subtitle stays normal size and costs its usual row.
+- A title that does not fit the content width (here 72 columns), or contains a character with no block letter (anything outside `A-Z`, `0-9`, space and basic punctuation, so CJK too), is drawn normally and `-check` and `-dump` warn with the slide number. The warning depends on `-w`, so it is not part of the deck's own warnings.
+- `huge` is not a size: it warns with its line number and acts as `1`.
+- Kitty draws the same rows as scaled text; `-check` and `-dump` always show these block letters.

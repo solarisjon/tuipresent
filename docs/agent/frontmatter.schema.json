@@ -56,6 +56,14 @@
       "type": "string",
       "enum": ["rule", "curly", "frame"],
       "default": "rule"
+    },
+    "title_size": {
+      "description": "Default title size for every slide: 1 (the normal title), 2 (block letters 3 rows tall, +2 rows) or 3 (5 rows tall, +4 rows); kitty draws them as scaled text. A slide's title_size directive overrides it. Unknown values warn and act as 1; a title that cannot be drawn big (a character without a block letter, or too wide) warns in -check and -dump and stays normal.",
+      "anyOf": [
+        { "type": "integer", "minimum": 1, "maximum": 3 },
+        { "type": "string", "pattern": "^\\s*[123]\\s*$" }
+      ],
+      "default": 1
     }
   },
   "$defs": {

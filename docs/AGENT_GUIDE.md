@@ -130,16 +130,16 @@ More body.
 <!-- end_slide -->
 ```
 
-- **Directives** (§5), each alone on its line: `end_slide`, `pause`, `column_layout: [2, 1]`, `column: N` (0-based), `reset_layout`, `jump_to_middle`, `transition: KIND`, `speaker_note: text` (or the multi-line form, §8), `fade: off`/`on`, `title_style: rule|curly|frame`, `subtitle: text`.
+- **Directives** (§5), each alone on its line: `end_slide`, `pause`, `column_layout: [2, 1]`, `column: N` (0-based), `reset_layout`, `jump_to_middle`, `transition: KIND`, `speaker_note: text` (or the multi-line form, §8), `fade: off`/`on`, `title_style: rule|curly|frame`, `title_size: 1|2|3`, `subtitle: text`.
 - **Transitions** (§15.3): `slide`, `wipe`, `cover`, `dissolve`, `none`. Going back from a slide plays its transition in reverse.
 - **Links**: `[text](https://url)` is an OSC 8 hyperlink showing only `text` where supported, else `text` plus its dimmed URL (always in `-dump`/`-check`). Relative and `#anchor` links show text only.
-- **Titles** (§7): only a setext H1 (`Title` + `===`) before any other content. `# Title` is a body heading. Titles take inline markdown (`**bold**`, `` `code` ``). `<!-- title_style: curly -->` (curly underline where supported, else the rule) or `frame` (boxed, +1 row); `<!-- subtitle: text -->` adds a line (+1 row). `title_style` also works in front matter.
+- **Titles** (§7): only a setext H1 (`Title` + `===`) before any other content. `# Title` is a body heading. Titles take inline markdown (`**bold**`, `` `code` ``). `<!-- title_style: curly -->` (curly underline where supported, else the rule) or `frame` (boxed, +1 row); `<!-- subtitle: text -->` adds a line (+1 row). `title_style` also works in front matter. `<!-- title_size: 2 -->` (or `3`) draws the title in big block letters (kitty: scaled text) and costs +2 (size 2) or +4 (size 3) rows, which `-check` counts; a title with characters outside `A-Z 0-9` and basic punctuation, or too wide, warns and stays normal. Use it for section and statement slides with short titles, not every slide.
 - **Text styles and callouts** (§13.7, §13.8): `~~strike~~`, `==highlight==`, `++underline++`, `[faint]{.faint}`, `[x]{.curly}`/`.dotted`/`.dashed`/`.double`; a blockquote starting `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` becomes a themed box costing its lines + 2 rows.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
 - **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory. `{1-3|5|all}` in the info string (`rust {1-3|5}`, combinable with `+exec`) steps through line groups: each group is one reveal step with the other lines dimmed, and the groups add steps like pauses. `{2-4}` alone is a static highlight (§10.5).
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
 - **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-mouse=false`, `-images auto|kitty|blocks|off` (presenting).
-- **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`, `progress`, `title_style`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
+- **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`, `progress`, `title_style`, `title_size`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
 
 ---
 

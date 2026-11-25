@@ -90,6 +90,24 @@ Body text has more styles: ==highlight==, ~~strikethrough~~,
 
 <!-- end_slide -->
 
+Big titles
+===
+<!-- title_size: 2 -->
+<!-- subtitle: `title_size: 2` costs 2 more rows; size 3 costs 4 -->
+<!-- transition: slide -->
+
+Block letters everywhere, scaled text in kitty. Short titles work best,
+and a title that is too wide falls back to the normal size with a
+warning from `-check`.
+
+```markdown
+Big titles
+===
+<!-- title_size: 2 -->
+```
+
+<!-- end_slide -->
+
 Pauses reveal one step at a time
 ===
 

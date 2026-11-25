@@ -27,6 +27,13 @@ func Warnings(d *deck.Deck, r *render.Renderer, transitionFlag string) []string 
 	return append(out, r.ThemeWarnings()...)
 }
 
+// LayoutWarnings lists the problems that depend on the screen width, which
+// -check and -dump know: a title_size that does not fit, so the slide draws
+// its normal title.
+func LayoutWarnings(r *render.Renderer, w int) []string {
+	return r.TitleSizeWarnings(w)
+}
+
 // PrintWarnings writes each warning as "name: warning: text".
 func PrintWarnings(w io.Writer, name string, warnings []string) {
 	for _, s := range warnings {
