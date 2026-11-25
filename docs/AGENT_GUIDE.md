@@ -34,7 +34,7 @@ Follow these steps in order. Do not skip step 4.
 6. **Hand off.** Give the user the file path, the slide count, the run command and the keys:
 
    ```sh
-   ./bin/tuipresent deck.md          # or: tuipresent deck.md if installed
+   tuipresent deck.md                # or ./bin/tuipresent deck.md in a checkout
    ```
 
    Keys: `→`/`space`/`l` next, `←`/`h` back, `g`/`G` first/last slide, `o` slide overview grid, a number then `enter` jumps to that slide, mouse click on the left/right third or the wheel goes back/forward (`-mouse=false` disables), `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs. Mention `tuipresent -notes deck.md` in a second terminal if the deck has speaker notes (its navigation keys, the same as the presenter's, also drive the presenter), and `-theme NAME` to preview other themes.
@@ -138,7 +138,7 @@ More body.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
 - **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory. `{1-3|5|all}` in the info string (`rust {1-3|5}`, combinable with `+exec`) steps through line groups: each group is one reveal step with the other lines dimmed, and the groups add steps like pauses. `{2-4}` alone is a static highlight (§10.5).
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
-- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-version` (print the version and exit; no deck needed), `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-mouse=false`, `-images auto|kitty|sixel|iterm2|blocks|off` (presenting); `-export tape|vhs|freeze` (record with VHS or export one image per slide with Freeze; with `-out PATH`, `-format`, `-dry-run`, `-dwell D`; see the sharing guide) (sharing: only when the user asks, and `-exec` there runs the deck's code).
+- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-version` (print the version and exit; no deck needed), `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-mouse=false`, `-images auto|kitty|sixel|iterm2|blocks|off` (presenting); `-export tape|vhs|freeze` (record with VHS or export one image per slide with Freeze; with `-out PATH`, `-format`, `-dry-run`, `-dwell D`; see the sharing guide) (sharing: only when the user asks, and `-exec` there runs the deck's code). Setting up an agent: `-install-skill` (with `-skill-dir project|user|DIR` and `-force`) writes the agent skill, and `-print-skill` prints its SKILL.md; neither needs a deck.
 - **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`, `progress`, `title_style`, `title_size`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
 
 ---

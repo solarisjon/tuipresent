@@ -2,7 +2,7 @@
 
 > tuipresent is a Go terminal presentation tool. It renders presenterm-compatible markdown decks as full-screen slides with transitions, pause fade-in reveals, columns, twenty built-in color themes (plus custom theme files and background painting), kitty graphics images with a half-block fallback, speaker notes in a second terminal, live reload on save, and runnable `+exec` code blocks. `tuipresent -check` and `-dump` verify a deck's layout without a TTY.
 
-Build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./bin/tuipresent -check -w 80 -h 24 deck.md` (fix any `warning:` lines on stderr too) and read `./bin/tuipresent -dump -w 80 -h 24 deck.md`. Never pass `-exec` without the user's approval: it runs the deck's code.
+Install with `go install github.com/solarisjon/tuipresent/cmd/tuipresent@latest`, or build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./bin/tuipresent -check -w 80 -h 24 deck.md` (fix any `warning:` lines on stderr too) and read `./bin/tuipresent -dump -w 80 -h 24 deck.md`. Never pass `-exec` without the user's approval: it runs the deck's code.
 
 ## Language reference
 
@@ -14,7 +14,7 @@ Build with `go build -o bin/tuipresent ./cmd/tuipresent`. Verify a deck with `./
 
 - [Agent docs index](docs/agent/README.md): read order and which file answers which question
 - [Agent guide](docs/AGENT_GUIDE.md): workflow from brief to verified deck, layout budget and rules of thumb, design guidance (including choosing a theme) and a pre-handoff checklist
-- [Agent skill](docs/agent-skill/SKILL.md): condensed, self-contained deck-authoring skill for agent runtimes
+- [Agent skill](docs/agent-skill/SKILL.md): condensed, self-contained deck-authoring skill for agent runtimes; `tuipresent -install-skill [-skill-dir project|user|DIR] [-force]` installs it with its references (no checkout needed), `tuipresent -print-skill` prints it
 
 ## User documentation
 

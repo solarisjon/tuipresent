@@ -4,6 +4,8 @@ These files are for LLM agents that write, check or answer questions about tuipr
 
 ## Read order
 
+0. **Setting up an agent without a checkout:** `tuipresent -install-skill`, then start the agent (see the README, "Working with an agent").
+
 1. **Writing a deck from a brief:** start with [docs/agent-skill/SKILL.md](../agent-skill/SKILL.md) (condensed, self-contained workflow and rules), then [docs/AGENT_GUIDE.md](../AGENT_GUIDE.md) (full workflow, verification steps, layout budget, design guidance, pre-handoff checklist). Consult LANGUAGE.md for any construct you are unsure about: the guide links to it instead of restating syntax.
 2. **Answering a precise question about the syntax or layout** (what does X parse to, how many rows does Y take, why did Z vanish): go straight to [LANGUAGE.md](LANGUAGE.md), then confirm with the matching case in [EXAMPLES.md](EXAMPLES.md).
 3. **Validating front matter in an editor or tool:** [frontmatter.schema.json](frontmatter.schema.json).
@@ -31,7 +33,7 @@ These files are for LLM agents that write, check or answer questions about tuipr
 - **EXAMPLES.md** is evidence: each case is a minimal deck plus its real `-check` line and `-dump` frames. `go test ./internal/docscheck` fails when any of that output differs from the renderer; after a parser or renderer change, run `go test ./internal/docscheck -run Examples -update` and review the diff. No case runs deck code.
 - **frontmatter.schema.json** is the machine-readable front matter; `go test` checks its keys against the code.
 - **AGENT_GUIDE.md** is the workflow guide: requirements, outline, verification commands, budgets and rules of thumb, design guidance, an annotated deck and a checklist. It links to LANGUAGE.md for syntax.
-- **SKILL.md** is the condensed skill for agent runtimes that load skills. It is installed on its own, so it repeats the essential rules.
+- **SKILL.md** is the condensed skill for agent runtimes that load skills: bootstrap, verify loop, syntax, troubleshooting. It repeats the essential rules and points at the other files above. `tuipresent -install-skill` writes it, with those files as `references/GUIDE.md`, `LANGUAGE.md`, `EXAMPLES.md` and `frontmatter.schema.json`, into `./.claude/skills/tuipresent-deck` (`-skill-dir user` for `~/.claude/skills/tuipresent-deck`, `-skill-dir DIR` for another place, `-force` to overwrite); `-print-skill` prints it to stdout. The files are embedded in the binary (package `docs`), so no checkout is needed. When it is installed, doc paths in it are rewritten from `docs/...` to `references/...`.
 - **docs/guide/** is the human user guide; [reference.md](../guide/reference.md) is its complete reference.
 
 If two documents disagree, the code wins. LANGUAGE.md and EXAMPLES.md are the most precise; fix the others (or report the drift).

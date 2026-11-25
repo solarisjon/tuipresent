@@ -1,29 +1,46 @@
 ---
 name: tuipresent-deck
-description: Write and verify a terminal slide deck for tuipresent, a presenterm-compatible markdown presenter. Use when the user asks to create, make, build or write a presentation, slides, slide deck or talk for the terminal, or mentions tuipresent or presenterm.
+description: Write, verify and present a terminal slide deck with tuipresent, a presenterm-compatible markdown presenter. Use when the user asks to create, make, build or write a presentation, slides, slide deck, talk or keynote for the terminal, to check or fix a deck's layout, to preview, record or export one, or mentions tuipresent or presenterm.
 ---
 
 # tuipresent deck authoring
 
-This skill is self-contained. In the tuipresent repo, `docs/AGENT_GUIDE.md` has the full workflow and design guidance and `docs/agent/LANGUAGE.md` the exact syntax rules; read them when a rule here is unclear, or before using columns, pauses or `+exec` together.
+Self-contained: the checkout of the tuipresent repo is not needed. Exact syntax is in `docs/agent/LANGUAGE.md`, real output for each construct in `docs/agent/EXAMPLES.md`, the full workflow and design guidance in `docs/AGENT_GUIDE.md`, the front matter schema in `docs/agent/frontmatter.schema.json`. Read LANGUAGE.md before using columns, pauses and `+exec` together, or when a rule here is unclear.
+
+## Bootstrap (first)
+
+Run `tuipresent -version`. If it is not found, install it, in this order:
+
+1. `go install github.com/solarisjon/tuipresent/cmd/tuipresent@latest` (needs Go; the binary lands in `$(go env GOPATH)/bin`, which must be on `PATH`).
+2. A release binary from https://github.com/solarisjon/tuipresent/releases: pick the one for the OS and CPU, `chmod +x`, put it on `PATH`.
+3. From a clone: `go install ./cmd/tuipresent`.
+
+Use `tuipresent` from `PATH`, not `./bin/tuipresent`, unless the user gives another path. Ask before installing anything. If no install is possible, say so at handoff and apply the layout budget below conservatively.
 
 ## Workflow
 
-1. **Gather requirements.** Topic and key message, audience, length (about 1 slide per minute), whether live demos are wanted, theme, output path. State any assumptions you make.
-2. **Outline.** One line per slide: title plus a single idea.
+1. **Gather requirements.** Ask only what you cannot reasonably assume: topic and key message, audience, length (about 1 slide per minute), live demos, where it is shown (laptop, bright-room projector). Assume and state: 8-12 slides, theme `dark` (light theme + `background: paint` for projectors), no `+exec`, output `<topic-slug>.md` in the current directory. Do not ask about transitions or pauses.
+2. **Outline.** One line per slide: title plus a single idea. Show it if the deck is long or the brief vague.
 3. **Write** one markdown file using the rules below.
-4. **Verify (mandatory).** Build, run `-check` at both sizes, then read `-dump` at both sizes:
+4. **Verify (mandatory).** Run `-check` at both sizes, then read `-dump` at both sizes:
    ```sh
-   go build -o bin/tuipresent ./cmd/tuipresent
-   ./bin/tuipresent -check -w 100 -h 30 deck.md   # must print "N slides fit", exit 0
-   ./bin/tuipresent -check -w 80 -h 24 deck.md
-   ./bin/tuipresent -dump -w 100 -h 30 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
-   ./bin/tuipresent -dump -w 80 -h 24 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
+   tuipresent -check -w 100 -h 30 deck.md   # must print "N slides fit", exit 0
+   tuipresent -check -w 80 -h 24 deck.md
+   tuipresent -dump -w 100 -h 30 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
+   tuipresent -dump -w 80 -h 24 deck.md | perl -pe 's/\e\[[0-9;:]*[A-Za-z]//g'
    ```
-   `-check` reports rows over budget and these column overflows: wide body lines, too-long titles, text clipped in columns, and code lines over the no-wrap limit. It does not count `+exec` output unless you add `-exec`. It prints warnings to stderr as `deck.md: warning: ...` (unknown theme or transition name, unknown theme key, a speaker note missing `-->`) without failing: fix every one.
-   For decks with `+exec`, add `-exec` to `-check`/`-dump` to run every block first and measure its output. This executes the deck's code. Use it only on a deck you wrote or reviewed, with blocks that follow the safety rules below, and only with the user's approval. Otherwise budget output rows by hand. Read the dump for readability and reveal order.
+   `-check` reports rows over budget and column overflows (wide body lines, long titles, clipped column text, code lines over the no-wrap limit). Load errors exit 1. It prints `deck.md: warning: ...` to stderr (unknown theme or transition, unknown theme key, a speaker note missing `-->`) without failing: fix every one. It does not count `+exec` output, misspelled directives or readability: read the dump (the perl filter strips ANSI; `-dump` prints every slide at every pause step).
+   `-exec` with `-check`/`-dump` runs every `+exec` block first and measures the output. It executes the deck's code: only on a deck you wrote or reviewed, only with the user's approval. Otherwise budget output rows by hand.
 5. **Fix and re-verify** until both checks pass and the dumps look right.
-6. **Hand off.** Give the path, slide count, `./bin/tuipresent deck.md`, and the keys: `space`/`→` next, `←` back, `o` overview grid, a number + `enter` jumps to a slide, mouse click (left/right third) or wheel navigates (`-mouse=false` disables), `e` run exec, `r` reload, `q` quit. Also list what each `+exec` block runs.
+6. **Hand off.** Give the path, slide count, the run command, and what each `+exec` block runs. Tell the user to run `tuipresent deck.md` in their own terminal (a presenter needs a real TTY; do not launch it yourself). Live reload is on by default (`-watch`), so they can keep it open while you edit: it reloads on save, keeping the slide and step, and shows a parse error in the status line while keeping the old deck. Keys: `space`/`→` next, `←` back, `o` overview grid, a number + `enter` jumps, mouse click (left/right third) or wheel navigates (`-mouse=false` disables), `e` runs `+exec`, `r` reload, `q` quit.
+
+## Presenting, themes, notes
+
+- Speaker notes: tell the user to run `tuipresent -notes deck.md` in a second terminal, same machine. It shows the notes and next slide, follows the presenter, and its navigation keys also drive the presenter.
+- Themes: `tuipresent -themes` lists them with swatches. `-theme NAME` (or a `.yaml` theme file) previews one without editing the deck; `-background terminal|paint` overrides painting. `-slide N` starts on a slide, `-transition KIND` overrides the default.
+- Other flags: `-fade=false`, `-progress=false`, `-links auto|on|off`, `-images auto|kitty|sixel|iterm2|blocks|off` (`auto` never draws real pixels inside tmux), `-watch=false`, `-version`.
+- Sharing, only when asked: `tuipresent -export tape deck.md` prints a VHS tape; `-export vhs` records it and `-export freeze` makes one PNG/SVG per slide (separate installs of Charm's VHS and Freeze; no PDF, combine PNGs with `magick slides/slide-*.png deck.pdf`). Options: `-out`, `-format`, `-dwell`. Run with `-dry-run` first (needs neither tool). `-exec` with `-export` runs deck code: only with the user's approval.
+- Skill setup: `tuipresent -install-skill` writes this skill into `./.claude/skills/tuipresent-deck`; `-skill-dir user|project|PATH` picks the place, `-force` overwrites, `-print-skill` prints SKILL.md for other agent runtimes.
 
 ## Syntax
 
@@ -49,7 +66,6 @@ This skill is self-contained. In the tuipresent repo, `docs/AGENT_GUIDE.md` has 
   - Runs only when the presenter presses `e`, or with `-exec` during `-check`/`-dump`, in the deck file's directory.
   - 15 s timeout. Combined stdout and stderr appears in a text block below the code.
 - **Images:** `![alt](path)` alone on its line; path relative to the deck; PNG, JPEG or GIF. Scaled to fit with aspect kept: height = body rows left free on the fully revealed slide (split between stacked images, min 3), width at most the content or column width. `![image:width:50%](path)` caps the width. kitty/ghostty (kitty graphics), iTerm2/WezTerm (iTerm2 inline images) and foot (sixel) draw real pixels; other terminals, tmux, `-dump` and `-check` use truecolor half-blocks with the same geometry in every mode. A missing file renders as a dim `[image: alt]` box (3 rows), never an error.
-- **CLI flags:** `-check`, `-dump`, `-exec` (with `-check`/`-dump`: run exec blocks first), `-w W`, `-h H` (sizes for `-check`/`-dump`), `-slide N` (start slide, cover counts), `-transition KIND` (overrides the front matter default, also after reload), `-watch` (default on: reload on save, keeping the slide, so the user can keep the deck open while you edit; a parse error keeps the old deck and shows in the status line; `-watch=false` disables), `-notes` (speaker notes view that follows a presenter of the same deck), `-mouse=false` (no mouse reporting; leaves text selection to the terminal), `-fade=false` (instant pause reveals, overrides the deck), `-progress=false` (no deck progress in the terminal tab; front matter `progress: false` does it deck-wide), `-links auto|on|off` (OSC 8 hyperlinks; `-dump`/`-check` never emit them), `-images auto|kitty|sixel|iterm2|blocks|off` (image drawing; `auto` picks the protocol from the terminal, never inside tmux), `-theme NAME` (preview in another theme or a `.yaml` theme file, overrides front matter, also after reload), `-background terminal|paint`, `-themes` (list themes with swatches), `-version` (print the version and exit; no deck needed), `-export tape|vhs|freeze` with `-out`, `-format`, `-dry-run`, `-dwell` (sharing: `tape` prints a VHS tape, `vhs` records it with Charm's VHS, `freeze` renders one PNG/SVG per slide with Charm's Freeze; only on request, `-dry-run` needs neither tool, and `-exec` there runs deck code; no PDF from Freeze, combine the PNGs with `magick slides/slide-*.png deck.pdf`).
 
 ## Layout budget
 
@@ -87,6 +103,21 @@ Design for 80x24:
 - Transitions: one deck default (`slide` or `dissolve`). Override only with meaning: `cover` for a new section, `wipe` for a reveal, `none` for an evolving diagram.
 - Pauses fade in what they add, so reveal whole units (a bullet, a column, a takeaway) where order matters, not on every slide. Use `<!-- fade: off -->` only for slides clicked through quickly.
 - `+exec` must be harmless, offline, idempotent and fast (`echo`, `date`, `seq`, pure `python3`). Never use destructive commands (`rm`, `git push`, `sudo`, installs), network commands (`curl`, `ssh`, `ping`), or anything that prints secrets. The presenter runs it live.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `tuipresent: command not found` | Bootstrap above; check `$(go env GOPATH)/bin` is on `PATH`. |
+| `-check`: slide N overflows by R rows | Split the slide, cut bullets, shorten code, or drop a `pause`d block to the next slide. Re-run both sizes. |
+| `-check`: overflows by C cols | Shorten the title (60 characters max) or the widest body, column or code line. |
+| A directive does nothing | Unknown directives are dropped silently. It must be lowercase, spelled exactly, alone on its line with blank lines around it. |
+| `warning: unknown theme` | Use an exact name from `tuipresent -themes`; aliases are only `tokyonight`, `catppuccin`, `gruvbox`, `solarized`. |
+| `# Title` shows as a body heading | Titles are setext: `Title` then a `===` line. |
+| `[image: alt]` box instead of a picture | Wrong path (relative to the deck) or not PNG, JPEG or GIF. |
+| Images are blocks in tmux, over SSH, or in `-dump` | Expected: real pixels need kitty, Ghostty, iTerm2, WezTerm or foot outside tmux. Not a bug. |
+| Everything after a fence is missing | An unclosed fence swallows every later `end_slide`. |
+| Reload shows an error in the status line | The old deck stays up; fix the file and save again. |
 
 ## Pre-handoff checklist
 

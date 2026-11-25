@@ -4,6 +4,14 @@ All notable changes to tuipresent are documented here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- `-install-skill` installs the agent skill (`tuipresent-deck`) from the binary itself: `SKILL.md` plus `references/` (guide, language spec, verified examples, front matter schema), into `./.claude/skills/tuipresent-deck` (`-skill-dir project`), `~/.claude/skills/tuipresent-deck` (`-skill-dir user`) or any directory. It never overwrites without `-force` and refuses symlinks. `-print-skill` prints `SKILL.md` for other agent runtimes. No checkout of the repository is needed.
+
+### Changed
+
+- The agent skill is rewritten for new users: bootstrap (finding or installing `tuipresent`), the verify loop, what to ask versus assume, previewing with live reload, the notes view, themes, export, and a troubleshooting table.
+
 ## [1.0.0-rc1]
 
 First release candidate: a markdown slide presenter for the terminal, compatible with most presenterm decks.
