@@ -137,7 +137,6 @@ Terminal capabilities
 
 Presenting
 - Navigate the presenter from the notes view
-- Step-through code line highlighting, like presenterm's `{1-3|5}`
 
 Sharing and export
 - Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze

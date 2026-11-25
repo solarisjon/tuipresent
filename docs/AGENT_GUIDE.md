@@ -134,7 +134,7 @@ More body.
 - **Transitions** (§15.3): `slide`, `wipe`, `cover`, `dissolve`, `none`. Going back from a slide plays its transition in reverse.
 - **Titles** (§7): only a setext H1 (`Title` + `===`) before any other content. `# Title` is a body heading.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
-- **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory.
+- **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory. `{1-3|5|all}` in the info string (`rust {1-3|5}`, combinable with `+exec`) steps through line groups: each group is one reveal step with the other lines dimmed, and the groups add steps like pauses. `{2-4}` alone is a static highlight (§10.5).
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
 - **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-watch=false`, `-mouse=false`, `-images auto|kitty|blocks|off` (presenting).
 - **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
@@ -276,6 +276,8 @@ Use `<!-- jump_to_middle -->` with a setext title for a single sentence that sho
 - Do not cycle through all kinds for variety. It reads as noise.
 
 ### Designing pauses
+
+- Code walk-throughs: instead of several slides of the same code, use one fence with `{1-3|5,7|all}`. Each group is one step, so it counts in the slide's steps (and `-dump` shows the step frames, though dimming is color only and not visible in the text dump). Keep the group count small and line numbers within the block; `-check` warns about numbers past the end.
 
 - Every reveal fades in, so a pause draws the eye to what it adds. Use pauses where the order of ideas matters (problem before fix, question before answer), not on every slide.
 - Reveal whole units (a bullet, a column, a takeaway line). A pause that adds one word fades in too little to notice.

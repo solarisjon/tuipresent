@@ -10,6 +10,7 @@ How to write a tuipresent deck that reads well on a terminal: every construct th
 - [Slide titles](#slide-titles)
 - [Text, lists, tables, quotes and code](#text-lists-tables-quotes-and-code)
 - [Pauses](#pauses)
+- [Code line highlights](#code-line-highlights)
 - [Columns](#columns)
 - [Centered statement slides](#centered-statement-slides)
 - [Images](#images)
@@ -202,6 +203,32 @@ Full-width takeaway under both columns.
 Here step 1 shows only "Before". Step 2 shows "After" and the takeaway together, because the takeaway also comes after the pause.
 
 The flip side: if column 0 has two pauses, column 1 doesn't appear until both have been revealed. You can't reveal two columns in parallel. Columns always reserve their fully revealed height, so the layout never shifts as steps appear.
+
+## Code line highlights
+
+Add a selection in braces to a code fence's info string to walk through the code a few lines at a time: `{1-3|5,7|all}`. The groups are separated by `|`; each is one step, like a pause, and in each step only the selected lines are drawn at full color while the rest of the block is dimmed.
+
+````markdown
+Walking through main
+===
+
+```rust {1-2|4-5|all}
+fn main() {
+    let name = "tuipresent";
+    greet(name);
+    println!("done");
+}
+```
+````
+
+Step 1 lights lines 1-2, step 2 lines 4-5, step 3 all of them. The keys that advance a pause advance the groups, `←` goes back through them, and the fade and the slide's step total work as for pauses. `-dump` prints one frame per step, but dimming is color only, so its text frames look alike.
+
+- A group is a comma-separated list of 1-based lines inside the fence (`5`), ranges (`2-4`) and `all` (every line): `{1,3-4|all}`.
+- A single group, `{2-4}`, is a static highlight: those lines stand out and there is no extra step.
+- Content after the code block appears once the last group is showing, as if a pause came after it. Pauses before it, and several highlight blocks on one slide, add up in order.
+- It works with the other info-string words: ```` ```bash {1|2} +exec ```` highlights the code and still runs it on `e`. The braces can go anywhere after the opening fence.
+- Mistakes warn and never stop the deck: a bad item (`0`, `2-`, `4-2`, `a`), a line past the end of the block (skipped, or clipped for a range), an empty group (`{1||3}`) and an unclosed brace. Warnings give the fence's line number. A fence with no usable group is an ordinary code block.
+- Dimming blends the code's colors toward the code background, so it reads in every theme. Code that wraps is shown without dimming.
 
 ## Columns
 

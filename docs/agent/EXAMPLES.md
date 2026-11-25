@@ -49,6 +49,7 @@ Conventions for each result:
 25. [Tabs expand to 4 spaces](#case-25)
 26. [An empty front matter block](#case-26)
 27. [Unknown transition names fall back to `slide` and warn](#case-27)
+28. [Code line highlights are reveal steps, and bad specs warn](#case-28)
 
 <a id="case-1"></a>
 
@@ -1175,3 +1176,78 @@ deck.md: 3 slides fit 80x24   (exit 0)
 - `swipe` (front matter) and `fade` (directive, line 11) are not transition kinds: both act as `slide`, and each produces a warning. Directive warnings give the line; the `-transition` flag gets its own warning.
 - Kinds are matched case-insensitively, so `Dissolve` is valid.
 - Warnings never change the exit status: `-check` still exits 0.
+
+<a id="case-28"></a>
+
+## 28. Code line highlights are reveal steps, and bad specs warn
+
+````markdown
+Highlights
+===
+
+```rust {1-2|4,9|all}
+fn main() {
+    let a = 1;
+
+    let b = 2;
+}
+```
+
+After
+
+```bash {2} +exec
+echo one
+echo two
+```
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: warning: line 4: highlight "9" is past the end of the 5-line code block
+deck.md: 1 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/3 ===
+
+
+    Highlights
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      fn main() {
+          let a = 1;
+
+          let b = 2;
+      }
+=== slide 1 step 2/3 ===
+
+
+    Highlights
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      fn main() {
+          let a = 1;
+
+          let b = 2;
+      }
+=== slide 1 step 3/3 ===
+
+
+    Highlights
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      fn main() {
+          let a = 1;
+
+          let b = 2;
+      }
+
+    After
+
+      echo one
+      echo two
+```
+
+- `{1-2|4,9|all}` makes the fence a highlight block with three groups, so the slide has 3 steps (`Highlights` has no pauses). `After` appears at the last step, when the code is fully revealed.
+- Line 9 is past the end of the 5-line block: it is skipped with a warning and the group still highlights line 4. A warning's line number is the fence's.
+- `{2}` on the `+exec` fence is a static highlight (one group, no extra step) and the block stays runnable. Highlight dimming is a color change, so it does not show in these text frames.

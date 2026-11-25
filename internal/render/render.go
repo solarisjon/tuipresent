@@ -242,6 +242,8 @@ func codeOverflow(blocks []deck.Block, width int, execOut map[int]string) int {
 		switch b.Kind {
 		case deck.Markdown:
 			measure(fencedCode(b.Text))
+		case deck.Code:
+			measure(b.Text)
 		case deck.Exec:
 			measure(b.Text)
 			measure(execOut[b.ExecID])
@@ -304,8 +306,18 @@ func (r *Renderer) body(blocks []deck.Block, step, width int) []string {
 		switch b.Kind {
 		case deck.Markdown:
 			md = append(md, b.Text)
+		case deck.Code:
+			flushMD()
+			out = r.appendCode(out, b, step, width)
+			afterColumns = true
 		case deck.Exec:
-			md = append(md, "", "```"+b.Lang, b.Text, "```", "")
+			if len(b.Highlights) > 0 {
+				flushMD()
+				out = r.appendCode(out, b, step, width)
+				afterColumns = true
+			} else {
+				md = append(md, "", "```"+b.Lang, b.Text, "```", "")
+			}
 			if o, ok := r.execOutput[b.ExecID]; ok {
 				md = append(md, "```text", strings.TrimRight(o, "\n"), "```", "")
 			}
