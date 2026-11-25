@@ -19,6 +19,9 @@ const root = "../.."
 // the standalone agent skill.
 var docs = []string{"docs/guide/reference.md", "docs/agent/LANGUAGE.md", "docs/AGENT_GUIDE.md", "docs/agent-skill/SKILL.md"}
 
+// flagRe finds the flag declarations in cmd/tuipresent/main.go.
+var flagRe = regexp.MustCompile(`flag\.(?:Bool|Int|String|Duration)\("([a-z-]+)"`)
+
 func read(t *testing.T, rel string) string {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join(root, rel))
@@ -84,7 +87,7 @@ func TestDocsCoverTransitions(t *testing.T) {
 func TestDocsCoverFlags(t *testing.T) {
 	src := read(t, "cmd/tuipresent/main.go")
 	var flags []string
-	for _, m := range regexp.MustCompile(`flag\.(?:Bool|Int|String)\("([a-z]+)"`).FindAllStringSubmatch(src, -1) {
+	for _, m := range flagRe.FindAllStringSubmatch(src, -1) {
 		flags = append(flags, m[1])
 	}
 	requireMentions(t, flags, func(f string) string { return "-" + f })

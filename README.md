@@ -156,15 +156,23 @@ If you're asking a coding agent such as Claude Code to write a deck, point it at
 
 Exact syntax lives in [`docs/agent/LANGUAGE.md`](docs/agent/LANGUAGE.md).
 
-[`docs/agent-skill/SKILL.md`](docs/agent-skill/SKILL.md) is a condensed version packaged as a Claude Code skill (`tuipresent-deck`). It triggers when you ask for a presentation, slides or a deck. To install it, copy the directory into your personal skills or into a project's skills:
+[`docs/agent-skill/SKILL.md`](docs/agent-skill/SKILL.md) is a condensed version packaged as a Claude Code skill (`tuipresent-deck`). It triggers when you ask for a presentation, slides or a deck, and covers installing the binary, the verify loop, themes, notes and export. The skill and its reference files are built into the binary, so you do not need a checkout:
 
 ```sh
-mkdir -p ~/.claude/skills/tuipresent-deck
-cp docs/agent-skill/SKILL.md ~/.claude/skills/tuipresent-deck/
-# or, for one project only:
-mkdir -p .claude/skills/tuipresent-deck
-cp docs/agent-skill/SKILL.md .claude/skills/tuipresent-deck/
+tuipresent -install-skill                    # ./.claude/skills/tuipresent-deck (this project)
+tuipresent -install-skill -skill-dir user    # ~/.claude/skills/tuipresent-deck (all projects)
+tuipresent -install-skill -skill-dir DIR     # DIR becomes the skill directory (other agent runtimes)
+tuipresent -print-skill > SKILL.md           # just the skill text, for runtimes that take one file
 ```
+
+It writes `SKILL.md` and `references/` (`GUIDE.md`, `LANGUAGE.md`, `EXAMPLES.md`, `frontmatter.schema.json`), refuses to overwrite existing files without `-force`, and never writes through a symlink. Copying by hand also works: copy `docs/agent-skill/SKILL.md` to `.claude/skills/tuipresent-deck/` in a clone, though then its `docs/...` paths refer to the clone.
+
+### Working with an agent
+
+1. Install the binary: `go install github.com/solarisjon/tuipresent/cmd/tuipresent@latest`.
+2. In your project, install the skill: `tuipresent -install-skill`.
+3. Start `claude` and ask: "make me a 10-slide deck about X".
+4. Keep `tuipresent deck.md` open in another terminal. It reloads on every save, so you watch the deck take shape; the agent verifies it with `-check` and `-dump` before handing off.
 
 ## Keeping docs and examples current
 

@@ -60,8 +60,12 @@ func main() {
 	dryRun := flag.Bool("dry-run", false, "with -export: print what would be written and run, touching nothing")
 	dwell := flag.Duration("dwell", 0, "with -export tape|vhs: time to rest on every slide and step (default: by amount of text)")
 	showVersion := flag.Bool("version", false, "print the version, commit, build date and Go version, then exit")
+	installSkillFlag := flag.Bool("install-skill", false, "install the agent skill (SKILL.md and references/) for Claude Code; see -skill-dir, -force")
+	skillTarget := flag.String("skill-dir", "project", "with -install-skill: project (./.claude/skills/tuipresent-deck), user (~/.claude/skills/tuipresent-deck) or a directory")
+	printSkill := flag.Bool("print-skill", false, "print the agent skill's SKILL.md to stdout and exit")
+	force := flag.Bool("force", false, "with -install-skill: overwrite existing skill files")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n       tuipresent -version\n")
+		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n       tuipresent -version\n       tuipresent -install-skill [-skill-dir project|user|DIR] [-force]\n       tuipresent -print-skill\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -72,6 +76,9 @@ func main() {
 	if *listThemes {
 		printThemes(os.Stdout)
 		return
+	}
+	if *installSkillFlag || *printSkill {
+		os.Exit(runSkillCmd(*installSkillFlag, *printSkill, *skillTarget, *force, os.Stdout, os.Stderr))
 	}
 	switch *themeBg {
 	case "", "terminal", "paint":

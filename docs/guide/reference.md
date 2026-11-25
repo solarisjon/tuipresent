@@ -29,9 +29,11 @@ Every command-line flag, key, front-matter key, theme, directive and layout numb
 ```sh
 tuipresent [flags] deck.md
 tuipresent -themes
+tuipresent -install-skill [-skill-dir project|user|DIR] [-force]
+tuipresent -print-skill
 ```
 
-Exactly one deck file is required (except with `-themes` and `-version`). Boolean flags take `-flag` or `-flag=false`.
+Exactly one deck file is required (except with `-themes`, `-version`, `-install-skill` and `-print-skill`). Boolean flags take `-flag` or `-flag=false`.
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -57,6 +59,10 @@ Exactly one deck file is required (except with `-themes` and `-version`). Boolea
 | `-out PATH` | | With `-export`: the `.tape` file (`tape`, default stdout) or the output directory (`vhs`: `<deck>-recording`; `freeze`: `<deck>-slides`). |
 | `-format FMT` | | With `-export`: `gif` (default), `mp4` or `webm` for `tape` and `vhs`; `png` (default) or `svg` for `freeze`. |
 | `-dry-run` | `false` | With `-export`: print the tape or the `freeze` commands and write and run nothing. Needs neither tool installed. |
+| `-install-skill` | `false` | Write the agent skill (`SKILL.md` plus `references/GUIDE.md`, `LANGUAGE.md`, `EXAMPLES.md`, `frontmatter.schema.json`) into the skill directory and exit; no deck needed. The files are built into the binary. Never overwrites without `-force`, never writes through a symlink. See [Working with an agent](../../README.md#working-with-an-agent). |
+| `-skill-dir WHERE` | `project` | With `-install-skill`: `project` (`./.claude/skills/tuipresent-deck`), `user` (`~/.claude/skills/tuipresent-deck`) or a directory, which becomes the skill directory itself. |
+| `-force` | `false` | With `-install-skill`: replace existing skill files (regular files only). |
+| `-print-skill` | `false` | Print the skill's `SKILL.md` to stdout and exit, for agent runtimes that take a single instruction file. Doc paths point at `references/`; install with `-install-skill -skill-dir DIR` to get those files too. |
 | `-dwell D` | auto | With `-export tape` or `vhs`: rest D (such as `3s`) on every slide and step instead of 2 s plus 100 ms per word (at most 10 s per slide, at least 1 s per step). |
 
 `-check` output and exit status:
