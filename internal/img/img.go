@@ -1,8 +1,9 @@
-// Package img draws raster images as terminal cells: kitty graphics Unicode
-// placeholders where supported, truecolor half-blocks everywhere else.
+// Package img draws raster images in the terminal: kitty graphics Unicode
+// placeholders, sixel or iTerm2 inline images where supported, truecolor
+// half-blocks everywhere else.
 //
-// Geometry is identical in both modes (a cell is treated as 1 pixel wide and
-// 2 pixels tall), so layout measured with half-blocks holds for kitty too.
+// Geometry is identical in every mode (a cell is treated as 1 pixel wide and
+// 2 pixels tall), so layout measured with half-blocks holds for the rest.
 package img
 
 import (
@@ -21,31 +22,42 @@ type Mode string
 const (
 	Auto   Mode = "auto"
 	Kitty  Mode = "kitty"
+	Sixel  Mode = "sixel"
+	ITerm2 Mode = "iterm2"
 	Blocks Mode = "blocks"
 	Off    Mode = "off"
 )
 
 func ParseMode(s string) (Mode, error) {
 	switch m := Mode(strings.ToLower(strings.TrimSpace(s))); m {
-	case Auto, Kitty, Blocks, Off:
+	case Auto, Kitty, Sixel, ITerm2, Blocks, Off:
 		return m, nil
 	case "":
 		return Auto, nil
 	}
-	return "", fmt.Errorf("unknown image mode %q (want auto, kitty, blocks or off)", s)
+	return "", fmt.Errorf("unknown image mode %q (want auto, kitty, sixel, iterm2, blocks or off)", s)
 }
 
-// Detect picks kitty graphics for terminals known to support Unicode
-// placeholders, and half-blocks elsewhere (including inside tmux/screen).
+// Detect picks the best image protocol the terminal is known to support:
+// kitty graphics (Ghostty, kitty), the iTerm2 inline-image protocol (iTerm2,
+// WezTerm), sixel (foot), or half-blocks. It is conservative: anything
+// unrecognised, and anything inside tmux or screen (which swallow the
+// escape sequences), gets half-blocks.
 func Detect(getenv func(string) string) Mode {
 	term := getenv("TERM")
 	if getenv("TMUX") != "" || strings.HasPrefix(term, "screen") || strings.HasPrefix(term, "tmux") {
 		return Blocks
 	}
 	tp := strings.ToLower(getenv("TERM_PROGRAM"))
-	if tp == "ghostty" || tp == "kitty" || strings.Contains(term, "kitty") || strings.Contains(term, "ghostty") ||
-		getenv("KITTY_WINDOW_ID") != "" || getenv("GHOSTTY_RESOURCES_DIR") != "" {
+	switch {
+	case tp == "ghostty" || tp == "kitty" || strings.Contains(term, "kitty") || strings.Contains(term, "ghostty") ||
+		getenv("KITTY_WINDOW_ID") != "" || getenv("GHOSTTY_RESOURCES_DIR") != "":
 		return Kitty
+	case tp == "wezterm" || tp == "iterm.app" || strings.EqualFold(getenv("LC_TERMINAL"), "iTerm2") ||
+		getenv("ITERM_SESSION_ID") != "":
+		return ITerm2
+	case term == "foot" || strings.HasPrefix(term, "foot-"):
+		return Sixel
 	}
 	return Blocks
 }

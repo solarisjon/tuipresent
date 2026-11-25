@@ -1,6 +1,6 @@
 # tuipresent
 
-tuipresent turns a markdown file into a full-screen slide deck in your terminal. Slides animate in, pauses fade content in, code is syntax-highlighted and can run live on stage, and images draw in full resolution in kitty and ghostty. It is built on Charm's Bubble Tea, Lip Gloss and Glamour, and its directive syntax is compatible with [presenterm](https://github.com/mfontanini/presenterm), so most presenterm decks work as-is. Because `-check` and `-dump` verify a deck's layout without a TTY, it's also a deck format that AI agents can write and check on their own.
+tuipresent turns a markdown file into a full-screen slide deck in your terminal. Slides animate in, pauses fade content in, code is syntax-highlighted and can run live on stage, and images draw in full resolution in kitty, Ghostty, WezTerm, iTerm2 and foot. It is built on Charm's Bubble Tea, Lip Gloss and Glamour, and its directive syntax is compatible with [presenterm](https://github.com/mfontanini/presenterm), so most presenterm decks work as-is. Because `-check` and `-dump` verify a deck's layout without a TTY, it's also a deck format that AI agents can write and check on their own.
 
 ## Highlights
 
@@ -9,7 +9,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 - **Rich text**: inline markdown in titles, framed or curly-underlined titles with a subtitle, `==highlight==`, `~~strikethrough~~`, faint and underline variants, and themed GitHub-style callouts (`> [!WARNING]`).
 - **Motion**: five slide transitions (`slide`, `wipe`, `cover`, `dissolve`, `none`) and a per-cell fade for content revealed by `<!-- pause -->`.
 - **Themes**: twenty built-in themes (tokyonight, catppuccin, gruvbox, dracula, nord, rose-pine, solarized, kanagawa and more), inline color overrides, custom theme files, and optional background painting so a deck looks the same in any terminal.
-- **Images**: PNG, JPEG and GIF via the kitty graphics protocol, with a truecolor half-block fallback everywhere else.
+- **Images**: PNG, JPEG and GIF via the kitty graphics protocol (kitty, Ghostty), the iTerm2 inline-image protocol (iTerm2, WezTerm) or sixel (foot), with a truecolor half-block fallback everywhere else.
 - **Live demos**: `+exec` code blocks run on a key press (bash, sh, Python) and show their output under the code.
 - **Speaker notes** in a second terminal that follows the presenter, and can drive it with the same keys.
 - **Navigation**: `o` opens a grid overview of every slide, type a number and `enter` to jump, and the mouse works too (click the left or right third, scroll the wheel).
@@ -142,8 +142,5 @@ Two hooks run it automatically:
 
 Titles and text styling
 - Big titles: a `title_size` directive using kitty's text-sizing protocol where supported, block letters elsewhere
-
-Terminal capabilities
-- Sixel and iTerm2 image protocols for WezTerm, iTerm2 and foot
 
 

@@ -220,6 +220,14 @@ func TestTransmitterUploadsOncePerSize(t *testing.T) {
 	}
 }
 
+func TestParseMode(t *testing.T) {
+	for in, want := range map[string]Mode{"": Auto, "AUTO": Auto, " kitty ": Kitty, "Sixel": Sixel, "iterm2": ITerm2, "blocks": Blocks, "off": Off} {
+		if got, err := ParseMode(in); err != nil || got != want {
+			t.Errorf("ParseMode(%q) = %q, %v", in, got, err)
+		}
+	}
+}
+
 func TestDetect(t *testing.T) {
 	env := func(kv ...string) func(string) string {
 		m := map[string]string{}
@@ -238,13 +246,28 @@ func TestDetect(t *testing.T) {
 		{env("TERM_PROGRAM", "ghostty", "TMUX", "/tmp/x"), Blocks},
 		{env("TERM", "screen-256color", "KITTY_WINDOW_ID", "1"), Blocks},
 		{env("TERM", "xterm-256color"), Blocks},
+		{env("TERM_PROGRAM", "WezTerm", "TERM", "xterm-256color"), ITerm2},
+		{env("TERM_PROGRAM", "iTerm.app"), ITerm2},
+		{env("LC_TERMINAL", "iTerm2"), ITerm2}, // survives ssh
+		{env("ITERM_SESSION_ID", "w0t0p0:ABC"), ITerm2},
+		{env("TERM", "foot"), Sixel},
+		{env("TERM", "foot-extra"), Sixel},
+		{env("TERM", "footnote"), Blocks},
+		{env("TERM_PROGRAM", "WezTerm", "TMUX", "/tmp/x"), Blocks},
+		{env("TERM_PROGRAM", "iTerm.app", "TERM", "tmux-256color"), Blocks},
+		{env("LC_TERMINAL", "iTerm2", "TERM", "screen"), Blocks},
+		{env("TERM", "foot", "TMUX", "/tmp/x"), Blocks},
+		{env("TERM_PROGRAM", "Apple_Terminal", "TERM", "xterm-256color"), Blocks},
+		{env("TERM_PROGRAM", "vscode"), Blocks},
+		{env("TERM", "xterm-kitty", "TERM_PROGRAM", "WezTerm"), Kitty}, // kitty wins: it has placeholders
+		{env(), Blocks},
 	}
 	for i, tt := range tests {
 		if got := Detect(tt.env); got != tt.want {
 			t.Errorf("case %d: got %s want %s", i, got, tt.want)
 		}
 	}
-	if _, err := ParseMode("sixel"); err == nil {
+	if _, err := ParseMode("sixels"); err == nil {
 		t.Error("unknown mode accepted")
 	}
 }

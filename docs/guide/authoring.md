@@ -338,6 +338,8 @@ How it's drawn:
 | Where | Result |
 |-------|--------|
 | kitty, ghostty (not in tmux) | Full resolution, through the kitty graphics protocol |
+| iTerm2, WezTerm (not in tmux) | Full resolution, through the iTerm2 inline-image protocol |
+| foot (not in tmux) | Sixel graphics, in at most 128 colors |
 | Other terminals, tmux, screen, `-dump`, `-check` | Truecolor half-block characters (about 2 pixels per cell) |
 | File missing or unreadable, or `-images off` | A dim box: `[image: alt]` |
 

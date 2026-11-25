@@ -819,8 +819,9 @@ func (r *Renderer) Markdown(src string, width int) []string { return r.markdown(
 
 // ImageConfig selects how image blocks are drawn.
 type ImageConfig struct {
-	Mode  img.Mode         // img.Kitty, img.Off; anything else draws half-blocks
-	Kitty *img.Transmitter // required for img.Kitty
+	Mode    img.Mode         // img.Kitty, img.Sixel, img.ITerm2, img.Off; anything else draws half-blocks
+	Kitty   *img.Transmitter // required for img.Kitty
+	Overlay *img.Overlay     // required for img.Sixel and img.ITerm2
 }
 
 // Images is the process-wide image configuration. The zero value draws
@@ -915,6 +916,9 @@ func (r *Renderer) image(b deck.Block, width int) []string {
 	var lines []string
 	if Images.Mode == img.Kitty && Images.Kitty != nil {
 		lines = Images.Kitty.Place(li.key, li.src, cols, rows)
+	} else if (Images.Mode == img.Sixel || Images.Mode == img.ITerm2) && Images.Overlay != nil {
+		// Stand-in cells; the presenter paints the pixels over them.
+		lines = Images.Overlay.Place(li.key, li.src, cols, rows)
 	} else {
 		var ok bool
 		if lines, ok = li.blocks[[2]int{cols, rows}]; !ok {

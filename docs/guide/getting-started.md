@@ -22,7 +22,7 @@ Press `space` to move forward and `q` to quit.
 
 ### Which terminal
 
-Any truecolor terminal works. kitty and ghostty are the best fit: images are drawn at full resolution there. Other terminals, and anything running inside tmux, draw images with colored half-block characters instead. Everything else (transitions, fades, colors) works the same everywhere.
+Any truecolor terminal works. kitty, ghostty, iTerm2, WezTerm and foot are the best fit: images are drawn as real pixels there (foot through sixel, so slightly fewer colors). Other terminals, and anything running inside tmux, draw images with colored half-block characters instead. Everything else (transitions, fades, colors) works the same everywhere.
 
 ## 2. Write a first deck
 

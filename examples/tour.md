@@ -320,7 +320,7 @@ Pictures, too
 ```
 
 * PNG, JPEG or GIF
-* kitty, ghostty: real pixels
+* kitty, ghostty, iTerm2, WezTerm, foot: real pixels
 * Elsewhere: half-blocks
 * Scaled to fit, aspect kept
 
@@ -339,7 +339,7 @@ Photographs fill the slide
 
 *Mountain goat, Mount Evans, Colorado.* The image takes every row the slide leaves free.
 
-<!-- speaker_note: A real 3:2 photo. In kitty or ghostty this is full resolution; elsewhere it falls back to half-blocks at the same size. -->
+<!-- speaker_note: A real 3:2 photo. In kitty, ghostty, iTerm2, WezTerm or foot this is full resolution (each uses its own image protocol); elsewhere it falls back to half-blocks at the same size. -->
 
 <!-- end_slide -->
 

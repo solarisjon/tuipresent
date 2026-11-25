@@ -166,7 +166,8 @@ the picture moves with it.
 
 <!-- reset_layout -->
 
-This slide uses it in kitty and ghostty, and half-blocks elsewhere.
+This slide uses it in kitty and ghostty, the iTerm2 or sixel protocols in
+WezTerm, iTerm2 and foot, and half-blocks elsewhere.
 
 <!-- end_slide -->
 
