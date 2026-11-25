@@ -6,7 +6,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 
 - **Plain markdown decks**: slides split on `<!-- end_slide -->`, setext titles drawn with a gradient, columns, centered statement slides.
 - **Terminal integration**: markdown links are clickable (OSC 8) where the terminal supports them, and the deck's progress shows in the terminal tab (OSC 9;4).
-- **Rich text**: inline markdown in titles, framed or curly-underlined titles with a subtitle, `==highlight==`, `~~strikethrough~~`, faint and underline variants, and themed GitHub-style callouts (`> [!WARNING]`).
+- **Rich text**: inline markdown in titles, framed or curly-underlined titles with a subtitle, big titles (`title_size`, kitty text sizing or block letters), `==highlight==`, `~~strikethrough~~`, faint and underline variants, and themed GitHub-style callouts (`> [!WARNING]`).
 - **Motion**: five slide transitions (`slide`, `wipe`, `cover`, `dissolve`, `none`) and a per-cell fade for content revealed by `<!-- pause -->`.
 - **Themes**: twenty built-in themes (tokyonight, catppuccin, gruvbox, dracula, nord, rose-pine, solarized, kanagawa and more), inline color overrides, custom theme files, and optional background painting so a deck looks the same in any terminal.
 - **Images**: PNG, JPEG and GIF via the kitty graphics protocol (kitty, Ghostty), the iTerm2 inline-image protocol (iTerm2, WezTerm) or sixel (foot), with a truecolor half-block fallback everywhere else.
@@ -139,8 +139,5 @@ Two hooks run it automatically:
 - **Claude Code Stop/SubagentStop** (`.claude/settings.json` -> `.claude/hooks/check-drift.sh`): the same checks when an agent finishes a turn; failures are fed back so the agent fixes the drift. Skipped when no `.go`/`.md` file changed since the last pass.
 
 ## Roadmap
-
-Titles and text styling
-- Big titles: a `title_size` directive using kitty's text-sizing protocol where supported, block letters elsewhere
 
 

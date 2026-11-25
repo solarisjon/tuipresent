@@ -196,7 +196,7 @@ func runExample(t *testing.T, src string, full bool, photo string) (check, frame
 	}
 	r := render.New(d)
 	var sb strings.Builder
-	report.PrintWarnings(&sb, "deck.md", report.Warnings(d, r, ""))
+	report.PrintWarnings(&sb, "deck.md", append(report.Warnings(d, r, ""), report.LayoutWarnings(r, exW)...))
 	exit := 0
 	if report.Check(&sb, "deck.md", d, r, exW, exH) > 0 {
 		exit = 1

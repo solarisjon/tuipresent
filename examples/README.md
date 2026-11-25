@@ -4,7 +4,7 @@ Each deck passes `-check` at 100x30 and 80x24 (`go test ./internal/docscheck` en
 
 Any deck can be shared: `tuipresent -export tape examples/tour.md` prints a VHS tape that steps through every slide and pause, `tuipresent -export freeze -dry-run -out slides examples/tour.md` shows the Freeze commands that turn each slide into a PNG, and `-export vhs` / `-export freeze` run the tools if they are installed. See the [sharing guide](../docs/guide/sharing.md).
 
-**[tour.md](tour.md)**, 16 slides. "tuipresent in 5 minutes": a self-demonstrating feature tour. Each slide shows a feature next to the markdown that produced it: front matter, titles (inline markdown, subtitle, curly underline), text styles and callouts, pauses, columns, syntax highlighting, step-through code line highlights (`{1|2-4|all}`), `+exec` (`date`, `uname -s`, a `python3` calculation), text charts, `jump_to_middle`, live reload on save, speaker notes, images (including a photo), and all five transitions set per slide.
+**[tour.md](tour.md)**, 19 slides. "tuipresent in 5 minutes": a self-demonstrating feature tour. Each slide shows a feature next to the markdown that produced it: front matter, titles (inline markdown, subtitle, curly underline, big titles), text styles and callouts, pauses, columns, syntax highlighting, step-through code line highlights (`{1|2-4|all}`), `+exec` (`date`, `uname -s`, a `python3` calculation), text charts, `jump_to_middle`, live reload on save, speaker notes, images (including a photo), and all five transitions set per slide.
 
 ```sh
 ./bin/tuipresent examples/tour.md

@@ -54,6 +54,7 @@ Conventions for each result:
 30. [Highlight, strikethrough, faint and underline marks](#case-30)
 31. [Callout boxes](#case-31)
 32. [Image protocols leave layout alone](#case-32)
+33. [Big titles: block letters, their row cost and the width fallback](#case-33)
 
 <a id="case-1"></a>
 
@@ -1428,3 +1429,124 @@ deck.md: 1 slides fit 80x24   (exit 0)
 
 - `photo.jpg` is 1200x800: 22 - 5 - 2 body rows leaves 15 rows, and 15 rows of a 3:2 image is 45 columns, centered in 72 cells (E19 has the arithmetic).
 - This is the same box kitty placeholders, iTerm2 inline images and sixel images occupy in the presenter (LANGUAGE.md §9.8). `-check` and `-dump` always draw half-blocks, so this output does not depend on `-images sixel|iterm2`.
+
+<a id="case-33"></a>
+
+## 33. Big titles: block letters, their row cost and the width fallback
+
+<!-- frames: full -->
+
+````markdown
+Big idea
+===
+<!-- title_size: 2 -->
+<!-- subtitle: block letters, 3 rows -->
+
+One short title, drawn large.
+
+<!-- end_slide -->
+
+This title is far too long for size three
+===
+<!-- title_size: 3 -->
+
+Falls back to the normal title.
+
+<!-- end_slide -->
+
+Bad
+===
+<!-- title_size: huge -->
+
+Unknown size.
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: warning: line 20: unknown title_size "huge" (valid: 1 to 3); using 1
+deck.md: warning: slide 2: title_size 3 does not fit (it needs 458 columns but the slide is 72 wide); using the normal title
+deck.md: 3 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    █▀▀▀▄ ▀▀█▀▀ ▄▀▀▀▀     ▀▀█▀▀ █▀▀▀▄ █▀▀▀▀ ▄▀▀▀▄
+    █▀▀▀▄   █   █  ▀█       █   █   █ █▀▀   █▀▀▀█
+    ▀▀▀▀  ▀▀▀▀▀  ▀▀▀      ▀▀▀▀▀ ▀▀▀▀  ▀▀▀▀▀ ▀   ▀
+    block letters, 3 rows
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    One short title, drawn large.
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━──────────────────────────────────────────────────────
+                                                                          1 / 3
+=== slide 2 step 1/1 ===
+
+
+    This title is far too long for size three
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Falls back to the normal title.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────────────────────
+                                                                          2 / 3
+=== slide 3 step 1/1 ===
+
+
+    Bad
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Unknown size.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                                          3 / 3
+```
+
+- `title_size: 2` replaces the 1-row title with 3 rows of block letters (+2 rows); size 3 uses 5 rows (+4). `-check` counts them, so a slide's body gets 2 or 4 fewer rows. A subtitle stays normal size and costs its usual row.
+- A title that does not fit the content width (here 72 columns), or contains a character with no block letter (anything outside `A-Z`, `0-9`, space and basic punctuation, so CJK too), is drawn normally and `-check` and `-dump` warn with the slide number. The warning depends on `-w`, so it is not part of the deck's own warnings.
+- `huge` is not a size: it warns with its line number and acts as `1`.
+- Kitty draws the same rows as scaled text; `-check` and `-dump` always show these block letters.

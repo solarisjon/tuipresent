@@ -38,6 +38,7 @@ body      = chunk { end-slide-line chunk }
 | `fade` | text or bool | on | `false`/`off`/`no`/`none` (case-insensitive, trimmed) disable pause fades deck-wide; anything else leaves them on. |
 | `progress` | text or bool | on | `false`/`off`/`no`/`none` (case-insensitive, trimmed) stop reporting deck progress to the terminal tab (§15.8); anything else leaves it on. |
 | `title_style` | text | `rule` | Default title style (§7.7): `rule`, `curly` or `frame`, case-insensitive. Anything else warns and acts as `rule` (§19). |
+| `title_size` | text or int | `1` | Default title size (§7.9): `1`, `2` or `3`. Anything else warns and acts as `1` (§19). |
 
 "text" = any YAML scalar, used as its string form (`title: 123` gives `123`; `date: 2026-12-08` stays `2026-12-08`).
 
@@ -126,6 +127,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 | `speaker_note` | text | Adds a note (§8). | Empty text is ignored. Several notes accumulate in source order. |
 | `fade` | `on`/`off`/... | Slide's fade setting (§15.4). | Last occurrence wins. Empty argument means "inherit from front matter". |
 | `title_style` | `rule`/`curly`/`frame` | Slide's title style (§7.7). | Last occurrence wins. Case-insensitive; an unknown value warns with the line number and acts as `rule`. Empty means "inherit". No effect without a title. |
+| `title_size` | `1`/`2`/`3` | Slide's title size (§7.9). | Last occurrence wins. An unknown value (not an integer 1-3) warns with the line number and acts as `1`. Empty means "inherit". No effect without a title. |
 | `subtitle` | inline markdown | Slide's subtitle line (§7.8). | Last occurrence wins. Trimmed; empty means none. No effect without a title. |
 
 ## 6. Blocks and reveal steps
@@ -148,6 +150,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 7.6. In-body headings (rendered by glamour, styled by the theme): `#` bold accent line; `##` prefixed `▌ `; `###`-`######` bold lines.
 7.7. Title styles: `rule` (above); `curly`: the title carries a curly underline (SGR `4:3`, color `58` = `accent`) and the rule row is blank, when `render.Curly` is set (the presenter sets it for kitty, Ghostty, WezTerm and iTerm2 outside tmux/screen; `-check` and `-dump` never do), else exactly `rule`: the block is 4 rows either way; `frame`: blank, `╭─╮` top (accent gradient), `│ title │` (and `│ subtitle │`), `╰─╯` bottom, blank: 5 rows (6 with a subtitle), box width `max(titleWidth, subtitleWidth) + 4`, which `-check` counts as the title width (E28).
 7.8. Subtitle: `<!-- subtitle: text -->` adds one row under the title, in `foreground`, italic, with inline markdown as in §7.2 (E28).
+7.9. Title size (`title_size`: `1`, `2`, `3`; slide directive beats front matter beats `1`): size 1 is the normal title. Sizes 2 and 3 replace the title row of any style with `TitleRows(size)` rows of block letters: size 2 = 3 rows (half blocks `▀▄█`, 1 cell per pixel), size 3 = 5 rows (`██` per pixel); extra rows over size 1: +2 and +4. The font is 5 pixels tall with 1 (size 2) or 2 (size 3) gap cells between characters, so the block is 6n-1 (size 2) or 12n-2 (size 3) cells wide for n characters. Glyphs: `A-Z` (lowercase is upper-cased), `0-9`, space (3 pixels), `. , : ! ? - _ / + = ' " & ( )`. Each character's cells use one color: the title gradient by character index, or `code`/`highlight` for those runs. Layout: rule style = blank, block rows, [subtitle], rule, blank (`2+R` rows plus 1 with a subtitle, R = rows); frame = blank, `╭`, block rows (and subtitle) inside the box, `╰`, blank, box width `max(blockWidth, subtitleWidth) + 4`; `curly` is the rule (no underline on block letters); the subtitle stays normal size; with `jump_to_middle` the block rows are centered as one block of width `max(blockWidth, subtitleWidth)`. Fallback: if any character has no glyph, or the block (plus 4 in a frame) is wider than `cw`, the slide gets the normal title (§7.5-7.7) and `-check`/`-dump` print `slide N: title_size S does not fit (REASON); using the normal title` (§19). `-check` counts the extra rows and the block width in the usual title-block and cols rules (§11.3, §14.2) (E32). Terminals: where `render.TextSizing` is set (the presenter does it for kitty outside tmux/screen, or `TUIPRESENT_TEXT_SIZING=on`; `off` disables) the presenter overlays the same rows with kitty OSC 66 scaled text (scale = R) once the slide has settled; the frame itself (`-dump`, transitions, fades, overview) is always block letters, so the overlay never changes layout.
 
 ## 8. Speaker notes
 
@@ -208,7 +211,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 11.3. Rows:
     - Footer: 2 rows if `h >= 6`, else none. Available rows `A = h - footer`.
     - Top margin: 1 blank row, or 0 on centered slides.
-    - Title block: 4 rows if the slide has a title (5 with a subtitle or `frame`, 6 with both; §7.5, §7.7).
+    - Title block: 4 rows if the slide has a title (5 with a subtitle or `frame`, 6 with both; §7.5, §7.7); `title_size` 2 or 3 adds 2 or 4 rows (§7.9).
     - Body rows `B = A - margin - titleBlock`: titled `h - 7`, untitled `h - 3`, titled centered `h - 6`, untitled centered `h - 2` (for `h >= 6`).
     - Body rows beyond `B` are cut from the bottom (silently; `-check` reports them).
 11.4. Wrap widths, for a region of width `W` (`cw` at top level, column width in a column):
@@ -272,7 +275,7 @@ Per-column prose wrap is `colw - 2`, code limit `colw - 4`.
 `tuipresent -check -w W -h H deck.md` (defaults 100x30). For each slide, at its LAST step:
 
 14.1. Rows: `margin + titleBlock + fullBody - A`. Images are sized first (§9.5), so an image never overflows unless its 3-row minimum does not fit.
-14.2. Cols: the maximum of: title width (or subtitle width, or the frame width, §7.7) - `cw`; body line width - `cw`; widest clipped column line - its column width; fenced/Exec code line (tabs = 4 spaces) - `K` of its region, per column; Exec output - `K` if outputs exist.
+14.2. Cols: the maximum of: title width (or subtitle width, or the frame width, §7.7, or the block-letter width, §7.9) - `cw`; body line width - `cw`; widest clipped column line - its column width; fenced/Exec code line (tabs = 4 spaces) - `K` of its region, per column; Exec output - `K` if outputs exist.
 14.3. Output: `deck.md: N slides fit WxH` (exit 0), or one line per bad slide `deck.md: slide N overflows WxH by R rows, C cols` (exit 1). Load errors (bad YAML, no slides) exit 1 on stderr.
 14.4. It cannot see: Exec output unless `-exec` was given; intermediate steps (reveal order, merged paragraphs, `A B` reflow); dropped slides, swallowed `end_slide`, ignored or misspelled directives; missing images (a box fits); unmatched markdown delimiters; readability. Always read `-dump` too.
 14.5. Code lines are found with the parser's fence rules (§10.1), so the lines of a fence nested in a longer one (```` ````markdown ```` around ```` ``` ````) are measured as code too.
@@ -398,6 +401,9 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 | Code fence line highlights (§10.5) | `line N: bad highlight "X": ...`, `highlight "X" is past the end of the K-line code block`, `highlight "X" runs past the end ...; clipped ...`, `empty highlight group G is ignored`, `code fence has an unclosed { ...` | Item skipped / clipped / group dropped / ignored |
 | Front matter `title_style` | `front matter: unknown title_style "X" (valid: rule, curly, frame); using rule` | `rule` |
 | `title_style` directive | `line N: unknown title_style "X", ...` | `rule` |
+| Front matter `title_size` | `front matter: unknown title_size "X" (valid: 1 to 3); using 1` | `1` |
+| `title_size` directive | `line N: unknown title_size "X", ...` | `1` |
+| `title_size` 2 or 3 that cannot be drawn (§7.9) | `slide N: title_size S does not fit (no block letter for "X" \| it needs C columns but the slide is W wide); using the normal title`; printed by `-check`/`-dump` for their `-w`, not while presenting | Normal title |
 | Multi-line `speaker_note` without `-->` | `line N: speaker_note has no closing -->; ...` | Note ends before the next `end_slide` or at end of file |
 | Theme name | `unknown theme "X", using dark ...` | `dark` |
 | Theme mapping / file keys | unknown key, `extends` in front matter, nested value, unknown `code_style`, bad `background`, both `name` and `path` | Ignored / base style / `terminal` / path |

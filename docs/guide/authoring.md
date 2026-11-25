@@ -73,6 +73,7 @@ progress: true
 | `fade` | `false` makes pause reveals instant for the whole deck |
 | `progress` | `false` stops the deck showing its progress in the terminal tab (see [Terminal integration](reference.md#terminal-integration)) |
 | `title_style` | `rule` (default), `curly` or `frame`: how slide titles are underlined or boxed, see [Slide titles](#slide-titles) |
+| `title_size` | `1` (default), `2` or `3`: how large slide titles are, see [Slide titles](#slide-titles) |
 
 Gotchas:
 
@@ -129,6 +130,16 @@ Hit rate **drives** `p99` latency
 - `**bold**`, `*italic*`, `` `code` ``, `~~strike~~` and `==highlight==` work in titles.
 - `<!-- subtitle: text -->` adds an italic line under the title (1 more row).
 - `<!-- title_style: curly -->` swaps the rule for a curly accent underline in kitty, Ghostty, WezTerm and iTerm2, and keeps the rule everywhere else (and in `-check` and `-dump`). `frame` draws the title in a rounded box (5 rows instead of 4). Put `title_style: curly` in the front matter to use one style for the whole deck.
+
+**Big titles.** `<!-- title_size: 2 -->` (or `3`) draws the title much larger, and `title_size: 2` in the front matter does it for every slide. Where the terminal speaks kitty's text-sizing protocol (kitty, outside tmux) the title is scaled text; everywhere else, and always in `-check` and `-dump`, it is drawn in block letters. Both take the same rows:
+
+| `title_size` | Title rows | Extra rows | Block letters |
+|--------------|-----------|------------|---------------|
+| 1 (default) | 1 | 0 | none, the normal title |
+| 2 | 3 | +2 | half blocks, 6 columns per character |
+| 3 | 5 | +4 | full blocks, 12 columns per character |
+
+The block font covers `A-Z` (case is ignored), `0-9`, space and `. , : ! ? - _ / + = ' " & ( )`. A title with any other character, or too wide for the slide (`-check` and `-dump` print a warning, with the width it needs), is drawn at the normal size. It works with `subtitle` (normal size, under the block), `frame` (the box grows to fit) and `jump_to_middle`; `curly` draws the rule. An unknown value warns with its line number and acts as `1`.
 
 ## Text, lists, tables, quotes and code
 

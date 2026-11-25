@@ -52,6 +52,9 @@ func Parse(src string) (*Deck, error) {
 	if v := d.Meta.TitleStyle; v != "" && !ValidTitleStyle(v) {
 		d.Warnings = append(d.Warnings, "front matter: "+unknownTitleStyle(v))
 	}
+	if v := d.Meta.TitleSize; v != "" && !ValidTitleSize(v) {
+		d.Warnings = append(d.Warnings, "front matter: "+unknownTitleSize(v))
+	}
 	// Line numbers in warnings count from the top of the file.
 	line := 1 + strings.Count(src[:len(src)-len(body)], "\n")
 	execID := 0
@@ -334,6 +337,11 @@ func (p *slideParser) directive(i int, name, arg string) {
 		p.slide.TitleStyle = strings.TrimSpace(arg)
 		if v := p.slide.TitleStyle; v != "" && !ValidTitleStyle(v) {
 			p.warn(i, unknownTitleStyle(v))
+		}
+	case "title_size":
+		p.slide.TitleSize = strings.TrimSpace(arg)
+		if v := p.slide.TitleSize; v != "" && !ValidTitleSize(v) {
+			p.warn(i, unknownTitleSize(v))
 		}
 	case "subtitle":
 		p.slide.Subtitle = strings.TrimSpace(arg)
