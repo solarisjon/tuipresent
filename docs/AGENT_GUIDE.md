@@ -138,10 +138,14 @@ More body.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
 - **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory. `{1-3|5|all}` in the info string (`rust {1-3|5}`, combinable with `+exec`) steps through line groups: each group is one reveal step with the other lines dimmed, and the groups add steps like pauses. `{2-4}` alone is a static highlight (§10.5).
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
-- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-mouse=false`, `-images auto|kitty|blocks|off` (presenting).
+- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-mouse=false`, `-images auto|kitty|blocks|off` (presenting); `-export tape|vhs|freeze` (record with VHS or export one image per slide with Freeze; with `-out PATH`, `-format`, `-dry-run`, `-dwell D`; see the sharing guide) (sharing: only when the user asks, and `-exec` there runs the deck's code).
 - **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`, `progress`, `title_style`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
 
 ---
+
+### Sharing the finished deck
+
+If the user wants a recording or images, do not run `vhs` or `freeze` yourself unless asked. `tuipresent -export tape deck.md` prints a VHS tape and `tuipresent -export freeze -dry-run -out slides deck.md` prints the Freeze commands; neither needs the tools or executes deck code. Real runs need `vhs` or `freeze` installed (the tool prints an install hint if not), and `-exec` with `-export` runs the deck's code: only with the user's approval. Freeze has no PDF output; PNGs combine with `magick slides/slide-*.png deck.pdf`. Details: [docs/guide/sharing.md](guide/sharing.md).
 
 ## 4. Layout budget
 

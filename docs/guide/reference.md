@@ -20,6 +20,7 @@ Every command-line flag, key, front-matter key, theme, directive and layout numb
 - [Executable code blocks](#executable-code-blocks)
 - [Transitions](#transitions)
 - [Pause fade](#pause-fade)
+- [Sharing and export](#sharing-and-export)
 - [Layout](#layout)
 - [Timings](#timings)
 
@@ -50,7 +51,12 @@ Exactly one deck file is required (except with `-themes`). Boolean flags take `-
 | `-dump` | `false` | Print every slide at every pause step to stdout, then exit. No TTY needed. |
 | `-w W` | `100` | Screen width for `-check` and `-dump` |
 | `-h H` | `30` | Screen height for `-check` and `-dump` |
-| `-exec` | `false` | With `-check` or `-dump` only: run every `+exec` block first, so its output is measured and shown. Executes the deck's code. |
+| `-exec` | `false` | With `-check`, `-dump` or `-export freeze`: run every `+exec` block first, so its output is measured and shown. With `-export tape` or `vhs`: the recording presses `e` on slides with exec blocks. Executes the deck's code. |
+| `-export MODE` | | Share the deck: `tape` (print or write a VHS tape), `vhs` (write the tape and run `vhs`) or `freeze` (one image per slide via `freeze`). See [Sharing and export](#sharing-and-export). Cannot be combined with `-check`, `-dump` or `-notes`. |
+| `-out PATH` | | With `-export`: the `.tape` file (`tape`, default stdout) or the output directory (`vhs`: `<deck>-recording`; `freeze`: `<deck>-slides`). |
+| `-format FMT` | | With `-export`: `gif` (default), `mp4` or `webm` for `tape` and `vhs`; `png` (default) or `svg` for `freeze`. |
+| `-dry-run` | `false` | With `-export`: print the tape or the `freeze` commands and write and run nothing. Needs neither tool installed. |
+| `-dwell D` | auto | With `-export tape` or `vhs`: rest D (such as `3s`) on every slide and step instead of 2 s plus 100 ms per word (at most 10 s per slide, at least 1 s per step). |
 
 `-check` output and exit status:
 
@@ -65,7 +71,7 @@ deck.md: slide 4 overflows 100x30 by 3 rows, 0 cols   exit 1 (one line per slide
 === slide 2 step 1/3 ===
 ```
 
-Exit statuses: `0` success; `1` when the deck can't be read or parsed, its custom theme is invalid, or `-check` found an overflow; `2` for a usage error (no deck, more than one, unknown `-images` mode, bad `-background`).
+Exit statuses: `0` success; `1` when the deck can't be read or parsed, its custom theme is invalid, or `-check` found an overflow; `2` for a usage error (no deck, more than one, unknown `-images` mode, bad `-background`, bad `-export` mode or `-format`).
 
 ## Warnings and errors
 
@@ -443,6 +449,22 @@ Turning it off, broadest first:
 **Links.** `[text](https://example.com)` shows only `text`, as an OSC 8 hyperlink: Ctrl/Cmd-click opens it in terminals that support them (ghostty, kitty, iTerm2, WezTerm, foot, GNOME Terminal and most others). Where hyperlinks are off (`-links off`, no terminal, a `dumb` terminal, the Linux console, macOS Terminal.app, `-dump`, `-check`) the text is followed by its URL in the dim color so it can still be read and copied. Only absolute URLs (`https:`, `mailto:` and so on) become hyperlinks; a relative link or `#anchor` shows its text alone. Autolinks (`<https://...>` or a bare URL) show the URL itself. Transitions and pause fades play over the same text; links stay intact and aligned.
 
 **Progress.** On terminals that understand OSC 9;4 (ghostty, WezTerm, Windows Terminal, recent iTerm2), the tab or window shows a progress bar equal to the current slide over the slide count (slide 1 of 10 is 10%, the last slide 100%). It updates on every slide change, follows reloads, and is cleared when tuipresent exits, including on `ctrl+c`, an error, `SIGTERM` or `SIGHUP`. Turn it off with `-progress=false` (this session) or `progress: false` in front matter (the deck; also `off`, `no`, `none`). It is never sent with `-dump`, `-check`, or when stdout is not a terminal.
+
+## Sharing and export
+
+`-export` records a deck or exports its slides by shelling out to Charm's VHS and Freeze. See the [sharing guide](sharing.md) for the walk-through.
+
+| Mode | Writes | Runs |
+|------|--------|------|
+| `tape` | A VHS tape to stdout, or to `-out FILE.tape` (the name must end in `.tape`) | Nothing |
+| `vhs` | `-out DIR/<deck>.tape` (default dir `<deck>-recording`) | `vhs <deck>.tape` inside DIR, producing `<deck>.gif` (or `-format`) |
+| `freeze` | `-out DIR/slide-NN-title.ansi` and `.png`/`.svg` (default dir `<deck>-slides`) | `freeze --language ansi ...` once per slide, inside DIR |
+
+- The tape sets `FontSize 16`, `LineHeight 1.2`, `Padding 20`, `Width` = `w*9.6+40` and `Height` = `h*19.2+40` pixels for the `-w` x `-h` screen, and a theme from the deck's palette. It starts `tuipresent -watch=false -progress=false -mouse=false -images=blocks` (plus your `-theme`, `-background`, `-transition`) hidden, then for every slide step does `Sleep` then `Right`, ends with `Type "q"`.
+- Dwell per step: `-dwell`, else `min(2000 + 100*words, 10000)` ms for the slide's fully revealed frame divided by its steps, at least 1000 ms.
+- Freeze images show each slide fully revealed, in the theme painted into every cell (`-background paint`, unless you set `-background`), from the same frame `-dump` prints. Freeze has no PDF output: combine the PNGs (`magick slides/slide-*.png deck.pdf`).
+- File names are `slide-NN-` + the title reduced to `a-z0-9-` (40 characters at most; none for an untitled slide). Writes only happen inside the out directory and never through a symlink or over a directory.
+- A missing `vhs` or `freeze` prints an install hint and exits 1 before anything is written. `-dry-run` needs neither. Usage errors (unknown mode or format, a `-out` for `tape` not ending in `.tape`) exit 2.
 
 ## Layout
 
