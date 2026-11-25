@@ -12,6 +12,9 @@ import (
 // Overview returns exactly h lines, each exactly w cells wide: a grid of one
 // card per slide with slide sel highlighted. The layout is overview.NewGrid(len(slides), w, h).
 func (r *Renderer) Overview(sel, w, h int) string {
+	if w < 1 || h < 1 {
+		return "" // a terminal reporting no room (a collapsing pane) gets nothing
+	}
 	n := len(r.deck.Slides)
 	g := overview.NewGrid(n, w, h)
 	lines := []string{r.style(r.theme.Palette.Heading).Bold(true).Render(fmt.Sprintf(" Overview  %d / %d", sel+1, n))}

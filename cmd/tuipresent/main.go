@@ -159,9 +159,6 @@ func main() {
 	render.Hyperlinks = on
 	m := newModel(path, d, flags)
 	m.progress = *progress && oscSupported(os.Getenv, stdoutIsTTY())
-	if m.progress {
-		defer clearProgressOnSignal()()
-	}
 	if imgMode == img.Auto {
 		imgMode = img.Detect(os.Getenv)
 	}
@@ -177,6 +174,14 @@ func main() {
 	m.watch, m.noFade, m.mouse = *watch, !*fade, *mouse
 	m.statePath, m.started = notes.StatePath(path), time.Now()
 	m.remote = newRemote(m.statePath, m.started)
+	statePath, cmdPath, hadProgress := m.statePath, m.remote.path, m.progress
+	defer cleanupOnSignal(func() {
+		notes.Remove(statePath)
+		notes.Remove(cmdPath)
+		if hadProgress {
+			fmt.Fprint(os.Stdout, progressClear)
+		}
+	})()
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
 	_, err = tea.NewProgram(m).Run()

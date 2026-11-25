@@ -169,8 +169,14 @@ func buildTape(o exportOpts, d *deck.Deck, r *render.Renderer, deckArg, output s
 		return "", errors.New("deck path contains a newline")
 	}
 	cmd := []string{"tuipresent", "-watch=false", "-progress=false", "-mouse=false", "-images=blocks"}
-	if o.flags.theme != "" {
-		cmd = append(cmd, "-theme", o.flags.theme)
+	if t := o.flags.theme; t != "" {
+		if ext := strings.ToLower(filepath.Ext(t)); o.mode == "vhs" && (ext == ".yaml" || ext == ".yml") {
+			// vhs runs in the output directory, where a relative theme file is not.
+			if abs, err := filepath.Abs(t); err == nil {
+				t = abs
+			}
+		}
+		cmd = append(cmd, "-theme", t)
 	}
 	if o.flags.background != "" {
 		cmd = append(cmd, "-background", o.flags.background)

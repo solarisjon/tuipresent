@@ -67,19 +67,27 @@ func (m *model) withProgress(cmd tea.Cmd) tea.Cmd {
 	return tea.Batch(tea.Raw(seq), cmd)
 }
 
-// clearProgressOnSignal clears the progress bar if the process is hung up
-// or terminated, in case the program does not get to exit normally. It
-// returns a function that stops watching.
-func clearProgressOnSignal() (stop func()) {
+// cleanupOnSignal runs cleanup when the process is hung up or terminated,
+// for the paths where the program does not get to exit normally. SIGHUP is
+// swallowed by signal.Notify, so it must also end the process, or a closed
+// terminal would leave the presenter running; SIGTERM ends the program
+// through bubbletea, which then runs the normal cleanup again (cleanup must
+// be idempotent). It returns a function that stops watching.
+func cleanupOnSignal(cleanup func()) (stop func()) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGHUP, syscall.SIGTERM)
 	done := make(chan struct{})
-	go func() {
-		select {
-		case <-ch:
-			fmt.Fprint(os.Stdout, progressClear)
-		case <-done:
-		}
-	}()
+	go handleSignals(ch, done, cleanup, os.Exit)
 	return func() { signal.Stop(ch); close(done) }
+}
+
+func handleSignals(ch <-chan os.Signal, done <-chan struct{}, cleanup func(), exit func(int)) {
+	select {
+	case sig := <-ch:
+		cleanup()
+		if sig == syscall.SIGHUP {
+			exit(129)
+		}
+	case <-done:
+	}
 }
