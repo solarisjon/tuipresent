@@ -48,6 +48,8 @@ func main() {
 	mouse := flag.Bool("mouse", true, "mouse navigation: click the left/right third to go back/forward, wheel to step, click in the overview; -mouse=false leaves the mouse to the terminal (text selection)")
 	notesView := flag.Bool("notes", false, "show speaker notes for a presenter running the same deck in another terminal")
 	fade := flag.Bool("fade", true, "fade in content revealed by a pause; -fade=false makes reveals instant")
+	progress := flag.Bool("progress", true, "show deck progress in the terminal tab (OSC 9;4); -progress=false turns it off")
+	links := flag.String("links", "auto", "clickable links (OSC 8): auto|on|off (-dump and -check never emit them)")
 	images := flag.String("images", "auto", "image drawing: auto|kitty|blocks|off (-dump and -check always use blocks unless off)")
 	themeName := flag.String("theme", "", "theme name or theme file (.yaml), overriding front matter; see -themes")
 	themeBg := flag.String("background", "", "terminal|paint: paint the theme background into every cell, overriding front matter")
@@ -126,6 +128,17 @@ func main() {
 		return
 	}
 
+	on, err := linksEnabled(*links, os.Getenv, stdoutIsTTY())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	render.Hyperlinks = on
+	m := newModel(path, d, flags)
+	m.progress = *progress && oscSupported(os.Getenv, stdoutIsTTY())
+	if m.progress {
+		defer clearProgressOnSignal()()
+	}
 	if imgMode == img.Auto {
 		imgMode = img.Detect(os.Getenv)
 	}
@@ -133,13 +146,15 @@ func main() {
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
 	}
 
-	m := newModel(path, d, flags)
 	m.watch, m.noFade, m.mouse = *watch, !*fade, *mouse
 	m.statePath, m.started = notes.StatePath(path), time.Now()
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
 	_, err = tea.NewProgram(m).Run()
 	notes.Remove(m.statePath)
+	if m.progress {
+		fmt.Print(progressClear)
+	}
 	if k := render.Images.Kitty; k != nil {
 		fmt.Print(k.Cleanup())
 	}
@@ -208,6 +223,11 @@ type model struct {
 	sel      int
 	num      string
 	termBg   color.Color // terminal background (OSC 11), nil until reported
+	// Deck progress in the terminal tab (see termcaps.go).
+	progress      bool // -progress, and stdout is a capable terminal
+	progressShown bool
+	progressSlide int
+	progressTotal int
 }
 
 func (m *model) Init() tea.Cmd {
@@ -233,6 +253,7 @@ func (m *model) clearStatusLater(d time.Duration) tea.Cmd {
 func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 	defer m.publish()
 	defer func() { cmd = m.withImages(cmd) }()
+	defer func() { cmd = m.withProgress(cmd) }()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height

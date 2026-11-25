@@ -42,6 +42,14 @@
         { "type": "string" }
       ],
       "default": true
+    },
+    "progress": {
+      "description": "Deck progress in the terminal tab (OSC 9;4). Disabled by false or by the strings 'false', 'off', 'no', 'none' (case-insensitive); any other value, or absence, leaves it on. The -progress=false flag overrides it. Never used with -dump or -check.",
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "string" }
+      ],
+      "default": true
     }
   },
   "$defs": {

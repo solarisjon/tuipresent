@@ -467,11 +467,23 @@ func (r *Renderer) glamour(src string, width int) []string {
 		r.glam[width] = g
 	}
 	// Raw tabs pass through glamour and misalign frames; CommonMark tab stops are 4.
-	s, err := g.Render(strings.ReplaceAll(src, "\t", "    "))
+	src = strings.ReplaceAll(src, "\t", "    ")
+	var urls []string
+	if Hyperlinks {
+		src, urls = hideLinkURLs(src)
+	}
+	s, err := g.Render(src)
 	if err != nil {
 		return strings.Split(src, "\n")
 	}
 	lines := strings.Split(s, "\n")
+	if Hyperlinks {
+		lines = finishLinks(lines, urls)
+	} else if strings.Contains(s, "\x1b]8;") {
+		for i, l := range lines {
+			lines[i] = StripLinks(l)
+		}
+	}
 	for len(lines) > 0 && strings.TrimSpace(ansi.Strip(lines[0])) == "" {
 		lines = lines[1:]
 	}
@@ -645,6 +657,12 @@ func (r *Renderer) glamourStyle() gansi.StyleConfig {
 	c.Enumeration = gansi.StylePrimitive{BlockPrefix: ". "}
 	c.Task = gansi.StyleTask{Ticked: "[✓] ", Unticked: "[ ] "}
 	c.Link = gansi.StylePrimitive{Color: str(p.Link), Underline: &t}
+	if Hyperlinks {
+		c.Link.Format = linkFormat
+	} else {
+		// The URL printed after link text is secondary: dim it.
+		c.Link = gansi.StylePrimitive{Color: str(p.Dim)}
+	}
 	c.LinkText = gansi.StylePrimitive{Color: str(p.Link), Bold: &t}
 	c.Image = gansi.StylePrimitive{Color: str(p.Link), Underline: &t}
 	c.ImageText = gansi.StylePrimitive{Color: str(p.Dim), Format: "Image: {{.text}} →"}

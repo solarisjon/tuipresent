@@ -5,6 +5,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 ## Highlights
 
 - **Plain markdown decks**: slides split on `<!-- end_slide -->`, setext titles drawn with a gradient, columns, centered statement slides.
+- **Terminal integration**: markdown links are clickable (OSC 8) where the terminal supports them, and the deck's progress shows in the terminal tab (OSC 9;4).
 - **Motion**: five slide transitions (`slide`, `wipe`, `cover`, `dissolve`, `none`) and a per-cell fade for content revealed by `<!-- pause -->`.
 - **Themes**: twenty built-in themes (tokyonight, catppuccin, gruvbox, dracula, nord, rose-pine, solarized, kanagawa and more), inline color overrides, custom theme files, and optional background painting so a deck looks the same in any terminal.
 - **Images**: PNG, JPEG and GIF via the kitty graphics protocol, with a truecolor half-block fallback everywhere else.
@@ -131,9 +132,7 @@ Titles and text styling
 - Callout boxes for GitHub-style `> [!NOTE]` / `> [!WARNING]` blocks
 
 Terminal capabilities
-- Clickable links (OSC 8)
 - Sixel and iTerm2 image protocols for WezTerm, iTerm2 and foot
-- Deck progress in the terminal tab via the OSC 9;4 progress bar
 
 Presenting
 - Navigate the presenter from the notes view
