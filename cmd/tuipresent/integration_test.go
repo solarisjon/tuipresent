@@ -12,10 +12,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/img"
-	"tuipresent/internal/notes"
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/notes"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 func TestHandleSignals(t *testing.T) {

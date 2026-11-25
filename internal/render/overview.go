@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/overview"
+	"github.com/solarisjon/tuipresent/internal/overview"
 )
 
 // Overview returns exactly h lines, each exactly w cells wide: a grid of one

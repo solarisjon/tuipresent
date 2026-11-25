@@ -14,12 +14,12 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/img"
-	"tuipresent/internal/notes"
-	"tuipresent/internal/render"
-	"tuipresent/internal/report"
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/notes"
+	"github.com/solarisjon/tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/report"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 const (

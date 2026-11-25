@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 func headLen(t *testing.T, src string) int {

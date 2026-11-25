@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 const hlDeck = "# T\n\n```go {1-2|4|all}\nalpha := 1\nbeta := 2\n\ngamma := 3\n```\n\nafter\n"

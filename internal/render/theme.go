@@ -13,7 +13,7 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"gopkg.in/yaml.v3"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 // Palette is every color a theme sets, as #rrggbb. Empty derived fields

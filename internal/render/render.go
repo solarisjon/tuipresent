@@ -17,8 +17,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/lucasb-eyer/go-colorful"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/img"
 )
 
 const (

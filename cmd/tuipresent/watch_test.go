@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 func writeFile(t *testing.T, path, content string, mtime time.Time) {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 // Cross-feature checks: every combination of directives and terminal

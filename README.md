@@ -21,10 +21,16 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 
 Requires Go 1.27.4 or newer to build; the release binaries need nothing.
 
-**From source** (the module is named `tuipresent` in `go.mod`, so it can't be fetched with `go install <host>/...@latest`; build from a clone):
+**With Go**:
 
 ```sh
-git clone <this repository> tuipresent && cd tuipresent
+go install github.com/solarisjon/tuipresent/cmd/tuipresent@latest
+```
+
+**From a clone**:
+
+```sh
+git clone https://github.com/solarisjon/tuipresent.git && cd tuipresent
 go install ./cmd/tuipresent          # installs to $(go env GOPATH)/bin
 # or
 make build                           # writes bin/tuipresent

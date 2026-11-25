@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 func TestParseInlineTitle(t *testing.T) {

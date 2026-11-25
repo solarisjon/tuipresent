@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/notes"
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/notes"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 func remoteModel(t *testing.T) *model {

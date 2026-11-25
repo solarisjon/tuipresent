@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 var (

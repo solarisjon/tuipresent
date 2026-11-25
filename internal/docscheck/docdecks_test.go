@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
-	"tuipresent/internal/report"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/report"
 )
 
 // TestDocDecksFit loads every complete deck shown in the user and agent

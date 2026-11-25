@@ -12,8 +12,8 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 var updateGolden = flag.Bool("update", false, "rewrite cmd/tuipresent/testdata golden files")

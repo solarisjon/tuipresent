@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/img"
 )
 
 func TestOverlayModesKeepGeometry(t *testing.T) {

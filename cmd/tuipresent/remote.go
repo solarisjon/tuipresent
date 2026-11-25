@@ -7,7 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tuipresent/internal/notes"
+	"github.com/solarisjon/tuipresent/internal/notes"
 )
 
 // Navigation from the notes view. The notes view writes commands (see

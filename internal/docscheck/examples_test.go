@@ -12,9 +12,9 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
-	"tuipresent/internal/report"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/report"
 )
 
 var update = flag.Bool("update", false, "rewrite the generated parts of docs/agent/EXAMPLES.md from real output")

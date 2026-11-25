@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 const schemaDoc = "docs/agent/frontmatter.schema.json"

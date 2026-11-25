@@ -11,9 +11,9 @@ import (
 	chromastyles "github.com/alecthomas/chroma/v2/styles"
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/img"
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 func TestBuiltinThemesValid(t *testing.T) {

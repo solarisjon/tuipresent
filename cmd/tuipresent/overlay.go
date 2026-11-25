@@ -7,8 +7,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tuipresent/internal/img"
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/img"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 // Sixel and iTerm2 images are pixels painted over cells, not cells, so the

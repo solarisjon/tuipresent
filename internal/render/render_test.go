@@ -8,7 +8,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 func checkFrame(t *testing.T, f string, w, h int) {

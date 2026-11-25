@@ -1,4 +1,4 @@
-module tuipresent
+module github.com/solarisjon/tuipresent
 
 go 1.27.4
 

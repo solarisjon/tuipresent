@@ -9,7 +9,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 func TestThemeFlagBeatsFrontMatterAcrossReload(t *testing.T) {

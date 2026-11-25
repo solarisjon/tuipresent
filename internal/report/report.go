@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 
-	"tuipresent/internal/deck"
-	"tuipresent/internal/render"
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 // Warnings lists every recoverable problem with a deck as loaded: parser

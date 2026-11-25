@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"tuipresent/internal/transition"
+	"github.com/solarisjon/tuipresent/internal/transition"
 )
 
 var (

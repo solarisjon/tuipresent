@@ -5,7 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tuipresent/internal/render"
+	"github.com/solarisjon/tuipresent/internal/render"
 )
 
 // bigTitleDelay is how long a slide must sit still before its scaled title

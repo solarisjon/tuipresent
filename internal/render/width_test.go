@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"tuipresent/internal/deck"
+	"github.com/solarisjon/tuipresent/internal/deck"
 )
 
 func TestContentWidthMonotonic(t *testing.T) {

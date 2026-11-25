@@ -5,7 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tuipresent/internal/overview"
+	"github.com/solarisjon/tuipresent/internal/overview"
 )
 
 // maxNumberDigits bounds a typed slide number; decks never have 100k slides.
