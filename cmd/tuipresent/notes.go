@@ -19,7 +19,7 @@ func (m *model) publish() {
 	if m.statePath == "" {
 		return
 	}
-	s := notes.State{PID: os.Getpid(), Slide: m.slide, Step: m.step, Started: m.started}
+	s := notes.State{PID: os.Getpid(), Slide: m.slide, Step: m.step, Started: m.started, Ack: m.remote.applied}
 	if m.published != nil && *m.published == s {
 		return
 	}
@@ -42,6 +42,9 @@ type notesModel struct {
 	warnings  []string
 	state     notes.State
 	running   bool
+	keys      notes.Keys
+	pending   []notes.Command // sent, not yet acknowledged by the presenter
+	lastSeq   int64
 }
 
 func runNotes(path string, d *deck.Deck, flags deckFlags) error {
@@ -67,12 +70,17 @@ func (m *notesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.w, m.h = msg.Width, msg.Height
 	case pollMsg:
 		m.state, m.running = notes.Read(m.statePath)
+		m.syncCommands()
 		m.reloadIfChanged()
 		return m, poll()
 	case tea.KeyPressMsg:
-		switch msg.String() {
-		case "q", "ctrl+c", "esc":
+		cmd, ok, quit := m.keys.Handle(msg.String())
+		if quit {
+			os.Remove(notes.CommandPath(m.statePath))
 			return m, tea.Quit
+		}
+		if ok {
+			m.send(cmd)
 		}
 	}
 	return m, nil
@@ -92,7 +100,7 @@ func (m *notesModel) reloadIfChanged() {
 }
 
 func (m *notesModel) View() tea.View {
-	v := tea.NewView(notes.Frame(m.deck, m.r, m.path, m.state, m.running, time.Now(), m.w, m.h, m.warnings))
+	v := tea.NewView(notes.FrameStatus(m.deck, m.r, m.path, m.state, m.running, time.Now(), m.w, m.h, m.warnings, m.status()))
 	v.AltScreen = true
 	return v
 }

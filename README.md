@@ -11,7 +11,7 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 - **Themes**: twenty built-in themes (tokyonight, catppuccin, gruvbox, dracula, nord, rose-pine, solarized, kanagawa and more), inline color overrides, custom theme files, and optional background painting so a deck looks the same in any terminal.
 - **Images**: PNG, JPEG and GIF via the kitty graphics protocol, with a truecolor half-block fallback everywhere else.
 - **Live demos**: `+exec` code blocks run on a key press (bash, sh, Python) and show their output under the code.
-- **Speaker notes** in a second terminal that follows the presenter.
+- **Speaker notes** in a second terminal that follows the presenter, and can drive it with the same keys.
 - **Navigation**: `o` opens a grid overview of every slide, type a number and `enter` to jump, and the mouse works too (click the left or right third, scroll the wheel).
 - **Live reload**: save the file and the open deck updates in place.
 - **Verifiable**: `-check` reports every slide that overflows a given screen size; `-dump` prints every frame as text.
@@ -130,9 +130,6 @@ Titles and text styling
 
 Terminal capabilities
 - Sixel and iTerm2 image protocols for WezTerm, iTerm2 and foot
-
-Presenting
-- Navigate the presenter from the notes view
 
 Sharing and export
 - Record decks to GIF/MP4 with Charm's VHS; export PDF/PNG slides with Charm's Freeze
