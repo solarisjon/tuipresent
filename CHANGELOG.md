@@ -4,6 +4,8 @@ All notable changes to tuipresent are documented here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [1.0.0-rc2] - 2026-11-25
+
 ### Added
 
 - `-install-skill` installs the agent skill (`tuipresent-deck`) from the binary itself: `SKILL.md` plus `references/` (guide, language spec, verified examples, front matter schema), into `./.claude/skills/tuipresent-deck` (`-skill-dir project`), `~/.claude/skills/tuipresent-deck` (`-skill-dir user`) or any directory. It never overwrites without `-force` and refuses symlinks. `-print-skill` prints `SKILL.md` for other agent runtimes. No checkout of the repository is needed.
