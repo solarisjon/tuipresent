@@ -426,6 +426,26 @@ The notes pane adds slide, step, next title and a clock.
 
 <!-- end_slide -->
 
+Getting around the deck
+===
+
+<!-- transition: slide -->
+
+| Key | Does |
+|-----|------|
+| `o` | slide overview grid |
+| `12` then `enter` | jump to slide 12 |
+| click left / right third | back / forward |
+| wheel | back / forward |
+
+* In the overview: arrows or `hjkl` move, `enter` opens, `esc` closes
+* While typing a number it shows on the status line; `esc` cancels
+* `-mouse=false` leaves the mouse to the terminal, for copying text
+
+<!-- speaker_note: Try it now: press o, move with the arrows, press enter. -->
+
+<!-- end_slide -->
+
 Check it before you present it
 ===
 

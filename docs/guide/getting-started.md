@@ -142,6 +142,8 @@ The essential keys:
 | `space`, `→`, `enter` | Next step or slide |
 | `←`, `backspace` | Previous step or slide |
 | `g` / `G` | First / last slide |
+| `o` | Overview grid of all slides |
+| `12` then `enter` | Jump to slide 12 |
 | `q`, `esc` | Quit |
 
 The full list is in the [reference](reference.md#key-bindings).

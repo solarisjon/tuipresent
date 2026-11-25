@@ -38,6 +38,7 @@ Exactly one deck file is required (except with `-themes`). Boolean flags take `-
 | `-themes` | | Print the built-in theme names, each marked `light` or `dark` with a one-line color swatch, and exit. |
 | `-fade` | `true` | Fade in content revealed by a pause. `-fade=false` makes every reveal instant, overriding the deck. |
 | `-watch` | `true` | Reload the deck (and its custom theme file) when the file changes. `-watch=false` disables it (`r` still reloads). |
+| `-mouse` | `true` | Mouse navigation: click the left/right third for back/forward, wheel to step, click a card in the overview. `-mouse=false` leaves the mouse to the terminal (text selection). |
 | `-notes` | `false` | Show the speaker-notes view instead of the slides. It follows a presenter of the same deck in another terminal. |
 | `-images MODE` | `auto` | `auto`: kitty graphics in kitty/ghostty outside tmux/screen, half-blocks elsewhere. `kitty`: force kitty graphics. `blocks`: force truecolor half-blocks. `off`: draw a `[image: alt]` box. `-dump` and `-check` always use half-blocks unless `off`. |
 | `-check` | `false` | Report slides that overflow a `-w` x `-h` screen, then exit. No TTY needed. |
@@ -89,9 +90,25 @@ Presenter (the default view):
 | `←` `h` `p` `k` `↑` `backspace` `pgup` | Previous step; on the first step, previous slide at its last step |
 | `g` `home` | First slide, first step |
 | `G` `end` | Last slide, first step |
+| `o` | Open or close the slide overview grid |
+| `0`-`9` then `enter` | Jump to that slide number (`backspace` erases a digit, `esc` cancels, a leading 0 is ignored, numbers past the end clamp to the last slide) |
 | `e` | Run the `+exec` blocks revealed so far on this slide |
 | `r` | Reload the deck from disk (clears exec output) |
 | `q` `esc` `ctrl+c` | Quit |
+
+Overview grid (after `o`):
+
+| Key | Action |
+|-----|--------|
+| `←` `h` `→` `l` | Move the selection one card |
+| `↑` `k` `↓` `j` | Move the selection one row |
+| `pgup` `pgdown` | Move the selection a page of rows |
+| `g` `home` `G` `end` | First / last slide |
+| `enter` `space` | Jump to the selected slide, first step, and close |
+| `o` `esc` | Close, staying on the current slide |
+| `q` `ctrl+c` | Quit |
+
+Mouse (`-mouse`, on by default; left button and wheel only): click the left third of the screen for back, the right third for forward, the middle third does nothing; the wheel goes back (up) or forward (down). In the overview a click on a card jumps to it and the wheel moves the selection a row.
 
 Notes view (`-notes`):
 
