@@ -14,18 +14,54 @@ tuipresent turns a markdown file into a full-screen slide deck in your terminal.
 - **Speaker notes** in a second terminal that follows the presenter, and can drive it with the same keys.
 - **Navigation**: `o` opens a grid overview of every slide, type a number and `enter` to jump, and the mouse works too (click the left or right third, scroll the wheel).
 - **Live reload**: save the file and the open deck updates in place.
-- **Sharing**: record a deck to GIF/MP4 with Charm's VHS, or export one PNG/SVG per slide (and a PDF) with Charm's Freeze.
+- **Sharing**: record a deck to GIF/MP4 with Charm's VHS, or export one PNG/SVG per slide with Charm's Freeze (Freeze has no PDF output; combine the PNGs yourself).
 - **Verifiable**: `-check` reports every slide that overflows a given screen size; `-dump` prints every frame as text.
 
 ## Install
 
-Requires Go 1.27 or newer.
+Requires Go 1.27.4 or newer to build; the release binaries need nothing.
+
+**From source** (the module is named `tuipresent` in `go.mod`, so it can't be fetched with `go install <host>/...@latest`; build from a clone):
 
 ```sh
-go build -o bin/tuipresent ./cmd/tuipresent
+git clone <this repository> tuipresent && cd tuipresent
+go install ./cmd/tuipresent          # installs to $(go env GOPATH)/bin
 # or
-go install ./cmd/tuipresent
+make build                           # writes bin/tuipresent
 ```
+
+**Release binaries**: `make release` cross-compiles static (CGO off) binaries for darwin/arm64, darwin/amd64, linux/amd64 and linux/arm64 into `dist/` and writes `dist/SHA256SUMS`. Check one with `shasum -a 256 -c SHA256SUMS`, make it executable and put it on your `PATH`. `tuipresent -version` prints the version, commit, build date and Go version.
+
+Windows is not a supported target (it is not built or tested).
+
+## Terminal support
+
+Any truecolor terminal runs everything; the table shows what needs more. Rows are features, columns are what the terminal must support, and every feature falls back by itself.
+
+| Feature | Needs | Falls back to |
+|---------|-------|---------------|
+| Colors, transitions, pause fades | truecolor | (required; set `COLORTERM=truecolor` if undetected) |
+| Images at full resolution | kitty graphics: kitty, Ghostty | truecolor half-blocks |
+| | iTerm2 inline images: iTerm2, WezTerm | truecolor half-blocks |
+| | sixel: foot (128 colors) | truecolor half-blocks |
+| Big titles (`title_size`) | kitty text sizing (OSC 66): kitty | block letters |
+| Curly title underline, `.curly` text | kitty, Ghostty, WezTerm, iTerm2 | the rule / a plain underline |
+| Clickable links | OSC 8: most modern terminals (not the Linux console or Terminal.app) | link text followed by its dimmed URL |
+| Deck progress in the tab | OSC 9;4: Ghostty, WezTerm, Windows Terminal, recent iTerm2 | nothing is drawn |
+| Notes view and presenter control | two terminals on the same machine | (no fallback; one terminal shows the slides only) |
+
+Image protocols and text sizing are never used inside tmux or screen (images become half-blocks). `-images`, `-links` and `-progress` force or disable each one, and `-dump` and `-check` never depend on the terminal. See [Presenting](docs/guide/presenting.md) for troubleshooting.
+
+## Known limitations
+
+- Some presenterm directives are not supported and are silently ignored: `incremental_lists`, `new_lines`, `newline`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`. presenterm theme files and settings such as an `override:` block are not read. See [the language spec](docs/agent/LANGUAGE.md) section 5.
+- `+exec` runs only bash, sh and Python (`python`, `python3`, `py`); any other language shows an `unsupported +exec language` error instead of running.
+- Freeze produces PNG and SVG, not PDF; combine the PNGs with ImageMagick or img2pdf. VHS and Freeze are separate installs.
+- Image formats are PNG, JPEG and GIF (a GIF shows its first frame).
+- Sixel and iTerm2 images are painted after the frame and are blank during transitions, fades and the overview.
+- Only tested outside tmux/screen for images and text sizing; behavior of OSC 8, OSC 9;4 and the other escape sequences inside tmux, over SSH and in Windows terminals is unverified.
+
+See the [CHANGELOG](CHANGELOG.md) for what is in each release.
 
 ## Quick start
 
@@ -76,7 +112,7 @@ The [user guide](docs/guide/README.md) covers everything:
 - [Getting started](docs/guide/getting-started.md): build, write a first deck, check it, present it.
 - [Authoring](docs/guide/authoring.md): every slide construct with examples, gotchas and design advice.
 - [Presenting](docs/guide/presenting.md): keys, a speaker-notes window, live reload, live demos, fitting the projector, troubleshooting.
-- [Sharing and export](docs/guide/sharing.md): record a GIF/MP4 and export slide images or a PDF.
+- [Sharing and export](docs/guide/sharing.md): record a GIF/MP4 and export slide images, and combine them into a PDF.
 - [Reference](docs/guide/reference.md): complete tables of flags, keys, warnings, front matter, themes, directives, images, `+exec`, transitions and layout numbers.
 
 For AI agents and tools:
@@ -85,6 +121,8 @@ For AI agents and tools:
 - [llms.txt](llms.txt): an index of the docs for LLMs.
 - [AGENT_GUIDE.md](docs/AGENT_GUIDE.md): the workflow for writing and verifying a deck, with layout budgets and design guidance.
 - [SKILL.md](docs/agent-skill/SKILL.md): a condensed, standalone Claude Code skill.
+
+What changed in each release is in the [CHANGELOG](CHANGELOG.md).
 
 [`examples/`](examples/README.md) has ready-to-run decks: a feature tour, an incident postmortem, a keynote-style pitch, a technical talk with live demos, a theme gallery and a deck in a custom theme.
 
