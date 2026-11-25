@@ -133,11 +133,12 @@ More body.
 - **Directives** (§5), each alone on its line: `end_slide`, `pause`, `column_layout: [2, 1]`, `column: N` (0-based), `reset_layout`, `jump_to_middle`, `transition: KIND`, `speaker_note: text` (or the multi-line form, §8), `fade: off`/`on`.
 - **Transitions** (§15.3): `slide`, `wipe`, `cover`, `dissolve`, `none`. Going back from a slide plays its transition in reverse.
 - **Titles** (§7): only a setext H1 (`Title` + `===`) before any other content. `# Title` is a body heading.
+- **Links**: `[text](https://url)` is an OSC 8 hyperlink showing only `text` where supported, else `text` plus its dimmed URL (always in `-dump`/`-check`). Relative and `#anchor` links show text only.
 - **Images** (§9): `![alt](path)` alone on a line, path relative to the deck; `![image:width:50%](path)` caps the width.
 - **Code** (§10): `+exec` in the info string makes a block runnable (`bash`, `sh`, `python`/`python3`/`py`; anything else shows an error as the output), in the deck's directory.
 - **Themes** (§18): twenty built-ins (table in section 6), palette overrides inline (`accent: "#ff6b35"`, quoted), or `path: themes/x.yaml` for a theme file with `extends:`.
-- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-watch=false`, `-images auto|kitty|blocks|off` (presenting).
-- **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
+- **Flags** (§15.1): `-check`, `-dump`, `-w`, `-h`, `-exec` (verification); `-slide N`, `-transition KIND`, `-theme NAME`, `-background terminal|paint`, `-themes`, `-notes`, `-fade=false`, `-progress=false`, `-links auto|on|off`, `-watch=false`, `-images auto|kitty|blocks|off` (presenting).
+- **Front matter keys** (§2.4): `title`, `sub_title`, `author`, `date`, `theme`, `transition`, `fade`, `progress`. Schema: [frontmatter.schema.json](agent/frontmatter.schema.json).
 
 ---
 

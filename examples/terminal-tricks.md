@@ -66,6 +66,24 @@ printf '\e[38;2;255;121;198mpink\e[0m\n'
 
 <!-- end_slide -->
 
+Two of those, live in this deck
+===
+
+* Links are [OSC 8 hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda): click one, or read its URL after the text where your terminal can't
+* The tab shows how far through the talk you are, using `OSC 9;4`
+
+```bash
+# OSC 9;4: set the tab's progress bar to 40%, then clear it
+printf '\e]9;4;1;40\e\\'
+printf '\e]9;4;0;0\e\\'
+```
+
+<!-- pause -->
+
+Turn the bar off with `-progress=false`, or `progress: false` in the front matter.
+
+<!-- end_slide -->
+
 Same idea in two more languages
 ===
 

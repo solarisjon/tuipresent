@@ -34,7 +34,7 @@ Each deck passes `-check` at 100x30 and 80x24 (`go test ./internal/docscheck` en
 ./bin/tuipresent examples/brand.md
 ```
 
-**[terminal-tricks.md](terminal-tricks.md)**, 12 slides. A technical talk, "Things your terminal can do in 2026": escape codes in bash, Go and Rust, the kitty graphics protocol (with an image), box-drawing diagrams, a 3-column layout, and four live `+exec` blocks (an `isatty` check, Unicode cell widths, shell arithmetic, an `awk` sum).
+**[terminal-tricks.md](terminal-tricks.md)**, 13 slides. A technical talk, "Things your terminal can do in 2026": escape codes in bash, Go and Rust, a clickable link and the tab progress bar, the kitty graphics protocol (with an image), box-drawing diagrams, a 3-column layout, and four live `+exec` blocks (an `isatty` check, Unicode cell widths, shell arithmetic, an `awk` sum).
 
 ```sh
 ./bin/tuipresent examples/terminal-tricks.md

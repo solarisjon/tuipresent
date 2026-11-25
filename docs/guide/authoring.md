@@ -57,6 +57,7 @@ date: 2026-11-30
 theme: dark
 transition: slide
 fade: true
+progress: true
 ---
 ```
 
@@ -69,6 +70,7 @@ fade: true
 | `theme` | Color theme; see [Themes](reference.md#themes) |
 | `transition` | Default transition between slides (see [Transitions and fade](#transitions-and-fade)) |
 | `fade` | `false` makes pause reveals instant for the whole deck |
+| `progress` | `false` stops the deck showing its progress in the terminal tab (see [Terminal integration](reference.md#terminal-integration)) |
 
 Gotchas:
 

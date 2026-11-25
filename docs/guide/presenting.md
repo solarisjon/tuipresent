@@ -157,6 +157,8 @@ The slides window resizes live, so you can also just resize and step through the
 
 **The pause fade flashes or looks muddy.** The fade blends from your terminal's background color, which tuipresent asks the terminal for. Terminals that don't answer get the theme's background instead, which may not match. Turn the fade off with `-fade=false`.
 
+**Links print their URL, or the tab shows no progress bar.** Links are clickable only where the terminal supports OSC 8, and the tab progress bar needs OSC 9;4; otherwise the text is followed by its dimmed URL and no bar is drawn. Force links with `-links on`; stop the bar with `-progress=false` or `progress: false`.
+
 **Animations stutter.** Common over slow SSH links or screen shares. Use `-transition none` and `-fade=false`.
 
 **Inside tmux.** Everything works, but images fall back to half-blocks, and colors need the truecolor setting above. For the best result, present outside tmux.

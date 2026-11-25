@@ -37,6 +37,8 @@ Exactly one deck file is required (except with `-themes`). Boolean flags take `-
 | `-background MODE` | | `paint` draws every cell on the theme's background; `terminal` uses the terminal's own. Overrides front matter. Any other value is a usage error. |
 | `-themes` | | Print the built-in theme names, each marked `light` or `dark` with a one-line color swatch, and exit. |
 | `-fade` | `true` | Fade in content revealed by a pause. `-fade=false` makes every reveal instant, overriding the deck. |
+| `-progress` | `true` | Show deck progress in the terminal tab (OSC 9;4), updated on every slide change and cleared on exit. `-progress=false` turns it off, overriding the deck. Never used with `-dump`, `-check` or when stdout is not a terminal. |
+| `-links MODE` | `auto` | Clickable links (OSC 8): `auto` when stdout is a terminal that is not `dumb`, the Linux console or macOS Terminal.app; `on` forces them; `off` prints link text followed by its dimmed URL. `-dump` and `-check` always use the `off` form. |
 | `-watch` | `true` | Reload the deck (and its custom theme file) when the file changes. `-watch=false` disables it (`r` still reloads). |
 | `-notes` | `false` | Show the speaker-notes view instead of the slides. It follows a presenter of the same deck in another terminal. |
 | `-images MODE` | `auto` | `auto`: kitty graphics in kitty/ghostty outside tmux/screen, half-blocks elsewhere. `kitty`: force kitty graphics. `blocks`: force truecolor half-blocks. `off`: draw a `[image: alt]` box. `-dump` and `-check` always use half-blocks unless `off`. |
@@ -118,6 +120,7 @@ Notes view (`-notes`):
 | `theme` | string or mapping | Color theme, see [Themes](#themes) |
 | `transition` | string | Default transition kind. Unset means `slide`. |
 | `fade` | string or bool | `false`, `off`, `no` or `none` (any case) disables the pause fade deck-wide. Anything else, or unset, leaves it on. |
+| `progress` | string or bool | `false`, `off`, `no` or `none` (any case) stops the deck reporting progress to the terminal tab. Anything else, or unset, leaves it on. |
 
 Other keys are ignored. A JSON Schema for editors is in [`docs/agent/frontmatter.schema.json`](../agent/frontmatter.schema.json).
 
@@ -343,6 +346,12 @@ Turning it off, broadest first:
 3. Front matter `fade: false` (also `off`, `no`, `none`): the whole deck.
 
 `-dump` and `-check` print static frames, so the fade never affects them.
+
+## Terminal integration
+
+**Links.** `[text](https://example.com)` shows only `text`, as an OSC 8 hyperlink: Ctrl/Cmd-click opens it in terminals that support them (ghostty, kitty, iTerm2, WezTerm, foot, GNOME Terminal and most others). Where hyperlinks are off (`-links off`, no terminal, a `dumb` terminal, the Linux console, macOS Terminal.app, `-dump`, `-check`) the text is followed by its URL in the dim color so it can still be read and copied. Only absolute URLs (`https:`, `mailto:` and so on) become hyperlinks; a relative link or `#anchor` shows its text alone. Autolinks (`<https://...>` or a bare URL) show the URL itself. Transitions and pause fades play over the same text; links stay intact and aligned.
+
+**Progress.** On terminals that understand OSC 9;4 (ghostty, WezTerm, Windows Terminal, recent iTerm2), the tab or window shows a progress bar equal to the current slide over the slide count (slide 1 of 10 is 10%, the last slide 100%). It updates on every slide change, follows reloads, and is cleared when tuipresent exits, including on `ctrl+c`, an error, `SIGTERM` or `SIGHUP`. Turn it off with `-progress=false` (this session) or `progress: false` in front matter (the deck; also `off`, `no`, `none`). It is never sent with `-dump`, `-check`, or when stdout is not a terminal.
 
 ## Layout
 

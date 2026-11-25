@@ -15,7 +15,8 @@ type Meta struct {
 	Date       string `yaml:"date"`
 	Theme      Theme  `yaml:"theme"`
 	Transition string `yaml:"transition"`
-	Fade       string `yaml:"fade"` // off/false disables the pause reveal fade deck-wide
+	Fade       string `yaml:"fade"`     // off/false disables the pause reveal fade deck-wide
+	Progress   string `yaml:"progress"` // off/false disables the terminal tab progress bar
 }
 
 // Theme is the front-matter theme setting. It accepts `theme: name` or a
@@ -79,6 +80,16 @@ func (d *Deck) FadeEnabled(i int) bool {
 		v = d.Meta.Fade
 	}
 	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "false", "off", "no", "none":
+		return false
+	}
+	return true
+}
+
+// ProgressEnabled reports whether the presenter reports deck progress to the
+// terminal (OSC 9;4): on unless the front matter's progress is false, off, no or none.
+func (d *Deck) ProgressEnabled() bool {
+	switch strings.ToLower(strings.TrimSpace(d.Meta.Progress)) {
 	case "false", "off", "no", "none":
 		return false
 	}
