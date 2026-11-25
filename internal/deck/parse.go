@@ -49,6 +49,9 @@ func Parse(src string) (*Deck, error) {
 			d.Warnings = append(d.Warnings, "front matter: "+transition.UnknownWarning(t))
 		}
 	}
+	if v := d.Meta.TitleStyle; v != "" && !ValidTitleStyle(v) {
+		d.Warnings = append(d.Warnings, "front matter: "+unknownTitleStyle(v))
+	}
 	// Line numbers in warnings count from the top of the file.
 	line := 1 + strings.Count(src[:len(src)-len(body)], "\n")
 	execID := 0
@@ -327,7 +330,18 @@ func (p *slideParser) directive(i int, name, arg string) {
 		}
 	case "fade":
 		p.slide.Fade = strings.TrimSpace(arg)
+	case "title_style":
+		p.slide.TitleStyle = strings.TrimSpace(arg)
+		if v := p.slide.TitleStyle; v != "" && !ValidTitleStyle(v) {
+			p.warn(i, unknownTitleStyle(v))
+		}
+	case "subtitle":
+		p.slide.Subtitle = strings.TrimSpace(arg)
 	}
+}
+
+func unknownTitleStyle(v string) string {
+	return fmt.Sprintf("unknown title_style %q (valid: %s); using rule", v, strings.Join(TitleStyles, ", "))
 }
 
 // multiLineNote reports whether lines[i] opens a speaker_note comment that

@@ -37,6 +37,7 @@ body      = chunk { end-slide-line chunk }
 | `transition` | text | `slide` | Default transition into every slide (§15.3). An unknown kind acts as `slide` and warns (§19). |
 | `fade` | text or bool | on | `false`/`off`/`no`/`none` (case-insensitive, trimmed) disable pause fades deck-wide; anything else leaves them on. |
 | `progress` | text or bool | on | `false`/`off`/`no`/`none` (case-insensitive, trimmed) stop reporting deck progress to the terminal tab (§15.8); anything else leaves it on. |
+| `title_style` | text | `rule` | Default title style (§7.7): `rule`, `curly` or `frame`, case-insensitive. Anything else warns and acts as `rule` (§19). |
 
 "text" = any YAML scalar, used as its string form (`title: 123` gives `123`; `date: 2026-12-08` stays `2026-12-08`).
 
@@ -124,6 +125,8 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 | `transition` | kind | Slide's transition (§15.3). | Last occurrence wins. Value trimmed; matched case-insensitively; an unknown kind acts as `slide` and warns with the line number (E27); empty argument means "inherit". |
 | `speaker_note` | text | Adds a note (§8). | Empty text is ignored. Several notes accumulate in source order. |
 | `fade` | `on`/`off`/... | Slide's fade setting (§15.4). | Last occurrence wins. Empty argument means "inherit from front matter". |
+| `title_style` | `rule`/`curly`/`frame` | Slide's title style (§7.7). | Last occurrence wins. Case-insensitive; an unknown value warns with the line number and acts as `rule`. Empty means "inherit". No effect without a title. |
+| `subtitle` | inline markdown | Slide's subtitle line (§7.8). | Last occurrence wins. Trimmed; empty means none. No effect without a title. |
 
 ## 6. Blocks and reveal steps
 
@@ -138,11 +141,13 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 ## 7. Titles
 
 7.1. Only a setext H1 that appears before any content (§4 rule 5) is the slide title: a non-blank line followed by a line matching `^=+\s*$`. One `=` suffices. Directives and speaker notes before it are fine; text, lists, fences or image lines before it are not (E3, E8).
-7.2. The title is the trimmed line, used literally: no inline markdown (`**x**` shows the asterisks) (E23). It never wraps.
+7.2. The title is the trimmed line. Inline markdown is parsed: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, `==highlight==`, nested, with `\` escaping one of ``\ ` * ~ = _ [ ] # > - + ! . |``; a delimiter with no closing partner is literal (E23). Width (`titleWidth`) is measured on the text without the markers. It never wraps.
 7.3. Title detection ignores column state: a setext title placed after `column_layout`/`column` but before any content still becomes the slide title (E13).
 7.4. Not titles: ATX headings (`# x`) at any position (E2); a later setext H1 (glamour renders it as an in-body H1); setext H2 (`---` underline); an underline with leading spaces.
-7.5. Title block: 4 rows: blank, title (bold gradient), rule, blank. Rule width `cw` (non-centered) or `min(titleWidth + 4, cw)` (centered).
+7.5. Title block, style `rule`: 4 rows: blank, title (bold gradient; code and highlight runs use the `code`/`code_background` and `highlight`/`background` colors), rule, blank. Rule width `cw` (non-centered) or `min(max(titleWidth, subtitleWidth) + 4, cw)` (centered). With a subtitle (§7.8) the title block has 5 rows.
 7.6. In-body headings (rendered by glamour, styled by the theme): `#` bold accent line; `##` prefixed `▌ `; `###`-`######` bold lines.
+7.7. Title styles: `rule` (above); `curly`: the title carries a curly underline (SGR `4:3`, color `58` = `accent`) and the rule row is blank, when `render.Curly` is set (the presenter sets it for kitty, Ghostty, WezTerm and iTerm2 outside tmux/screen; `-check` and `-dump` never do), else exactly `rule`: the block is 4 rows either way; `frame`: blank, `╭─╮` top (accent gradient), `│ title │` (and `│ subtitle │`), `╰─╯` bottom, blank: 5 rows (6 with a subtitle), box width `max(titleWidth, subtitleWidth) + 4`, which `-check` counts as the title width (E28).
+7.8. Subtitle: `<!-- subtitle: text -->` adds one row under the title, in `foreground`, italic, with inline markdown as in §7.2 (E28).
 
 ## 8. Speaker notes
 
@@ -202,7 +207,7 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 11.3. Rows:
     - Footer: 2 rows if `h >= 6`, else none. Available rows `A = h - footer`.
     - Top margin: 1 blank row, or 0 on centered slides.
-    - Title block: 4 rows if the slide has a title.
+    - Title block: 4 rows if the slide has a title (5 with a subtitle or `frame`, 6 with both; §7.5, §7.7).
     - Body rows `B = A - margin - titleBlock`: titled `h - 7`, untitled `h - 3`, titled centered `h - 6`, untitled centered `h - 2` (for `h >= 6`).
     - Body rows beyond `B` are cut from the bottom (silently; `-check` reports them).
 11.4. Wrap widths, for a region of width `W` (`cw` at top level, column width in a column):
@@ -258,15 +263,17 @@ Per-column prose wrap is `colw - 2`, code limit `colw - 4`.
 13.4. Truncation: every frame line is cut to `w` cells (no ellipsis); column lines to their column width. Titles and wide unbreakable text spill into the right margin before being cut.
 13.5. HTML comments that are not directives or notes are hidden by glamour. Raw HTML is otherwise glamour-defined.
 13.6. The footer: row 1 progress bar, `floor(w * slideNumber / total)` cells of `━` then `─`; row 2 ` TITLE  ·  AUTHOR` (parts present) left, `N / TOTAL ` right. The runtime status line (`running…`, `reloaded`, warnings, load errors), in the `accent` color, temporarily replaces the last row.
+13.7. Text marks, in prose outside code spans and fences (E29): `==x==` highlight (text in `background` on a `highlight` background); `[x]{.faint}` faint (SGR 2); `++x++` and `[x]{.underline}` underline (SGR 4); `[x]{.curly}`, `[x]{.dotted}`, `[x]{.dashed}`, `[x]{.double}` underline variants (SGR `4:3`/`4:4`/`4:5`/`4:2`, color `58` = `accent`; plain SGR 4 unless `render.Curly`, §7.7). `==` needs a non-space after the opening and before the closing delimiter, so `a == b` is untouched; an unknown `{.class}` is left as written. `~~x~~` strikethrough is standard markdown. Marks add no rows or columns, apply inside list items, tables, quotes and columns, and are closed and reopened across wrapped lines.
+13.8. Callouts (E30): a blockquote whose first line is `> [!KIND]`, KIND one of NOTE, TIP, IMPORTANT, WARNING, CAUTION (case-insensitive), nothing else on the line, outside fences. Its lines are the consecutive `>` lines that follow (the `>` and one space stripped; a lazy continuation without `>` ends it). Rendered as markdown at width `W - 4` inside a rounded box in the palette color `note`/`tip`/`important`/`warning`/`caution`: top border `╭─ Kind ───╮` (Kind in bold, title case), `│ ` + line + ` │` rows, bottom `╰───╯`. Box width = widest inside line + 4 (at least label + 6), at most `W`. Height = body lines + 2. Other quotes, and unknown KINDs, are ordinary glamour quotes. A callout is a quote for the statement-slide test (§12.3).
 
 ## 14. What `-check` measures
 
 `tuipresent -check -w W -h H deck.md` (defaults 100x30). For each slide, at its LAST step:
 
 14.1. Rows: `margin + titleBlock + fullBody - A`. Images are sized first (§9.5), so an image never overflows unless its 3-row minimum does not fit.
-14.2. Cols: the maximum of: title width - `cw`; body line width - `cw`; widest clipped column line - its column width; fenced/Exec code line (tabs = 4 spaces) - `K` of its region, per column; Exec output - `K` if outputs exist.
+14.2. Cols: the maximum of: title width (or subtitle width, or the frame width, §7.7) - `cw`; body line width - `cw`; widest clipped column line - its column width; fenced/Exec code line (tabs = 4 spaces) - `K` of its region, per column; Exec output - `K` if outputs exist.
 14.3. Output: `deck.md: N slides fit WxH` (exit 0), or one line per bad slide `deck.md: slide N overflows WxH by R rows, C cols` (exit 1). Load errors (bad YAML, no slides) exit 1 on stderr.
-14.4. It cannot see: Exec output unless `-exec` was given; intermediate steps (reveal order, merged paragraphs, `A B` reflow); dropped slides, swallowed `end_slide`, ignored or misspelled directives; missing images (a box fits); literal markdown in titles; readability. Always read `-dump` too.
+14.4. It cannot see: Exec output unless `-exec` was given; intermediate steps (reveal order, merged paragraphs, `A B` reflow); dropped slides, swallowed `end_slide`, ignored or misspelled directives; missing images (a box fits); unmatched markdown delimiters; readability. Always read `-dump` too.
 14.5. Code lines are found with the parser's fence rules (§10.1), so the lines of a fence nested in a longer one (```` ````markdown ```` around ```` ``` ````) are measured as code too.
 14.6. Warnings (§19) go to stderr before the report and never change the exit status.
 
@@ -358,6 +365,12 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 | `code_background` | Inline code background (padded one space each side) and the fenced-code panel (longest line + 2 cells) | `background` blended 8% toward `foreground` |
 | `quote` | Blockquote text and `│` bar (italic) | `dim` |
 | `border` | Table borders, horizontal rules | `dim` |
+| `highlight` | Background of `==x==` text (§13.7) | `accent` |
+| `note` | `[!NOTE]` callout box and label (§13.8) | `#7aa2f7`; `#2e7de9` when the `background` is light |
+| `tip` | `[!TIP]` callouts | `#9ece6a`; `#3f7d20` light |
+| `important` | `[!IMPORTANT]` callouts | `#bb9af7`; `#8839ef` light |
+| `warning` | `[!WARNING]` callouts | `#e0af68`; `#a66a00` light |
+| `caution` | `[!CAUTION]` callouts | `#f7768e`; `#c4283c` light |
 
 `code_style` (not a color): chroma style for fenced code; unknown names warn and keep the base theme's.
 
@@ -377,6 +390,8 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 | `transition` directive | `line N: unknown transition "X", ...` | `slide` |
 | `-transition` flag | `-transition: unknown transition "X", ...` | `slide` |
 | Code fence line highlights (§10.5) | `line N: bad highlight "X": ...`, `highlight "X" is past the end of the K-line code block`, `highlight "X" runs past the end ...; clipped ...`, `empty highlight group G is ignored`, `code fence has an unclosed { ...` | Item skipped / clipped / group dropped / ignored |
+| Front matter `title_style` | `front matter: unknown title_style "X" (valid: rule, curly, frame); using rule` | `rule` |
+| `title_style` directive | `line N: unknown title_style "X", ...` | `rule` |
 | Multi-line `speaker_note` without `-->` | `line N: speaker_note has no closing -->; ...` | Note ends before the next `end_slide` or at end of file |
 | Theme name | `unknown theme "X", using dark ...` | `dark` |
 | Theme mapping / file keys | unknown key, `extends` in front matter, nested value, unknown `code_style`, bad `background`, both `name` and `path` | Ignored / base style / `terminal` / path |

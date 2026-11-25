@@ -44,12 +44,15 @@ Conventions for each result:
 20. [`+exec` blocks render as code until run](#case-20)
 21. [The code no-wrap limit (cw - 4)](#case-21)
 22. [Titles never wrap](#case-22)
-23. [Title text is literal, not markdown](#case-23)
+23. [Titles render inline markdown](#case-23)
 24. [List items wrap with a hanging indent](#case-24)
 25. [Tabs expand to 4 spaces](#case-25)
 26. [An empty front matter block](#case-26)
 27. [Unknown transition names fall back to `slide` and warn](#case-27)
 28. [Code line highlights are reveal steps, and bad specs warn](#case-28)
+29. [Subtitle and the frame title style](#case-29)
+30. [Highlight, strikethrough, faint and underline marks](#case-30)
+31. [Callout boxes](#case-31)
 
 <a id="case-1"></a>
 
@@ -1006,7 +1009,7 @@ deck.md: slide 1 overflows 80x24 by 0 rows, 2 cols   (exit 1)
 
 <a id="case-23"></a>
 
-## 23. Title text is literal, not markdown
+## 23. Titles render inline markdown
 
 ````markdown
 **Bold** and `code`
@@ -1024,13 +1027,13 @@ deck.md: 1 slides fit 80x24   (exit 0)
 === slide 1 step 1/1 ===
 
 
-    **Bold** and `code`
+    Bold and code
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     Bold and  code  in the body.
 ```
 
-- The slide title is printed verbatim (asterisks and backticks included) in the title gradient. Inline markdown only renders in the body.
+- The title's `**bold**` and `` `code` `` are rendered, not printed: the markers vanish and the title is 13 cells wide, not 19. `-dump` strips colors, so the bold and the code background are not visible here. Unmatched markers stay literal.
 
 <a id="case-24"></a>
 
@@ -1251,3 +1254,129 @@ deck.md: 1 slides fit 80x24   (exit 0)
 - `{1-2|4,9|all}` makes the fence a highlight block with three groups, so the slide has 3 steps (`Highlights` has no pauses). `After` appears at the last step, when the code is fully revealed.
 - Line 9 is past the end of the 5-line block: it is skipped with a warning and the group still highlights line 4. A warning's line number is the fence's.
 - `{2}` on the `+exec` fence is a static highlight (one group, no extra step) and the block stays runnable. Highlight dimming is a color change, so it does not show in these text frames.
+
+<a id="case-29"></a>
+
+## 29. Subtitle and the frame title style
+
+````markdown
+Why caching **wins**
+===
+<!-- subtitle: measured over 30 days -->
+<!-- title_style: frame -->
+
+Body text.
+
+<!-- end_slide -->
+
+Curly falls back to the rule here
+===
+<!-- title_style: curly -->
+
+Body text.
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: 2 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    ╭───────────────────────╮
+    │ Why caching wins      │
+    │ measured over 30 days │
+    ╰───────────────────────╯
+
+    Body text.
+=== slide 2 step 1/1 ===
+
+
+    Curly falls back to the rule here
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Body text.
+```
+
+- `frame` boxes the title and subtitle: 5 rows plus 1 for the subtitle, against 4 for the default. `-check` counts the box's width (text + 4) against the content width.
+- `curly` draws a curly underline instead of the rule only where the presenter detected support (kitty, Ghostty, WezTerm, iTerm2). `-dump` and `-check` never do, so slide 2 shows the plain rule and is 4 rows either way.
+
+<a id="case-30"></a>
+
+## 30. Highlight, strikethrough, faint and underline marks
+
+````markdown
+Marks
+===
+
+Ship ==this week==, not ~~never~~.
+
+Some [quiet]{.faint} and ++underlined++ and [wavy]{.curly} words, and a literal a == b and `==code==`.
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: 1 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    Marks
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Ship this week, not never.
+
+    Some quiet and underlined and wavy words, and a literal a == b
+    and  ==code== .
+```
+
+- The markers vanish and cost no columns: the colors and underlines are escape sequences that `-dump` strips.
+- `a == b` (spaces around `==`) and text inside a code span are left alone.
+
+<a id="case-31"></a>
+
+## 31. Callout boxes
+
+````markdown
+Callouts
+===
+
+> [!NOTE]
+> A one-line note costs 3 rows.
+
+> [!WARNING]
+> Rotate the key **before** the deploy, or the new service cannot read the old data, and a long line wraps inside the box.
+
+> A plain quote stays a quote.
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: 1 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    Callouts
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ╭─ Note ────────────────────────╮
+    │ A one-line note costs 3 rows. │
+    ╰───────────────────────────────╯
+
+    ╭─ Warning ────────────────────────────────────────────────────────╮
+    │ Rotate the key before the deploy, or the new service cannot read │
+    │ the old data, and a long line wraps inside the box.              │
+    ╰──────────────────────────────────────────────────────────────────╯
+
+    │ A plain quote stays a quote.
+```
+
+- Each callout is its lines plus 2 border rows, with the type in the top border. The box is as wide as its widest line plus 4, up to the content width.
+- Its text wraps 4 cells narrower than normal prose. An unknown type such as `[!BOGUS]`, or a quote without `[!TYPE]`, is an ordinary blockquote.

@@ -72,6 +72,34 @@ Code blocks sit on a panel in the theme's code background.
 
 <!-- end_slide -->
 
+Marks and callouts
+===
+
+Styles: ==highlight==, ~~strike~~, [faint]{.faint}, ++underline++,
+[curly]{.curly}.
+
+<!-- column_layout: [1, 1] -->
+<!-- column: 0 -->
+
+> [!NOTE]
+> Useful background.
+
+> [!TIP]
+> A better way.
+
+> [!IMPORTANT]
+> Needed to succeed.
+
+<!-- column: 1 -->
+
+> [!WARNING]
+> Urgent, mind it.
+
+> [!CAUTION]
+> Risk of harm.
+
+<!-- end_slide -->
+
 Tables and quotes
 ===
 

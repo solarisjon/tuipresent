@@ -219,13 +219,13 @@ func finishLinks(lines []string, urls []string) []string {
 	return out
 }
 
-type piece struct {
+type linkPiece struct {
 	s     string
 	width int
 }
 
 func finishLine(p *ansi.Parser, line string, urls []string) string {
-	var pieces []piece
+	var pieces []linkPiece
 	var state byte
 	skipClose := false // inside a link with no URL
 	for len(line) > 0 {
@@ -244,20 +244,20 @@ func finishLine(p *ansi.Parser, line string, urls []string) string {
 				}
 			}
 		case !strings.HasPrefix(seq, "\x1b]8;"):
-			pieces = append(pieces, piece{seq, width})
+			pieces = append(pieces, linkPiece{seq, width})
 		case hyperlinkURL(seq) == "": // close
 			if skipClose {
 				skipClose = false
 			} else {
-				pieces = append(pieces, piece{seq, 0})
+				pieces = append(pieces, linkPiece{seq, 0})
 			}
 		default:
 			num, ok := markerLink(hyperlinkURL(seq))
 			switch {
 			case !ok:
-				pieces = append(pieces, piece{seq, 0})
+				pieces = append(pieces, linkPiece{seq, 0})
 			case urls[num] != "":
-				pieces = append(pieces, piece{hyperlink(urls[num], num), 0})
+				pieces = append(pieces, linkPiece{hyperlink(urls[num], num), 0})
 			default:
 				skipClose = true
 			}
