@@ -50,7 +50,7 @@ func main() {
 	fade := flag.Bool("fade", true, "fade in content revealed by a pause; -fade=false makes reveals instant")
 	progress := flag.Bool("progress", true, "show deck progress in the terminal tab (OSC 9;4); -progress=false turns it off")
 	links := flag.String("links", "auto", "clickable links (OSC 8): auto|on|off (-dump and -check never emit them)")
-	images := flag.String("images", "auto", "image drawing: auto|kitty|blocks|off (-dump and -check always use blocks unless off)")
+	images := flag.String("images", "auto", "image drawing: auto|kitty|sixel|iterm2|blocks|off (-dump and -check always use blocks unless off)")
 	themeName := flag.String("theme", "", "theme name or theme file (.yaml), overriding front matter; see -themes")
 	themeBg := flag.String("background", "", "terminal|paint: paint the theme background into every cell, overriding front matter")
 	listThemes := flag.Bool("themes", false, "list the built-in themes with a color swatch and exit")
@@ -59,11 +59,16 @@ func main() {
 	exportFormat := flag.String("format", "", "with -export: gif|mp4|webm (tape, vhs; default gif) or png|svg (freeze; default png)")
 	dryRun := flag.Bool("dry-run", false, "with -export: print what would be written and run, touching nothing")
 	dwell := flag.Duration("dwell", 0, "with -export tape|vhs: time to rest on every slide and step (default: by amount of text)")
+	showVersion := flag.Bool("version", false, "print the version, commit, build date and Go version, then exit")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n")
+		fmt.Fprintf(os.Stderr, "usage: tuipresent [flags] deck.md\n       tuipresent -themes\n       tuipresent -version\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+	if *showVersion {
+		printVersion(os.Stdout)
+		return
+	}
 	if *listThemes {
 		printThemes(os.Stdout)
 		return

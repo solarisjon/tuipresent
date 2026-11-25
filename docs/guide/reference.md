@@ -31,7 +31,7 @@ tuipresent [flags] deck.md
 tuipresent -themes
 ```
 
-Exactly one deck file is required (except with `-themes`). Boolean flags take `-flag` or `-flag=false`.
+Exactly one deck file is required (except with `-themes` and `-version`). Boolean flags take `-flag` or `-flag=false`.
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -39,6 +39,7 @@ Exactly one deck file is required (except with `-themes`). Boolean flags take `-
 | `-transition KIND` | | Default transition: `slide`, `wipe`, `cover`, `dissolve`, `none`. Overrides front matter `transition`; per-slide directives still win. An unknown kind acts as `slide` and warns. Still applies after a reload. |
 | `-theme NAME` | | Render in this theme instead of the front matter's: a built-in name (or alias) or a `.yaml`/`.yml` theme file. Replaces the deck's theme name, path and inline overrides but keeps its `background` setting. Still applies after a reload. |
 | `-background MODE` | | `paint` draws every cell on the theme's background; `terminal` uses the terminal's own. Overrides front matter. Any other value is a usage error. |
+| `-version` | `false` | Print `tuipresent v1.0.0-rc1 (commit abc1234, built 2026-..., go1.27.4)` and exit; no deck needed. Release builds inject the version with `-ldflags "-X main.version=..."`; without it the version is `dev` (or the module version under `go install pkg@version`) and the commit and date come from the build's embedded VCS info when there is any. |
 | `-themes` | | Print the built-in theme names, each marked `light` or `dark` with a one-line color swatch, and exit. |
 | `-fade` | `true` | Fade in content revealed by a pause. `-fade=false` makes every reveal instant, overriding the deck. |
 | `-progress` | `true` | Show deck progress in the terminal tab (OSC 9;4), updated on every slide change and cleared on exit. `-progress=false` turns it off, overriding the deck. Never used with `-dump`, `-check` or when stdout is not a terminal. |
