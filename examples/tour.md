@@ -182,6 +182,28 @@ Any language glamour knows: go, rust, python, sql, yaml, diff...
 
 <!-- end_slide -->
 
+Walk through code line by line
+===
+
+<!-- transition: slide -->
+
+Put line groups in braces after the language. Each `|` is a step; the
+other lines dim. Press space to move through them.
+
+```go {1|2-4|5|all}
+func fib(n int) int {
+    if n < 2 {
+        return n
+    }
+    return fib(n-1) + fib(n-2)
+}
+```
+
+The source: ` ```go {1|2-4|5|all} `. `{2-4}` alone is a static highlight, and
+`+exec` blocks take groups too.
+
+<!-- end_slide -->
+
 Add +exec and press e
 ===
 

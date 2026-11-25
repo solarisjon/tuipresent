@@ -126,13 +126,13 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
 
 ## 6. Blocks and reveal steps
 
-6.1. A slide is `(title, blocks, Steps, centered, transition, fade, notes)`. Block kinds: Markdown (source text), Exec (code + language + id), Image (alt + path), Columns (widths + one block list per column). Every block has a step `s >= 0`, the number of `pause` directives before it in the slide.
+6.1. A slide is `(title, blocks, Steps, centered, transition, fade, notes)`. Block kinds: Markdown (source text), Code (highlighted code, §10.5), Exec (code + language + id), Image (alt + path), Columns (widths + one block list per column). Every block has a step `s >= 0`, the number of `pause` directives before it in the slide plus the extra highlight groups of earlier code blocks (§10.5).
 6.2. Reveal: the presenter moves through steps `n = 0 .. Steps-1`. At step `n`, a top-level block is visible iff `s <= n`. A Columns block is drawn iff its own `s <= n`; inside it, a child block is visible iff its `s <= n`.
 6.3. The step counter is global to the slide. A pause in column 0 raises the step of everything after it in source order, including all later columns and content after `reset_layout`. To reveal columns side by side, put no pauses inside earlier columns; pause before `column_layout` or after `reset_layout` instead (E10).
 6.4. The title is not a block: it is visible at every step (E8).
 6.5. Invisible blocks consume no rows at the current step, EXCEPT inside a Columns block, whose height is always its fully revealed height (§11.6), and on centered slides, whose offsets come from the fully revealed slide (§12). Image sizes also come from the fully revealed slide (§9.3). On a non-centered slide, content below a hidden block is top-aligned, so earlier rows never move, but see §6.6.
 6.6. Adjacent visible Markdown and Exec blocks are concatenated with a single `\n` and rendered as ONE markdown document (§13.1). So `A` / `<!-- pause -->` / `B` with no blank lines renders `A` at step 1 and the single paragraph `A B` at step 2. Surround `pause` (and any directive between paragraphs, including `speaker_note`) with blank lines to keep paragraphs separate (E7, E16).
-6.7. `Steps = 1 + number of pause directives` in the chunk (outside fences and notes).
+6.7. `Steps = 1 + number of pause directives + sum over highlight blocks of (groups - 1)` in the chunk (outside fences and notes).
 
 ## 7. Titles
 
@@ -186,6 +186,11 @@ Steps and fences are per slide. Columns cannot nest: every `column_layout` creat
     - Timeout 15 s; the process is killed (`[signal: killed]` appended). Non-zero exit appends `\n[exit status N]`; a missing interpreter appends the exec error. After the process exits or is killed, a background child still holding the output pipe gets at most 0.5 s more (`WaitDelay`), then the pipe is closed and the error is appended.
     - Key `e`: runs every Exec block with `s <= current step` on the current slide (columns included), concurrently. Status row shows `running…` until the first result arrives. Re-pressing re-runs and replaces output. Reload (`r` or file watch) discards all outputs.
     - `-exec` with `-check` or `-dump`: runs every Exec block of every slide (all steps) sequentially before measuring/printing. It executes deck code: only with the user's approval.
+
+10.5. Line highlights: INFO may contain one `{SPEC}` (first `{...}` with no braces inside; the rest of INFO, e.g. `rust {1-3|5} +exec` or `+exec rust{2}`, is read as if it were absent; a second `{...}` is dropped silently). SPEC is `|`-separated groups; a group is a `,`-separated list of items: a 1-based line `N`, a range `N-M` (`M >= N`), or `all` (case-insensitive); spaces around items are ignored. Lines count from the first line inside the fence. Each valid group is one reveal step: group `k` (0-based) shows at step `s + k` with only its lines at full color and every other line of the block dimmed (colors blended 62% toward the `code_background`); the last group stays. The block adds `groups - 1` steps, so everything after it moves that many steps later, like pauses (§6.3). A single group, `{2-4}`, is a static highlight with no extra step. Inside a column the shared step counter applies (§6.3).
+    - Kinds: a non-exec fence with at least one valid group becomes a Code block (flushing the Markdown before it, rendered as its own code panel); an `+exec` fence stays an Exec block with the groups attached, so `e` still runs it. A fence with no valid group stays an ordinary Markdown fence.
+    - Problems (warnings, §19; each prefixed with the fence's line number, the rest of the spec still applies): an item that is not `N`, `N-M` or `all` (`0`, `-2`, `2-`, `4-2`, `a`, numbers too large); a range running past the end (clipped); an item entirely past the end (skipped); an empty group (`1||3`, `1|`, `{}`) is dropped; a group left with no line is dropped; an unclosed `{` in INFO (the text is then ignored as an unknown attribute). An unclosed fence uses the body to the end of the chunk without the final empty line.
+    - If the renderer cannot match highlight lines to rendered code lines (the code was reflowed), the block shows undimmed. Blank first/last lines of the body count as lines for numbering (E28).
 
 ## 11. Layout model
 
@@ -292,7 +297,7 @@ directive_line= ws "<!--" ws name [ ws ":" ws arg ] ws "-->" ws NL ;
 name          = ( "a".."z" | "_" ) { "a".."z" | "_" } ;
 note_block    = ws "<!--" ws "speaker_note" ws [ ":" text ] NL   (* no "-->" on this line *)
                 { line_without_close } text "-->" text NL ;
-fence_block   = ws marker ws info NL { any_line } [ ws marker' ws NL ] ;
+fence_block   = ws marker ws info NL      (* info may hold {1-3|5}, §10.5 *) { any_line } [ ws marker' ws NL ] ;
                 (* marker = 3+ ` or 3+ ~ ; marker' same char, len >= marker *)
 image_line    = ws "![" alt "](" ws ( "<" path_sp ">" | path ) [ ws1 '"' title '"' ] ws ")" ws NL ;
 title_pair    = nonblank_line NL "=" { "=" } trailing_ws NL ;   (* only before content *)
@@ -367,11 +372,12 @@ Source: `internal/render/theme.go`. A theme is a palette of 13 colors plus a chr
 | Front matter `transition` | `front matter: unknown transition "X", using slide (valid: ...)` | `slide` |
 | `transition` directive | `line N: unknown transition "X", ...` | `slide` |
 | `-transition` flag | `-transition: unknown transition "X", ...` | `slide` |
+| Code fence line highlights (§10.5) | `line N: bad highlight "X": ...`, `highlight "X" is past the end of the K-line code block`, `highlight "X" runs past the end ...; clipped ...`, `empty highlight group G is ignored`, `code fence has an unclosed { ...` | Item skipped / clipped / group dropped / ignored |
 | Multi-line `speaker_note` without `-->` | `line N: speaker_note has no closing -->; ...` | Note ends before the next `end_slide` or at end of file |
 | Theme name | `unknown theme "X", using dark ...` | `dark` |
 | Theme mapping / file keys | unknown key, `extends` in front matter, nested value, unknown `code_style`, bad `background`, both `name` and `path` | Ignored / base style / `terminal` / path |
 
-`N` is the 1-based line number in the deck file (front matter lines included) of the offending directive or note opener.
+`N` is the 1-based line number in the deck file (front matter lines included) of the offending directive, note opener or code fence.
 
 19.2. Errors (exit 1 at startup with the message on stderr; during a reload the old deck stays and the message shows on the status row): invalid front-matter YAML (`front matter: yaml: ...`), no slides (`deck has no slides`), invalid custom theme (§18.4, also an empty or malformed inline color). Usage errors exit 2.
 

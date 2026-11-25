@@ -14,6 +14,7 @@ Every command-line flag, key, front-matter key, theme, directive and layout numb
 - [Slide titles](#slide-titles)
 - [Speaker notes](#speaker-notes)
 - [Images](#images)
+- [Code line highlights](#code-line-highlights)
 - [Executable code blocks](#executable-code-blocks)
 - [Transitions](#transitions)
 - [Pause fade](#pause-fade)
@@ -73,6 +74,7 @@ Problems tuipresent can recover from are **warnings**: the deck still loads and 
 | Theme `background` other than `terminal` or `paint` | `terminal` |
 | Theme with both `name` and `path` | The path |
 | Unknown transition kind: front matter, `-transition`, or a `transition:` directive (with its line number) | `slide` |
+| Code fence line highlights: a bad item, a line past the end of the block, an empty group, or an unclosed `{` (with the fence's line number) | The item or group is skipped (a range past the end is clipped); a fence with no usable group is plain code |
 | Multi-line `speaker_note` with no closing `-->` (with its line number) | The note ends before the next `<!-- end_slide -->`, or at the end of the file |
 
 **Errors** stop the deck from loading: invalid front-matter YAML, a deck with no slides, and an invalid custom theme (unreadable theme file, a color that isn't `#rgb`/`#rrggbb`, an empty color, or `extends` naming an unknown theme). At startup they exit 1; during a reload the old deck stays up and the error shows on the status line until the next good save.
@@ -293,6 +295,20 @@ A non-blank line followed by a line of `=` characters (setext H1), appearing bef
 | Spacing | One blank row before an image (if anything precedes it) and before markdown that follows it |
 | Drawing | kitty graphics protocol (Unicode placeholders) in kitty and ghostty outside tmux/screen; truecolor half-blocks elsewhere and in `-dump`/`-check`. Same geometry either way. See `-images`. |
 | Missing or undecodable file, or `-images off` | A dim 3-row box reading `[image: alt]`, never an error |
+
+## Code line highlights
+
+A `{...}` selection in a code fence's info string highlights lines: ```` ```rust {1-3|5,7|all} ````.
+
+| Part | Meaning |
+|------|---------|
+| `\|` | Separates groups. Each group is one reveal step, advanced and reversed with the same keys as `pause`; the other lines are dimmed. |
+| `N`, `N-M`, `all` | A 1-based line inside the fence, a range, or every line. Comma-separate several in a group. |
+| Single group | `{2-4}` is a static highlight: no extra step |
+| Steps | A block with G groups adds G - 1 steps, and content after it appears at its last group, like pauses |
+| With `+exec` | Allowed in any order with the other info words; the block still runs on `e` |
+
+See [Code line highlights](authoring.md#code-line-highlights).
 
 ## Executable code blocks
 

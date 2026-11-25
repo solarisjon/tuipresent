@@ -103,6 +103,7 @@ const (
 	Columns
 	Exec
 	Image
+	Code // fenced code with line highlights; see Block.Highlights
 )
 
 // Block is a unit of content revealed at Step (0-based).
@@ -115,4 +116,9 @@ type Block struct {
 	Children [][]Block // Columns: blocks per column
 	ExecID   int       // Exec: deck-unique id
 	Path     string    // Image: path as written, relative to Deck.Dir
+	// Highlights (Code, Exec): one entry per reveal group, each a per-line
+	// selection of Text. Group k shows at step Step+k with the other lines
+	// dimmed; the block takes len(Highlights) steps, and a single group is a
+	// static highlight. Nil means no highlighting.
+	Highlights [][]bool
 }

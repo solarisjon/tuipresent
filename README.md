@@ -137,7 +137,6 @@ Terminal capabilities
 Presenting
 - Slide overview grid and jump-to-slide by number
 - Navigate the presenter from the notes view
-- Step-through code line highlighting, like presenterm's `{1-3|5}`
 - Mouse navigation
 
 Sharing and export

@@ -244,7 +244,11 @@ func (p *slideParser) warn(i int, msg string) {
 // fence consumes a fenced code block starting at lines[i] and returns the index of its last line.
 func (p *slideParser) fence(lines []string, i int, marker, info string) int {
 	p.content = true
-	fields := strings.Fields(info)
+	rest, spec, hasSpec := splitHighlight(info)
+	if !hasSpec && strings.Contains(info, "{") {
+		p.warn(i, "code fence has an unclosed { in its info string; line highlights look like {1-3|5}")
+	}
+	fields := strings.Fields(rest)
 	isExec := false
 	for _, f := range fields {
 		if f == "+exec" {
@@ -256,7 +260,19 @@ func (p *slideParser) fence(lines []string, i int, marker, info string) int {
 		j++
 	}
 	end := min(j, len(lines)-1)
-	if !isExec {
+	body := lines[i+1 : min(j, len(lines))]
+	var groups [][]bool
+	if hasSpec {
+		if j == len(lines) && len(body) > 0 && body[len(body)-1] == "" {
+			body = body[:len(body)-1] // unclosed fence: the file's final newline is not a code line
+		}
+		var warns []string
+		groups, warns = ParseHighlights(spec, len(body))
+		for _, w := range warns {
+			p.warn(i, w)
+		}
+	}
+	if !isExec && groups == nil {
 		p.lines = append(p.lines, lines[i:end+1]...)
 		return end
 	}
@@ -265,8 +281,14 @@ func (p *slideParser) fence(lines []string, i int, marker, info string) int {
 	if len(fields) > 0 && !strings.HasPrefix(fields[0], "+") {
 		lang = fields[0]
 	}
-	*p.execID++
-	p.add(Block{Kind: Exec, Step: p.step, Lang: lang, Text: strings.Join(lines[i+1:min(j, len(lines))], "\n"), ExecID: *p.execID})
+	b := Block{Kind: Code, Step: p.step, Lang: lang, Text: strings.Join(body, "\n"), Highlights: groups}
+	if isExec {
+		*p.execID++
+		b.Kind, b.ExecID = Exec, *p.execID
+	}
+	p.add(b)
+	// Each group after the first is a reveal step of its own, like a pause.
+	p.step += max(len(groups)-1, 0)
 	return end
 }
 
