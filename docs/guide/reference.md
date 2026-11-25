@@ -12,6 +12,8 @@ Every command-line flag, key, front-matter key, theme, directive and layout numb
 - [Themes](#themes)
 - [Directives](#directives)
 - [Slide titles](#slide-titles)
+- [Text styles](#text-styles)
+- [Callouts](#callouts)
 - [Speaker notes](#speaker-notes)
 - [Images](#images)
 - [Executable code blocks](#executable-code-blocks)
@@ -73,6 +75,7 @@ Problems tuipresent can recover from are **warnings**: the deck still loads and 
 | Theme `background` other than `terminal` or `paint` | `terminal` |
 | Theme with both `name` and `path` | The path |
 | Unknown transition kind: front matter, `-transition`, or a `transition:` directive (with its line number) | `slide` |
+| Unknown `title_style`: front matter, or a directive (with its line number) | `rule` |
 | Multi-line `speaker_note` with no closing `-->` (with its line number) | The note ends before the next `<!-- end_slide -->`, or at the end of the file |
 
 **Errors** stop the deck from loading: invalid front-matter YAML, a deck with no slides, and an invalid custom theme (unreadable theme file, a color that isn't `#rgb`/`#rrggbb`, an empty color, or `extends` naming an unknown theme). At startup they exit 1; during a reload the old deck stays up and the error shows on the status line until the next good save.
@@ -118,6 +121,7 @@ Notes view (`-notes`):
 | `theme` | string or mapping | Color theme, see [Themes](#themes) |
 | `transition` | string | Default transition kind. Unset means `slide`. |
 | `fade` | string or bool | `false`, `off`, `no` or `none` (any case) disables the pause fade deck-wide. Anything else, or unset, leaves it on. |
+| `title_style` | string | Default [title style](#slide-titles) for every slide: `rule` (default), `curly` or `frame` |
 
 Other keys are ignored. A JSON Schema for editors is in [`docs/agent/frontmatter.schema.json`](../agent/frontmatter.schema.json).
 
@@ -211,6 +215,12 @@ theme:
 | `code_background` | Inline code and the panel behind code blocks | `background` mixed 8% toward `foreground` |
 | `quote` | Blockquote text and bar | `dim` |
 | `border` | Table borders, horizontal rules | `dim` |
+| `highlight` | Background of `==highlighted==` text (the text takes the `background` color) | `accent` |
+| `note` | `> [!NOTE]` callout border and label | `#7aa2f7` on dark themes, `#2e7de9` on light |
+| `tip` | `> [!TIP]` callouts | `#9ece6a` dark, `#3f7d20` light |
+| `important` | `> [!IMPORTANT]` callouts | `#bb9af7` dark, `#8839ef` light |
+| `warning` | `> [!WARNING]` callouts | `#e0af68` dark, `#a66a00` light |
+| `caution` | `> [!CAUTION]` callouts | `#f7768e` dark, `#c4283c` light |
 
 `code_style` (not a color) selects the syntax-highlighting style: any [chroma style](https://xyproto.github.io/splash/docs/) name, such as `monokai`. Default: the base theme's.
 
@@ -229,7 +239,7 @@ Quote colors: in YAML a bare `#` starts a comment, which leaves the key empty (a
 
 **Background painting.** By default slides are drawn on the terminal's own background, so a theme looks right only when the terminal's background roughly matches it. With `background: paint` (or `-background paint`), every cell of the frame is drawn on the theme's `background` and `foreground`, re-applied after every color reset, so the deck looks the same in any terminal: transitions, the pause fade (which then fades up from the painted background), the status line and kitty images included. Geometry is unchanged. Use it for light themes, shared decks, and unknown presenting terminals.
 
-**What a theme colors.** The gradient slide titles and rules, headings, body text, bullets, links, inline code, code blocks (on a `code_background` panel two cells wider than the longest line), quotes, table borders, the footer, the progress bar and the status line.
+**What a theme colors.** The gradient slide titles and rules, headings, body text, bullets, links, inline code, code blocks (on a `code_background` panel two cells wider than the longest line), quotes, callouts, highlights, table borders, the footer, the progress bar and the status line.
 
 ## Directives
 
@@ -245,13 +255,55 @@ A directive is an HTML comment alone on a line: `<!-- name -->` or `<!-- name: a
 | `<!-- jump_to_middle -->` | | Centers the slide vertically and horizontally |
 | `<!-- transition: KIND -->` | transition kind | Transition used when entering this slide, and in reverse when going back from it. Unknown kinds act as `slide` and warn. |
 | `<!-- fade: off -->` | `off`/`false`/`no`/`none`, or `on` | Disables (or re-enables) the pause fade for this slide, overriding front matter |
+| `<!-- title_style: curly -->` | `rule`, `curly` or `frame` | Title style for this slide, overriding front matter. Unknown values warn and act as `rule`. |
+| `<!-- subtitle: text -->` | inline markdown | A line under the slide title (ignored on untitled slides) |
 | `<!-- speaker_note: text -->` | markdown | Adds a speaker note, shown only in the `-notes` view |
 
-`transition` and `fade` (and the matching front-matter keys) are tuipresent extensions; the other directives come from presenterm. Content placed between `column_layout` and the first `column:` goes full width above the columns. Unsupported presenterm directives (`incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`, ...) are ignored.
+`transition`, `fade`, `title_style` and `subtitle` (and the matching front-matter keys) are tuipresent extensions; the other directives come from presenterm. Content placed between `column_layout` and the first `column:` goes full width above the columns. Unsupported presenterm directives (`incremental_lists`, `new_lines`, `alignment`, `font_size`, `include`, `skip_slide`, `no_footer`, ...) are ignored.
 
 ## Slide titles
 
-A non-blank line followed by a line of `=` characters (setext H1), appearing before any other content on the slide, is the slide title. Directives and speaker notes may precede it. It renders as a gradient title with a rule, taking 4 rows, and never wraps. Its text is literal (no inline markdown). `# ATX` headings are body headings, not titles.
+A non-blank line followed by a line of `=` characters (setext H1), appearing before any other content on the slide, is the slide title. Directives and speaker notes may precede it. It renders as a gradient title with a rule, taking 4 rows, and never wraps. `# ATX` headings are body headings, not titles.
+
+The title text takes inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~` and `==highlight==` (nested allowed, `\*` escapes). The gradient colors the plain text; code and highlight use the theme's code and highlight colors. An unclosed delimiter is literal text. Width is measured on the text without the markers.
+
+**Subtitle.** `<!-- subtitle: text -->` adds an italic line (foreground color, inline markdown) under the title: 1 more row.
+
+**Title styles.** `title_style: rule | curly | frame`, as a front-matter key for every slide or a directive for one:
+
+| Style | Look | Rows |
+|-------|------|------|
+| `rule` (default) | Gradient title over a `━` rule | 4 |
+| `curly` | Gradient title with a curly underline in the accent color instead of the rule. Where the terminal does not draw curly underlines (anything but kitty, Ghostty, WezTerm and iTerm2, and always in tmux, `-check` and `-dump`) it falls back to `rule`. | 4 |
+| `frame` | Title (and subtitle) inside a rounded accent-gradient box, sized to the text | 5 |
+
+Each takes one more row with a subtitle. A framed title is 4 cells wider than its text; `-check` reports it when that exceeds the content width.
+
+## Text styles
+
+Body text is markdown rendered by glamour, plus these styles. They work in paragraphs, lists, tables, quotes, columns and callouts, never inside code spans or fences.
+
+| Syntax | Result |
+|--------|--------|
+| `**x**`, `*x*`, `` `x` `` | Bold, italic, inline code |
+| `~~x~~` | Strikethrough |
+| `==x==` | Highlight: the `background` color on a `highlight` color background |
+| `[x]{.faint}` | Faint (dim) text |
+| `++x++` or `[x]{.underline}` | Underline |
+| `[x]{.curly}`, `[x]{.dotted}`, `[x]{.dashed}`, `[x]{.double}` | Underline variants in the accent color; plain underline where the terminal doesn't support them (see title styles) |
+
+The styles are SGR attributes, so they take no extra columns or rows. Text whose delimiters don't match, such as `a == b`, or an unknown class (`[x]{.nope}`), stays as written.
+
+## Callouts
+
+A blockquote whose first line is `> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]` or `> [!CAUTION]` (any case, alone on the line) becomes a callout: a rounded box in the type's theme color with the type in its top border and the rest of the quote, as markdown, inside.
+
+```markdown
+> [!WARNING]
+> Rotate the key **before** the deploy.
+```
+
+A callout costs its body rows plus 2, and is as wide as its widest line plus 4, at most the region's width. A one-line callout is 3 rows. Its text wraps 4 cells narrower than the region. Other blockquotes, and unknown types like `[!BOGUS]`, render as ordinary quotes. Colors are the `note`, `tip`, `important`, `warning` and `caution` theme keys.
 
 ## Speaker notes
 
@@ -354,7 +406,8 @@ Formulas for a `w` x `h` terminal:
 | Left margin | `(w - cw) / 2` |
 | Footer | 2 rows (progress bar, then ` title  ·  author` and `N / total`) when `h >= 6`, otherwise none |
 | Top margin | 1 row, none on `jump_to_middle` slides |
-| Title | 4 rows (blank, title, rule, blank) |
+| Title | 4 rows (blank, title, rule, blank); 5 with a `subtitle`; `frame` style 5, or 6 with a subtitle |
+| Callout | body rows + 2 (top and bottom border), 4 cells narrower than its region at most |
 | Body rows | titled `h - 7`, untitled `h - 3`, titled `jump_to_middle` `h - 6` (for `h >= 6`) |
 | Prose wrap width | `cw - 2` |
 | Longest code line keeping its margin | `cw - 4` (wider lines wrap at `cw - 2`) |

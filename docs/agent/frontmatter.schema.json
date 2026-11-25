@@ -42,6 +42,12 @@
         { "type": "string" }
       ],
       "default": true
+    },
+    "title_style": {
+      "description": "Default title style for every slide: 'rule' (gradient title over a rule), 'curly' (curly accent underline where the terminal supports it, else the rule) or 'frame' (boxed title, one more row). A slide's title_style directive overrides it. Unknown values warn and act as 'rule'; the parser is case-insensitive.",
+      "type": "string",
+      "enum": ["rule", "curly", "frame"],
+      "default": "rule"
     }
   },
   "$defs": {
@@ -93,6 +99,12 @@
         "code_background": { "$ref": "#/$defs/color", "description": "Inline code and code-block panels. Default: background mixed 8% toward foreground." },
         "quote": { "$ref": "#/$defs/color", "description": "Blockquote text and bar. Default: dim." },
         "border": { "$ref": "#/$defs/color", "description": "Table borders and horizontal rules. Default: dim." },
+        "highlight": { "$ref": "#/$defs/color", "description": "Background of ==highlighted== text. Default: accent." },
+        "note": { "$ref": "#/$defs/color", "description": "NOTE callouts. Default: #7aa2f7 (#2e7de9 on a light background)." },
+        "tip": { "$ref": "#/$defs/color", "description": "TIP callouts. Default: #9ece6a (#3f7d20 on a light background)." },
+        "important": { "$ref": "#/$defs/color", "description": "IMPORTANT callouts. Default: #bb9af7 (#8839ef on a light background)." },
+        "warning": { "$ref": "#/$defs/color", "description": "WARNING callouts. Default: #e0af68 (#a66a00 on a light background)." },
+        "caution": { "$ref": "#/$defs/color", "description": "CAUTION callouts. Default: #f7768e (#c4283c on a light background)." },
         "code_style": {
           "description": "Chroma syntax-highlighting style name, e.g. monokai. Unknown names warn and keep the base theme's style.",
           "type": "string"

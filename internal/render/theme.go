@@ -33,6 +33,12 @@ type Palette struct {
 	Quote          string // blockquote text and bar (default dim)
 	Border         string // table borders and horizontal rules (default dim)
 	Bullet         string // list bullets and numbers (default accent)
+	Highlight      string // background of ==highlighted== text (default accent)
+	Note           string // callout colors: > [!NOTE] ...
+	Tip            string
+	Important      string
+	Warning        string
+	Caution        string
 }
 
 // Theme is a resolved palette plus the chroma style used for code.
@@ -62,6 +68,12 @@ var paletteKeys = []struct {
 	{"quote", func(p *Palette) *string { return &p.Quote }},
 	{"border", func(p *Palette) *string { return &p.Border }},
 	{"bullet", func(p *Palette) *string { return &p.Bullet }},
+	{"highlight", func(p *Palette) *string { return &p.Highlight }},
+	{"note", func(p *Palette) *string { return &p.Note }},
+	{"tip", func(p *Palette) *string { return &p.Tip }},
+	{"important", func(p *Palette) *string { return &p.Important }},
+	{"warning", func(p *Palette) *string { return &p.Warning }},
+	{"caution", func(p *Palette) *string { return &p.Caution }},
 }
 
 // PaletteKeys lists the color keys a custom theme may set.
@@ -183,6 +195,19 @@ func (p Palette) withDefaults() Palette {
 	def(&p.Border, p.Dim)
 	def(&p.Quote, p.Dim)
 	def(&p.Code, p.Accent2)
+	def(&p.Highlight, p.Accent)
+	light := backgroundIsLight(p.Background)
+	pick := func(dark, lt string) string {
+		if light {
+			return lt
+		}
+		return dark
+	}
+	def(&p.Note, pick("#7aa2f7", "#2e7de9"))
+	def(&p.Tip, pick("#9ece6a", "#3f7d20"))
+	def(&p.Important, pick("#bb9af7", "#8839ef"))
+	def(&p.Warning, pick("#e0af68", "#a66a00"))
+	def(&p.Caution, pick("#f7768e", "#c4283c"))
 	if p.CodeBackground == "" {
 		p.CodeBackground = mix(p.Background, p.Foreground, 0.08)
 	}
@@ -190,8 +215,10 @@ func (p Palette) withDefaults() Palette {
 }
 
 // IsLight reports whether the theme is meant for a light background.
-func (t Theme) IsLight() bool {
-	c, err := colorful.Hex(t.Palette.Background)
+func (t Theme) IsLight() bool { return backgroundIsLight(t.Palette.Background) }
+
+func backgroundIsLight(hex string) bool {
+	c, err := colorful.Hex(hex)
 	if err != nil {
 		return false
 	}

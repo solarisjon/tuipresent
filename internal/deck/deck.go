@@ -16,6 +16,31 @@ type Meta struct {
 	Theme      Theme  `yaml:"theme"`
 	Transition string `yaml:"transition"`
 	Fade       string `yaml:"fade"` // off/false disables the pause reveal fade deck-wide
+	TitleStyle string `yaml:"title_style"`
+}
+
+// TitleStyles are the values of the title_style directive and front-matter key.
+var TitleStyles = []string{"rule", "curly", "frame"}
+
+// ValidTitleStyle reports whether v (case-insensitive) is a title style.
+func ValidTitleStyle(v string) bool {
+	for _, s := range TitleStyles {
+		if strings.EqualFold(strings.TrimSpace(v), s) {
+			return true
+		}
+	}
+	return false
+}
+
+// TitleStyle is the title style of slide i: its own directive, else the front
+// matter, else "rule".
+func (d *Deck) TitleStyle(i int) string {
+	for _, v := range []string{d.Slides[i].TitleStyle, d.Meta.TitleStyle} {
+		if ValidTitleStyle(v) {
+			return strings.ToLower(strings.TrimSpace(v))
+		}
+	}
+	return "rule"
 }
 
 // Theme is the front-matter theme setting. It accepts `theme: name` or a
@@ -92,6 +117,8 @@ type Slide struct {
 	Centered   bool
 	Transition string   // overrides Meta.Transition when set
 	Fade       string   // overrides Meta.Fade when set
+	TitleStyle string   // overrides Meta.TitleStyle when set
+	Subtitle   string   // line under the title (inline markdown)
 	Cover      bool     // synthesized title slide from front matter
 	Notes      []string // speaker notes (markdown), in source order; never rendered on the slide
 }

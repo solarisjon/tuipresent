@@ -128,6 +128,7 @@ func main() {
 	if imgMode == img.Auto {
 		imgMode = img.Detect(os.Getenv)
 	}
+	render.Curly = render.DetectCurly(os.Getenv)
 	if imgMode == img.Kitty {
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
 	}

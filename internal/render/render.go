@@ -82,14 +82,7 @@ func (r *Renderer) frame(idx, step, w, h int) string {
 	}
 	avail := max(h-len(footer), 0)
 
-	var head []string
-	if s.Title != "" {
-		rule := cw
-		if s.Centered {
-			rule = min(ansi.StringWidth(s.Title)+4, cw)
-		}
-		head = append(head, "", r.title(s.Title, cw), r.rule(rule), "")
-	}
+	head, _ := r.head(idx, s, cw)
 
 	headRows := len(head)
 	if !s.Centered {
@@ -211,14 +204,13 @@ func (r *Renderer) Overflow(idx, w, h int) (rows, cols int) {
 	if !s.Centered {
 		used++
 	}
-	if s.Title != "" {
-		used += 4
-	}
+	head, headW := r.head(idx, s, cw)
+	used += len(head)
 	r.sizeImages(s, cw, avail-used)
 	r.clip = 0
 	body := r.bodyFull(s, cw)
 	used += len(body)
-	cols = max(ansi.StringWidth(s.Title)-cw, r.clip)
+	cols = max(headW-cw, r.clip)
 	for _, l := range body {
 		cols = max(cols, ansi.StringWidth(l)-cw)
 	}
@@ -389,19 +381,28 @@ func (r *Renderer) columns(b deck.Block, step, width int) []string {
 func (r *Renderer) markdown(src string, width int) []string {
 	var out []string
 	for _, seg := range splitFences(src) {
-		lines := r.glamour(seg.text, width)
+		var groups [][]string
 		if seg.code {
-			lines = r.codePanel(lines, width)
+			groups = append(groups, r.codePanel(r.glamour(seg.text, width), width))
 		} else {
-			lines = r.decorate(hangIndent(lines, max(width-2, 10)))
+			for _, pc := range splitCallouts(seg.text) {
+				if pc.kind != "" {
+					groups = append(groups, r.callout(pc.kind, pc.text, width))
+					continue
+				}
+				lines := r.applyMarks(r.glamour(markText(pc.text), width))
+				groups = append(groups, r.decorate(hangIndent(lines, max(width-2, 10))))
+			}
 		}
-		if len(lines) == 0 {
-			continue
+		for _, lines := range groups {
+			if len(lines) == 0 {
+				continue
+			}
+			if len(out) > 0 {
+				out = append(out, "")
+			}
+			out = append(out, lines...)
 		}
-		if len(out) > 0 {
-			out = append(out, "")
-		}
-		out = append(out, lines...)
 	}
 	return out
 }
@@ -640,10 +641,6 @@ func (r *Renderer) glamourStyle() gansi.StyleConfig {
 	c.CodeBlock = gansi.StyleCodeBlock{StyleBlock: gansi.StyleBlock{StylePrimitive: prim(p.Foreground), Margin: &two}, Theme: r.theme.CodeStyle}
 	c.DefinitionDescription = gansi.StylePrimitive{BlockPrefix: "\n🠶 "}
 	return c
-}
-
-func (r *Renderer) title(t string, cw int) string {
-	return r.gradient(t, true)
 }
 
 func (r *Renderer) rule(cw int) string {

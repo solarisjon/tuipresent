@@ -69,6 +69,7 @@ fade: true
 | `theme` | Color theme; see [Themes](reference.md#themes) |
 | `transition` | Default transition between slides (see [Transitions and fade](#transitions-and-fade)) |
 | `fade` | `false` makes pause reveals instant for the whole deck |
+| `title_style` | `rule` (default), `curly` or `frame`: how slide titles are underlined or boxed, see [Slide titles](#slide-titles) |
 
 Gotchas:
 
@@ -113,6 +114,19 @@ Gotchas:
 - Titles never wrap. Keep them under about 60 characters so they fit at 80 columns.
 - Use the title for the claim ("Hit rate drives latency"), not a topic label ("Caching").
 
+Titles accept inline markdown, a subtitle and two more looks:
+
+```markdown
+Hit rate **drives** `p99` latency
+===
+<!-- subtitle: measured over 30 days -->
+<!-- title_style: frame -->
+```
+
+- `**bold**`, `*italic*`, `` `code` ``, `~~strike~~` and `==highlight==` work in titles.
+- `<!-- subtitle: text -->` adds an italic line under the title (1 more row).
+- `<!-- title_style: curly -->` swaps the rule for a curly accent underline in kitty, Ghostty, WezTerm and iTerm2, and keeps the rule everywhere else (and in `-check` and `-dump`). `frame` draws the title in a rounded box (5 rows instead of 4). Put `title_style: curly` in the front matter to use one style for the whole deck.
+
 ## Text, lists, tables, quotes and code
 
 Everything between directives is ordinary markdown, rendered by glamour and wrapped to the slide width.
@@ -140,6 +154,27 @@ Markdown on a slide
 func main() { fmt.Println("hi") }
 ```
 ````
+
+### More text styles
+
+| Write | Get |
+|-------|-----|
+| `~~gone~~` | strikethrough |
+| `==important==` | highlighted (themed) |
+| `[quiet]{.faint}` | faint text |
+| `++underlined++` | underline |
+| `[wavy]{.curly}` | curly underline (also `.dotted`, `.dashed`, `.double`; plain underline where unsupported) |
+
+### Callouts
+
+GitHub-style alerts become boxes in the theme's colors:
+
+```markdown
+> [!WARNING]
+> Rotate the key **before** the deploy.
+```
+
+The types are `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION`. A callout takes its lines plus 2 rows, so a one-line callout costs 3. Themes color them with the `note`, `tip`, `important`, `warning` and `caution` keys.
 
 Gotchas:
 

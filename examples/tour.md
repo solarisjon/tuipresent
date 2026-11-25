@@ -72,6 +72,24 @@ A setext `===` heading before any other content becomes the title.
 
 <!-- end_slide -->
 
+Titles take **markdown** and a subtitle
+===
+<!-- subtitle: this one asks for `title_style: curly` -->
+<!-- title_style: curly -->
+<!-- transition: slide -->
+
+The curly underline shows in kitty, Ghostty, WezTerm and iTerm2; elsewhere
+the usual rule stays. `title_style: frame` boxes the title instead.
+
+Body text has more styles: ==highlight==, ~~strikethrough~~,
+[faint]{.faint}, ++underline++ and [curly]{.curly}.
+
+> [!TIP]
+> Callouts are boxes in the theme's colors: NOTE, TIP, IMPORTANT,
+> WARNING and CAUTION.
+
+<!-- end_slide -->
+
 Pauses reveal one step at a time
 ===
 
