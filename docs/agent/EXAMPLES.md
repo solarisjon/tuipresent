@@ -53,6 +53,7 @@ Conventions for each result:
 29. [Subtitle and the frame title style](#case-29)
 30. [Highlight, strikethrough, faint and underline marks](#case-30)
 31. [Callout boxes](#case-31)
+32. [Image protocols leave layout alone](#case-32)
 
 <a id="case-1"></a>
 
@@ -1380,3 +1381,50 @@ deck.md: 1 slides fit 80x24   (exit 0)
 
 - Each callout is its lines plus 2 border rows, with the type in the top border. The box is as wide as its widest line plus 4, up to the content width.
 - Its text wraps 4 cells narrower than normal prose. An unknown type such as `[!BOGUS]`, or a quote without `[!TYPE]`, is an ordinary blockquote.
+
+<a id="case-32"></a>
+
+## 32. Image protocols leave layout alone
+
+````markdown
+Pictures
+===
+
+Same cell box in every terminal.
+
+![Photo](photo.jpg)
+````
+
+```text
+$ tuipresent -check -w 80 -h 24 deck.md
+deck.md: 1 slides fit 80x24   (exit 0)
+```
+
+```text
+=== slide 1 step 1/1 ===
+
+
+    Pictures
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Same cell box in every terminal.
+
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+                 <45 half-block cells>
+```
+
+- `photo.jpg` is 1200x800: 22 - 5 - 2 body rows leaves 15 rows, and 15 rows of a 3:2 image is 45 columns, centered in 72 cells (E19 has the arithmetic).
+- This is the same box kitty placeholders, iTerm2 inline images and sixel images occupy in the presenter (LANGUAGE.md §9.8). `-check` and `-dump` always draw half-blocks, so this output does not depend on `-images sixel|iterm2`.

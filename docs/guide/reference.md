@@ -45,7 +45,7 @@ Exactly one deck file is required (except with `-themes`). Boolean flags take `-
 | `-watch` | `true` | Reload the deck (and its custom theme file) when the file changes. `-watch=false` disables it (`r` still reloads). |
 | `-mouse` | `true` | Mouse navigation: click the left/right third for back/forward, wheel to step, click a card in the overview. `-mouse=false` leaves the mouse to the terminal (text selection). |
 | `-notes` | `false` | Show the speaker-notes view instead of the slides. It follows a presenter of the same deck in another terminal. |
-| `-images MODE` | `auto` | `auto`: kitty graphics in kitty/ghostty outside tmux/screen, half-blocks elsewhere. `kitty`: force kitty graphics. `blocks`: force truecolor half-blocks. `off`: draw a `[image: alt]` box. `-dump` and `-check` always use half-blocks unless `off`. |
+| `-images MODE` | `auto` | `auto`: kitty graphics in kitty/ghostty, the iTerm2 protocol in iTerm2/WezTerm, sixel in foot (never inside tmux/screen), half-blocks elsewhere. `kitty`, `iterm2`, `sixel`: force that protocol. `blocks`: force truecolor half-blocks. `off`: draw a `[image: alt]` box. `-dump` and `-check` always use half-blocks unless `off`. |
 | `-check` | `false` | Report slides that overflow a `-w` x `-h` screen, then exit. No TTY needed. |
 | `-dump` | `false` | Print every slide at every pause step to stdout, then exit. No TTY needed. |
 | `-w W` | `100` | Screen width for `-check` and `-dump` |
@@ -365,7 +365,7 @@ A callout costs its body rows plus 2, and is as wide as its widest line plus 4, 
 | Sizing | Scaled to fit the width and the rows left free on the fully revealed slide, shared among stacked images, at least 3 rows; aspect ratio kept (a cell is treated as 1x2 pixels); at most 297 cells per side |
 | Columns | Supported. An image in a shorter column may use the rows its taller neighbor leaves free. |
 | Spacing | One blank row before an image (if anything precedes it) and before markdown that follows it |
-| Drawing | kitty graphics protocol (Unicode placeholders) in kitty and ghostty outside tmux/screen; truecolor half-blocks elsewhere and in `-dump`/`-check`. Same geometry either way. See `-images`. |
+| Drawing | kitty graphics protocol (Unicode placeholders) in kitty and ghostty, iTerm2 inline images in iTerm2 and WezTerm, sixel in foot, all outside tmux/screen; truecolor half-blocks elsewhere and in `-dump`/`-check`. Same geometry in every mode. During a slide transition or a pause fade, iTerm2 and sixel images are blank (the image appears when the motion ends); kitty images fade with the slide. See `-images`. |
 | Missing or undecodable file, or `-images off` | A dim 3-row box reading `[image: alt]`, never an error |
 
 ## Code line highlights

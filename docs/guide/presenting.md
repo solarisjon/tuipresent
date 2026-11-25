@@ -184,11 +184,11 @@ The slides window resizes live, so you can also just resize and step through the
 
 ## Troubleshooting
 
-**Images look blocky or pixelated.** You're seeing the half-block fallback. Full-resolution images need kitty or ghostty, outside tmux and screen. tuipresent detects these from `TERM`, `TERM_PROGRAM`, `KITTY_WINDOW_ID` and `GHOSTTY_RESOURCES_DIR`; if detection misses (for example over SSH with an unusual `TERM`), force it with `-images kitty`. Over SSH it works as long as the local terminal is kitty or ghostty.
+**Images look blocky or pixelated.** You're seeing the half-block fallback. Full-resolution images need kitty, ghostty, iTerm2, WezTerm or foot, outside tmux and screen. tuipresent detects these from `TERM`, `TERM_PROGRAM`, `LC_TERMINAL`, `ITERM_SESSION_ID`, `KITTY_WINDOW_ID` and `GHOSTTY_RESOURCES_DIR`; if detection misses (for example over SSH with an unusual `TERM`), force it with `-images kitty`, `-images iterm2` or `-images sixel`. Over SSH it works as long as the local terminal supports the protocol. (`LC_TERMINAL` is how iTerm2 announces itself over SSH, if your SSH config passes it.)
 
 **An image shows as `[image: ...]`.** The file couldn't be found or decoded. Paths are relative to the deck file, not the current directory. Only PNG, JPEG and GIF are supported. Also check you didn't pass `-images off`.
 
-**Images are blank or garbled.** You may have forced `-images kitty` in a terminal that doesn't support kitty graphics, or inside tmux. Use `-images auto` (the default) or `-images blocks`.
+**Images are blank or garbled.** You may have forced `-images kitty`, `iterm2` or `sixel` in a terminal that doesn't support that protocol, or inside tmux. Use `-images auto` (the default) or `-images blocks`.
 
 **Colors look wrong or washed out.** tuipresent needs a truecolor terminal. If your terminal supports it but colors are still off, it's probably not being advertised: try `COLORTERM=truecolor tuipresent deck.md`. In tmux, also enable truecolor, for example `set -as terminal-features ',*:RGB'` in `~/.tmux.conf` (tmux 3.2 or newer).
 

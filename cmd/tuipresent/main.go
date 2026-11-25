@@ -143,8 +143,11 @@ func main() {
 		imgMode = img.Detect(os.Getenv)
 	}
 	render.Curly = render.DetectCurly(os.Getenv)
-	if imgMode == img.Kitty {
+	switch imgMode {
+	case img.Kitty:
 		render.Images = render.ImageConfig{Mode: img.Kitty, Kitty: img.NewTransmitter()}
+	case img.Sixel, img.ITerm2:
+		render.Images = render.ImageConfig{Mode: imgMode, Overlay: img.NewOverlay(imgMode)}
 	}
 
 	m.watch, m.noFade, m.mouse = *watch, !*fade, *mouse
@@ -229,6 +232,12 @@ type model struct {
 	progressShown bool
 	progressSlide int
 	progressTotal int
+	// Sixel and iTerm2 images are painted over the frame once it is shown
+	// (see overlay.go).
+	ovKey    string // what the screen is meant to show; "" when it has no images
+	ovPlaces []img.Placement
+	ovDrawn  bool
+	ovGen    int
 }
 
 func (m *model) Init() tea.Cmd {
@@ -254,11 +263,15 @@ func (m *model) clearStatusLater(d time.Duration) tea.Cmd {
 func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 	defer m.publish()
 	defer func() { cmd = m.withImages(cmd) }()
+	defer func() { cmd = m.withOverlay(cmd) }()
 	defer func() { cmd = m.withProgress(cmd) }()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 		m.anim = nil
+		if ov := render.Images.Overlay; ov != nil {
+			ov.SetCellSize(cellPixels(os.Stdout))
+		}
 	case tea.BackgroundColorMsg:
 		m.termBg = msg.Color
 	case tickMsg:
@@ -273,6 +286,8 @@ func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 	case execMsg:
 		m.r.SetExecOutput(msg.id, msg.out)
 		m.status = ""
+	case overlayMsg:
+		return m, m.drawOverlay(msg.gen)
 	case watchMsg:
 		return m, m.pollWatch()
 	case clearStatusMsg:
@@ -542,6 +557,9 @@ func (m *model) screen() string {
 		return m.r.Overview(m.sel, m.w, m.h)
 	}
 	frame := m.current()
+	if ov := render.Images.Overlay; ov != nil {
+		frame, _ = ov.Extract(frame)
+	}
 	if status := m.statusText(); status != "" && m.anim == nil {
 		lines := strings.Split(frame, "\n")
 		lines[len(lines)-1] = m.r.StatusLine(status, m.w)
