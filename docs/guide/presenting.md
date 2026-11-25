@@ -86,7 +86,9 @@ The notes view follows the presenter automatically. It shows:
 - the title of the next slide.
 - any warnings about the deck or its theme (the same ones the status line and `-check` give), in yellow above the bottom, for as long as they apply.
 
-Either one can be started first; the notes view says "Waiting for the presenter" until the slides are running, and goes back to waiting when they quit. Press `q` to close it. The notes view can't drive the slides; use the presenter window for that.
+Either one can be started first; the notes view says "Waiting for the presenter" until the slides are running, and goes back to waiting when they quit. Press `q` to close it.
+
+**Driving the slides from the notes view.** The notes view takes the presenter's navigation keys and sends them to the running presenter, which applies them like its own key presses (transitions, steps and fades all play): `right` `l` `space` `n` `pgdown` `enter` `j` `down` next, `left` `h` `p` `pgup` `backspace` `k` `up` back, `g`/`G` first/last slide, and a number then `enter` jumps to that slide (the number shows on the notes view's `Next:` line). The notes view keeps following the presenter's published position, so it shows the result a moment later. It is read-only while it says "Waiting for the presenter": keys do nothing, and nothing is ever sent to a presenter started later. The overview, `e` and `r` stay in the presenter window. Commands go through a small file next to the state file; the presenter ignores commands that are older than 5 seconds, were issued before it started, or were addressed to another presenter, and applies each once.
 
 ### Where to put the notes
 

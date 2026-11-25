@@ -455,6 +455,7 @@ that only you can see.
 <!-- reset_layout -->
 
 The notes pane adds slide, step, next title and a clock.
+Its arrow keys, `g`/`G` and numbers drive the slides too.
 
 <!-- speaker_note: This slide has two notes. If you can read this, the notes view works. -->
 

@@ -21,6 +21,7 @@ type State struct {
 	Slide   int       `json:"slide"` // 0-based
 	Step    int       `json:"step"`  // 0-based
 	Started time.Time `json:"started"`
+	Ack     int64     `json:"ack,omitempty"` // highest command Seq applied (see Command)
 }
 
 // StatePath returns the state file for deckPath. Relative paths and symlinks
@@ -44,6 +45,11 @@ func Write(path string, s State) error {
 	if err != nil {
 		return err
 	}
+	return writeAtomic(path, b)
+}
+
+// writeAtomic replaces path with b via a temp file and rename.
+func writeAtomic(path string, b []byte) error {
 	tmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".*")
 	if err != nil {
 		return err

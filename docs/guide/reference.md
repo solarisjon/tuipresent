@@ -121,7 +121,13 @@ Notes view (`-notes`):
 
 | Key | Action |
 |-----|--------|
+| `right` `l` `space` `n` `pgdown` `enter` `j` `down` | Presenter: next step or slide |
+| `left` `h` `p` `pgup` `backspace` `k` `up` | Presenter: back |
+| `g` `home` / `G` `end` | Presenter: first / last slide |
+| digits, then `enter` | Presenter: jump to that slide (`esc` cancels, `backspace` erases) |
 | `q` `esc` `ctrl+c` | Quit |
+
+The navigation keys are sent to the running presenter and do nothing while the notes view is waiting for one.
 
 ## File format
 
@@ -346,7 +352,7 @@ A callout costs its body rows plus 2, and is as wide as its widest line plus 4, 
 | Missing `-->` | The note ends before the next `<!-- end_slide -->` (which still splits) or at the end of the file, with a warning. Any other directive before that, such as `<!-- pause -->`, closes the note and is swallowed. |
 | Paragraphs | A note does not separate paragraphs: put blank lines around it |
 | Notes-only slide | Kept as a blank slide, for talking over |
-| Notes view | Current slide's notes, `slide N/M`, the reveal step, the next slide's title and the time since the presenter started. It follows the presenter through a state file in the system temp directory, keyed by the deck's absolute path. |
+| Notes view | Current slide's notes, `slide N/M`, the reveal step, the next slide's title and the time since the presenter started. It follows the presenter through a state file in the system temp directory, keyed by the deck's absolute path. Its navigation keys send commands back to the presenter (see Notes view keys above). |
 
 ## Images
 

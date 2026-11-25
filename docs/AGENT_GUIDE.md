@@ -37,7 +37,7 @@ Follow these steps in order. Do not skip step 4.
    ./bin/tuipresent deck.md          # or: tuipresent deck.md if installed
    ```
 
-   Keys: `→`/`space`/`l` next, `←`/`h` back, `g`/`G` first/last slide, `o` slide overview grid, a number then `enter` jumps to that slide, mouse click on the left/right third or the wheel goes back/forward (`-mouse=false` disables), `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs. Mention `tuipresent -notes deck.md` in a second terminal if the deck has speaker notes, and `-theme NAME` to preview other themes.
+   Keys: `→`/`space`/`l` next, `←`/`h` back, `g`/`G` first/last slide, `o` slide overview grid, a number then `enter` jumps to that slide, mouse click on the left/right third or the wheel goes back/forward (`-mouse=false` disables), `e` runs `+exec` blocks on the current slide, `r` reloads from disk, `q` quits. If the deck has `+exec` blocks, list what each one runs. Mention `tuipresent -notes deck.md` in a second terminal if the deck has speaker notes (its navigation keys, the same as the presenter's, also drive the presenter), and `-theme NAME` to preview other themes.
 
    Live reload: while the deck is open, tuipresent watches the file (and its custom theme file) and reloads on every save, also when editors or agents replace the file via rename, keeping the current slide and step. So the user can keep the deck presenting in one terminal while you edit it. If a save fails to load, the old deck stays up and the error shows in the bottom status line; warnings show there too. `-watch=false` turns this off. Live reload is not a substitute for step 4.
 

@@ -17,6 +17,12 @@ import (
 // warnings (see report.Warnings) are listed above the footer, or under the
 // waiting message, for as long as they apply.
 func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running bool, now time.Time, w, h int, warnings []string) string {
+	return FrameStatus(d, r, deckPath, s, running, now, w, h, warnings, "")
+}
+
+// FrameStatus is Frame with a status (a typed slide number, or a key hint)
+// right-aligned on the "Next:" line when it fits.
+func FrameStatus(d *deck.Deck, r *render.Renderer, deckPath string, s State, running bool, now time.Time, w, h int, warnings []string, status string) string {
 	if w <= 0 || h <= 0 {
 		return ""
 	}
@@ -55,7 +61,11 @@ func Frame(d *deck.Deck, r *render.Renderer, deckPath string, s State, running b
 	if slide+1 < len(d.Slides) {
 		next = slideTitle(d, slide+1)
 	}
-	footer := []string{rule, " Next: " + accent.Render(next)}
+	nextLine := " Next: " + accent.Render(next)
+	if g := w - ansi.StringWidth(nextLine) - ansi.StringWidth(status) - 1; status != "" && g > 0 {
+		nextLine += strings.Repeat(" ", g) + dim.Render(status)
+	}
+	footer := []string{rule, nextLine}
 
 	room := h - len(out) - len(footer)
 	// Warnings take at most half of the room, so the notes stay readable.

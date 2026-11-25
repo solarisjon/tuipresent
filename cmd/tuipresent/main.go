@@ -149,10 +149,12 @@ func main() {
 
 	m.watch, m.noFade, m.mouse = *watch, !*fade, *mouse
 	m.statePath, m.started = notes.StatePath(path), time.Now()
+	m.remote = newRemote(m.statePath, m.started)
 	m.slide = min(max(*start-1, 0), len(d.Slides)-1)
 	m.publish()
 	_, err = tea.NewProgram(m).Run()
 	notes.Remove(m.statePath)
+	notes.Remove(m.remote.path)
 	if m.progress {
 		fmt.Print(progressClear)
 	}
@@ -216,8 +218,9 @@ type model struct {
 	statePath string
 	started   time.Time
 	published *notes.State
-	noFade    bool // -fade=false
-	mouse     bool // -mouse: report mouse clicks and wheel
+	remote    remote // notes-view navigation commands (see remote.go)
+	noFade    bool   // -fade=false
+	mouse     bool   // -mouse: report mouse clicks and wheel
 	// Navigation (see nav.go): the overview grid and its selected slide, and
 	// the slide number being typed.
 	overview bool
@@ -235,6 +238,9 @@ func (m *model) Init() tea.Cmd {
 	cmds := []tea.Cmd{tea.RequestBackgroundColor, m.clearStatusLater(statusWarnTime)}
 	if m.watch {
 		cmds = append(cmds, watchTick())
+	}
+	if m.remote.path != "" {
+		cmds = append(cmds, remoteTick())
 	}
 	return tea.Batch(cmds...)
 }
@@ -275,6 +281,8 @@ func (m *model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 		m.status = ""
 	case watchMsg:
 		return m, m.pollWatch()
+	case remoteMsg:
+		return m, m.pollRemote()
 	case clearStatusMsg:
 		if m.status == msg.text {
 			m.status = ""
